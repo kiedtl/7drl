@@ -1244,116 +1244,6 @@ pub const Status = enum {
 
     // Tick functions {{{
 
-    pub fn tickDetectHeat(mob: *Mob) void {
-        var y: usize = 0;
-        while (y < HEIGHT) : (y += 1) {
-            var x: usize = 0;
-            while (x < WIDTH) : (x += 1) {
-                const coord = Coord.new2(mob.coord.z, x, y);
-                if (coord.distance(mob.coord) > DETECT_HEAT_RADIUS) {
-                    continue;
-                }
-
-                if (state.dungeon.at(coord).mob) |othermob| {
-                    if (othermob.ai.flag(.DetectWithHeat)) {
-                        mob.fov[y][x] = 100;
-                    }
-
-                    if (othermob.hasStatus(.Fire)) {
-                        mob.fov[y][x] = 100;
-                    }
-                }
-
-                if (state.dungeon.machineAt(coord)) |machine| {
-                    if (machine.detect_with_heat) {
-                        for (&DIRECTIONS) |d| if (coord.move(d, state.mapgeometry)) |n| {
-                            mob.fov[n.y][n.x] = 100;
-                        };
-                        mob.fov[y][x] = 100;
-                    }
-                }
-
-                if (state.dungeon.fireAt(coord).* > 0 or
-                    state.dungeon.at(coord).type == .Lava)
-                {
-                    for (&DIRECTIONS) |d| if (coord.move(d, state.mapgeometry)) |n| {
-                        mob.fov[n.y][n.x] = 100;
-                    };
-                    mob.fov[y][x] = 100;
-                }
-            }
-        }
-    }
-
-    pub fn tickDetectElec(mob: *Mob) void {
-        var y: usize = 0;
-        while (y < HEIGHT) : (y += 1) {
-            var x: usize = 0;
-            while (x < WIDTH) : (x += 1) {
-                const coord = Coord.new2(mob.coord.z, x, y);
-                if (coord.distance(mob.coord) > DETECT_ELEC_RADIUS) {
-                    continue;
-                }
-
-                if (state.dungeon.at(coord).mob) |othermob| {
-                    if (othermob.ai.flag(.DetectWithElec)) {
-                        mob.fov[y][x] = 100;
-                    }
-
-                    if (othermob.hasStatus(.ExplosiveElec)) {
-                        mob.fov[y][x] = 100;
-                    }
-                }
-
-                if (state.dungeon.machineAt(coord)) |machine| {
-                    if (machine.detect_with_elec) {
-                        for (&DIRECTIONS) |d| if (coord.move(d, state.mapgeometry)) |n| {
-                            mob.fov[n.y][n.x] = 100;
-                        };
-                        mob.fov[y][x] = 100;
-                    }
-                }
-            }
-        }
-    }
-
-    pub fn tickTormentUndead(mob: *Mob) void {
-        for (&DIRECTIONS) |d| if (utils.getMobInDirection(mob, d)) |othermob| {
-            if (othermob.life_type != .Undead)
-                continue;
-
-            // It's adjacent, should be seen...
-            assert(mob.cansee(othermob.coord));
-
-            if (othermob.isHostileTo(mob)) {
-                ai.updateEnemyKnowledge(othermob, mob, null);
-            }
-
-            // FIXME: reduce duplicated will-checking code between this and spells.cast()
-            if (!spells.willSucceedAgainstMob(mob, othermob)) {
-                if (state.player.cansee(othermob.coord) or state.player.cansee(mob.coord)) {
-                    const chance = 100 - spells.appxChanceOfWillOverpowered(mob, othermob);
-                    state.message(.SpellCast, "{c} resisted $oTorment Undead$. $g($c{}%$g chance)$.", .{ othermob, chance });
-                }
-                continue;
-            }
-
-            othermob.takeDamage(.{
-                .amount = TORMENT_UNDEAD_DAMAGE,
-                .by_mob = mob,
-                .kind = .Irresistible,
-                .blood = false,
-                .source = .Passive,
-            }, .{
-                .strs = &[_]DamageStr{
-                    items._dmgstr(99, "torment", "torments", ""),
-                    // When it is completely destroyed, it has been dispelled
-                    items._dmgstr(100, "dispel", "dispels", ""),
-                },
-            });
-        } else |_| {};
-    }
-
     pub fn tickNoisy(mob: *Mob) void {
         if (mob.isUnderStatus(.Sleeping) == null)
             mob.makeNoise(.Movement, .Medium);
@@ -1760,7 +1650,7 @@ pub const Mob = struct { // {{{
     prisoner_status: ?Prisoner = null,
     linked_fovs: StackBuffer(*Mob, 16) = StackBuffer(*Mob, 16).init(null),
 
-    fov: [HEIGHT][WIDTH]usize = [1][WIDTH]usize{[1]usize{0} ** WIDTH} ** HEIGHT,
+    fov: [HEIGHT][WIDTH]bool = [1][WIDTH]bool{[1]bool{false} ** WIDTH} ** HEIGHT,
     path_cache: std.AutoHashMap(Path, Coord) = undefined,
     enemies: EnemyRecord.AList = undefined,
     allies: MobArrayList = undefined,
@@ -1959,13 +1849,12 @@ pub const Mob = struct { // {{{
 
     pub fn tickFOV(self: *Mob) void {
         for (self.fov) |*row| for (row) |*cell| {
-            cell.* = 0;
+            cell.* = false;
         };
 
         if (self.isUnderStatus(.Sleeping)) |_| return;
 
         const vision = @intCast(usize, self.stat(.Vision));
-        const energy = math.clamp(vision * Dungeon.FLOOR_OPACITY, 0, 100);
         const direction = if (self.deg360_vision) null else self.facing;
 
         // Handle multitile creatures
@@ -1986,28 +1875,7 @@ pub const Mob = struct { // {{{
 
         var gen = Generator(Rect.rectIter).init(eyes);
         while (gen.next()) |eye_coord|
-            fov.rayCast(eye_coord, vision, energy, Dungeon.tileOpacity, &self.fov, direction, self == state.player);
-
-        // Clear out linked-fovs list of dead/non-z-level mobs
-        if (self.linked_fovs.len > 0) {
-            var new_linked_fovs = @TypeOf(self.linked_fovs).init(null);
-            for (self.linked_fovs.constSlice()) |linked_fov_mob|
-                if (!linked_fov_mob.is_dead and linked_fov_mob.coord.z == self.coord.z)
-                    new_linked_fovs.append(linked_fov_mob) catch unreachable;
-            self.linked_fovs = new_linked_fovs;
-        }
-
-        for (self.linked_fovs.constSlice()) |linked_fov_mob| {
-            for (linked_fov_mob.fov) |row, y| for (row) |_, x| {
-                if (linked_fov_mob.fov[y][x] > 0) {
-                    self.fov[y][x] = 100;
-                }
-            };
-        }
-
-        if (self.hasStatus(.Corruption)) {
-            Status._revealUndead(self);
-        }
+            fov.shadowCast(eye_coord, vision, state.mapgeometry, &self.fov, Dungeon.isTileOpaque);
     }
 
     // Misc stuff.
@@ -2041,25 +1909,6 @@ pub const Mob = struct { // {{{
                 self.corruption_ctr = 0;
             }
         }
-
-        // Player conjuration augments
-        if (self == state.player and player.hasSabresInSight()) {
-            var spawn_ctr = 0 +
-                (if (player.hasAugment(.WallDisintegrate1)) @as(usize, 1) else 0) +
-                (if (player.hasAugment(.WallDisintegrate2)) @as(usize, 2) else 0);
-            for (&DIRECTIONS) |d| {
-                if (spawn_ctr == 0)
-                    break;
-                if (state.player.coord.move(d, state.mapgeometry)) |neighbor| {
-                    if (state.dungeon.at(neighbor).type == .Wall) {
-                        state.dungeon.at(neighbor).type = .Floor;
-                        spells.spawnSabreSingle(state.player, neighbor);
-                        state.message(.Info, "A nearby wall disintegrates into a spectral sabre.", .{});
-                        spawn_ctr -= 1;
-                    }
-                }
-            }
-        }
     }
 
     // Decrement status durations, and do stuff for various statuses that need
@@ -2087,9 +1936,6 @@ pub const Mob = struct { // {{{
                 }
 
                 switch (status_e) {
-                    .DetectHeat => Status.tickDetectHeat(self),
-                    .DetectElec => Status.tickDetectElec(self),
-                    .TormentUndead => Status.tickTormentUndead(self),
                     .Noisy => Status.tickNoisy(self),
                     .Echolocation => Status.tickEcholocation(self),
                     .Recuperate => Status.tickRecuperate(self),
@@ -3046,13 +2892,6 @@ pub const Mob = struct { // {{{
             explosions.elecBurst(self.coord, s.power, self);
         }
 
-        if (state.player.canSeeMob(self) and player.hasSabresInSight() and
-            self.isHostileTo(state.player) and self.life_type == .Undead and
-            player.hasAugment(.UndeadBloodthirst))
-        {
-            spells.spawnSabreVolley(state.player, self.coord);
-        }
-
         // Apply death effect
         switch (self.slain_trigger) {
             .None => {},
@@ -3425,7 +3264,7 @@ pub const Mob = struct { // {{{
         if (self.coord.eq(coord))
             return true;
 
-        if (self.fov[coord.y][coord.x] > 0)
+        if (self.fov[coord.y][coord.x])
             return true;
 
         return false;

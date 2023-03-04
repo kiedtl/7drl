@@ -138,7 +138,8 @@ pub fn tickActOnAlert(level: usize) void {
                         }
                     } else null;
                     if (coord) |spawn_coord| {
-                        const patrol = mobs.placeMob(state.GPA.allocator(), &mobs.PatrolTemplate, spawn_coord, .{});
+                        // TODO
+                        const patrol = mobs.placeMob(state.GPA.allocator(), &mobs.GuardTemplate, spawn_coord, .{});
                         ai.updateEnemyKnowledge(patrol, enemy_alert.enemy, null);
                         if (enemy_alert.enemy.squad) |enemy_squad| for (enemy_squad.members.constSlice()) |member| {
                             ai.updateEnemyKnowledge(patrol, member, null);

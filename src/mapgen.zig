@@ -705,7 +705,6 @@ pub fn excavatePrefab(
                 .HeavyLockedDoor,
                 .Door,
                 .Bars,
-                .Brazier,
                 .ShallowWater,
                 .Floor,
                 .Loot1,
@@ -781,7 +780,6 @@ pub fn excavatePrefab(
                 .LockedDoor => placeDoor(rc, true),
                 .HeavyLockedDoor => _place_machine(rc, &surfaces.HeavyLockedDoor),
                 .Door => placeDoor(rc, false),
-                .Brazier => _place_machine(rc, Configs[room.rect.start.z].light),
                 .Bars => {
                     const p_ind = utils.findById(surfaces.props.items, Configs[room.rect.start.z].bars);
                     _ = placeProp(rc, &surfaces.props.items[p_ind.?]);
@@ -1875,33 +1873,6 @@ fn placeWindow(room: *Room) void {
     }
 }
 
-fn placeLights(room: *const Room) void {
-    if (Configs[room.rect.start.z].no_lights) return;
-    if (room.prefab) |rfb| if (rfb.nolights) return;
-
-    const lights_needed = rng.range(usize, 1, 2);
-
-    var lights: usize = 0;
-    var light_tries: usize = 500;
-    while (light_tries > 0 and lights < lights_needed) : (light_tries -= 1) {
-        const coord = randomWallCoord(&room.rect, light_tries);
-
-        if (state.dungeon.at(coord).type != .Wall or
-            !utils.hasPatternMatch(coord, &VALID_LIGHT_PLACEMENT_PATTERNS) or
-            state.dungeon.neighboringMachines(coord) > 0)
-            continue; // invalid coord
-
-        var brazier = Configs[room.rect.start.z].light.*;
-
-        // Dim lights by a random amount.
-        brazier.powered_luminescence -= rng.range(usize, 0, 10);
-
-        _place_machine(coord, &brazier);
-        state.dungeon.at(coord).type = .Floor;
-        lights += 1;
-    }
-}
-
 // Place a single prop along a Coord range.
 fn _placePropAlongRange(level: usize, where: Range, prop: *const Prop, max: usize) usize {
     // FIXME: we *really* should just be iterating through each coordinate
@@ -1925,14 +1896,10 @@ fn _placePropAlongRange(level: usize, where: Range, prop: *const Prop, max: usiz
     return placed;
 }
 
-pub fn placeRoomFeatures(level: usize, alloc: mem.Allocator) void {
+pub fn placeRoomFeatures(level: usize, _: mem.Allocator) void {
     for (state.rooms[level].items) |*room| {
         const rect = room.rect;
         const room_area = rect.height * rect.width;
-
-        // Don't light up narrow corridors
-        if (room.rect.width > 2 and room.rect.height > 2)
-            placeLights(room);
 
         // Don't fill small rooms or corridors.
         if (room_area < 16 or rect.height <= 2 or rect.width <= 2 or room.type == .Corridor) {
@@ -1953,13 +1920,9 @@ pub fn placeRoomFeatures(level: usize, alloc: mem.Allocator) void {
             .{ .from = Coord.new(rect_end.x - 1, rect.start.y + 1), .to = Coord.new(rect_end.x - 1, rect_end.y - 2) }, // left
         };
 
-        var statues: usize = 0;
         var props: usize = 0;
-        var containers: usize = 0;
         var machs: usize = 0;
         var posters: usize = 0;
-
-        const max_containers = math.log(usize, 2, room_area);
 
         var forbidden_range: ?usize = null;
 
@@ -1981,11 +1944,9 @@ pub fn placeRoomFeatures(level: usize, alloc: mem.Allocator) void {
             continue;
         }
 
-        const Mode = enum { Statues, Containers, Machine, Poster, None };
-        const modes = [_]Mode{ .Statues, .Containers, .Machine, .Poster, .None };
+        const Mode = enum { Machine, Poster, None };
+        const modes = [_]Mode{ .Machine, .Poster, .None };
         const mode_weights = [_]usize{
-            if (Configs[level].allow_statues) 10 else 0,
-            if (Configs[level].containers.len > 0) 8 else 0,
             if (Configs[level].machines.len > 0) 10 else 0,
             if (room_area >= 25) 5 else 0,
             8,
@@ -2009,25 +1970,6 @@ pub fn placeRoomFeatures(level: usize, alloc: mem.Allocator) void {
                 continue;
 
             switch (mode) {
-                .Statues => {
-                    assert(Configs[level].allow_statues);
-                    if (statues == 0 and rng.onein(2)) {
-                        const statue = rng.chooseUnweighted(mobs.MobTemplate, &mobs.STATUES);
-                        _ = mobs.placeMob(alloc, &statue, coord, .{});
-                        statues += 1;
-                    } else if (props < 2) {
-                        const prop = rng.chooseUnweighted(Prop, Configs[level].props.*);
-                        _ = placeProp(coord, &prop);
-                        props += 1;
-                    }
-                },
-                .Containers => {
-                    if (containers < max_containers) {
-                        var cont = rng.chooseUnweighted(Container, Configs[level].containers);
-                        placeContainer(coord, &cont);
-                        containers += 1;
-                    }
-                },
                 .Machine => {
                     if (machs < 1) {
                         assert(Configs[level].machines.len > 0);
@@ -2714,7 +2656,6 @@ pub const Prefab = struct {
         LockedDoor,
         HeavyLockedDoor,
         Door,
-        Brazier,
         ShallowWater,
         Floor,
         Connection,
@@ -3098,7 +3039,6 @@ pub const Prefab = struct {
                             '+' => .Door,
                             '±' => .LockedDoor,
                             '⊞' => .HeavyLockedDoor,
-                            '•' => .Brazier,
                             '˜' => .ShallowWater,
                             '@' => player: {
                                 f.player_position = Coord.new(x, y);
@@ -3335,7 +3275,6 @@ pub const LevelConfig = struct {
     tiletype: TileType = .Wall,
     material: *const Material = &materials.Concrete,
     window_material: *const Material = &materials.Glass,
-    light: *const Machine = &surfaces.Brazier,
     door: *const Machine = &surfaces.NormalDoor,
     vent: []const u8 = "gas_vent",
     bars: []const u8 = "iron_bars",
@@ -3419,7 +3358,6 @@ pub fn createLevelConfig_LAB(comptime prefabs: []const []const u8) LevelConfig {
 
         .material = &materials.Dobalene,
         .window_material = &materials.LabGlass,
-        .light = &surfaces.Lamp,
         .bars = "titanium_bars",
         .door = &surfaces.LabDoor,
         //.containers = &[_]Container{ surfaces.Chest, surfaces.LabCabinet },
@@ -3539,7 +3477,6 @@ pub fn createLevelConfig_WRK(comptime prefabs: []const []const u8) LevelConfig {
 
         .material = &materials.Dobalene,
         .window_material = &materials.LabGlass,
-        .light = &surfaces.Lamp,
         .bars = "titanium_bars",
         .door = &surfaces.LabDoor,
         //.containers = &[_]Container{ surfaces.Chest, surfaces.LabCabinet },

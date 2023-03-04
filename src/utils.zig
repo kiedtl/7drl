@@ -225,7 +225,7 @@ pub fn getNearestCorpse(me: *Mob) ?Coord {
     search: for (me.fov) |row, y| for (row) |cell, x| {
         if (buf.isFull()) break :search;
 
-        if (cell == 0) continue;
+        if (!cell) continue;
         const coord = Coord.new2(me.coord.z, x, y);
 
         if (state.dungeon.at(coord).surface) |s| switch (s) {

@@ -218,13 +218,6 @@ pub fn hasAugment(augment: ConjAugment) bool {
     } else false;
 }
 
-pub fn hasSabresInSight() bool {
-    return for (state.player.squad.?.members.constSlice()) |squadling| {
-        if (!squadling.is_dead and mem.eql(u8, squadling.id, "spec_sabre"))
-            break true;
-    } else false;
-}
-
 pub fn hasAlignedNC() bool {
     return repPtr().* > 0;
 }
@@ -240,11 +233,6 @@ pub fn triggerPoster(coord: Coord) bool {
 }
 
 pub fn triggerStair(cur_stair: Coord, dest_floor: usize) bool {
-    // if (state.levelinfo[dest_stair.z].optional) {
-    //     if (!ui.drawYesNoPrompt("Really travel to optional level?", .{}))
-    //         return false;
-    // }
-
     // state.message(.Move, "You ascend...", .{});
     _ = ui.drawTextModal("You ascend...", .{});
 
@@ -298,7 +286,7 @@ pub fn triggerStair(cur_stair: Coord, dest_floor: usize) bool {
 //   things of interest (items, machines, etc) and announce their presence.
 pub fn bookkeepingFOV() void {
     for (state.player.fov) |row, y| for (row) |_, x| {
-        if (state.player.fov[y][x] > 0) {
+        if (state.player.fov[y][x]) {
             const fc = Coord.new2(state.player.coord.z, x, y);
 
             var was_already_seen: bool = false;
@@ -358,21 +346,9 @@ pub fn moveOrFight(direction: Direction) bool {
     // Does the player want to stab or fight?
     if (state.dungeon.at(dest).mob) |mob| {
         if (state.player.isHostileTo(mob)) {
-            if (!combat.isAttackStab(state.player, mob) and
-                (!ai.isEnemyKnown(mob, state.player) and !mob.hasStatus(.Amnesia)))
-            {
-                if (!ui.drawYesNoPrompt("Really attack unaware enemy?", .{}))
-                    return false;
-            }
             state.player.fight(mob, .{});
             return true;
         }
-    }
-
-    // Does the player want to move into a surveilled location?
-    if (!isPlayerSpotted() and enemiesCanSee(dest) and state.is_walkable(dest, .{ .mob = state.player })) {
-        if (!ui.drawYesNoPrompt("Really move into an enemy's view?", .{}))
-            return false;
     }
 
     if (!movementTriggersA(direction)) {
@@ -459,10 +435,6 @@ pub fn movementTriggersB(direction: Direction) void {
                 }, .{ .noun = "Lightning" });
             } else |_| {};
         state.player.makeNoise(.Combat, .Loud);
-    }
-    if (state.player.hasStatus(.RingConjuration)) {
-        const target = utils.getFarthestWalkableCoord(direction, state.player.coord, .{ .only_if_breaks_lof = true });
-        spells.BOLT_CONJURE.use(state.player, state.player.coord, target, .{ .MP_cost = 0, .free = true });
     }
 }
 

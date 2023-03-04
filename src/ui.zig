@@ -1144,7 +1144,7 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
         for (state.player.fov) |row, iy| for (row) |_, ix| {
             const coord = Coord.new2(state.player.coord.z, ix, iy);
 
-            if (state.player.fov[iy][ix] > 0) {
+            if (state.player.fov[iy][ix]) {
                 var name = StringBuf64.init(null);
                 var priority: usize = 0;
 
@@ -3091,7 +3091,7 @@ pub const Animation = union(enum) {
         coord: Coord,
         char: u32,
         fg: u32 = colors.LIGHT_CONCRETE,
-        delay: usize = 80,
+        delay: usize = 50,
     },
     BlinkChar: struct {
         coords: []const Coord,
