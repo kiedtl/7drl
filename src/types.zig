@@ -4171,15 +4171,20 @@ pub const Tile = struct {
             }
         }
 
-        // var spattering = self.spatter.iterator();
-        // while (spattering.next()) |entry| {
-        //     const spatter = entry.key;
-        //     const num = entry.value.*;
-        //     const sp_color = spatter.color();
-        //     const q = @intToFloat(f64, num / 10);
-        //     const aq = 1 - math.clamp(q, 0.19, 0.40);
-        //     if (num > 0) cell.bg = colors.mix(sp_color, cell.bg, aq);
-        // }
+        var spattering = self.spatter.iterator();
+        while (spattering.next()) |entry| {
+            const spatter = entry.key;
+            const num = entry.value.*;
+            const sp_color = spatter.color();
+            const q = 1 - switch (entry.value.*) {
+                0 => 0,
+                1 => 10,
+                2 => 20,
+                3 => 30,
+                4 => 40,
+            };
+            if (num > 0) cell.bg = colors.mix(sp_color, cell.bg, q);
+        }
 
         return cell;
     }
@@ -4318,19 +4323,19 @@ pub const Dungeon = struct {
     }
 
     pub fn spatter(self: *Dungeon, c: Coord, what: Spatter) void {
-        for (&DIRECTIONS) |d| {
+        for (&CARDINAL_DIRECTIONS) |d| {
             if (!rng.onein(4)) continue;
 
             if (c.move(d, state.mapgeometry)) |neighbor| {
                 const prev = self.at(neighbor).spatter.get(what);
-                const new = math.min(prev + rng.range(usize, 0, 4), 10);
+                const new = math.min(prev + 1, 4);
                 self.at(neighbor).spatter.set(what, new);
             }
         }
 
-        if (rng.boolean()) {
+        if (rng.tenin(13)) {
             const prev = self.at(c).spatter.get(what);
-            const new = math.min(prev + rng.range(usize, 0, 5), 10);
+            const new = math.min(prev + 1, 4);
             self.at(c).spatter.set(what, new);
         }
     }

@@ -53,12 +53,12 @@ pub const labels = @import("ui/labels.zig");
 
 pub const FRAMERATE = 1000 / 30;
 
-pub const LEFT_INFO_WIDTH: usize = 35;
+pub const LEFT_INFO_WIDTH: usize = 30;
 //pub const RIGHT_INFO_WIDTH: usize = 24;
-pub const LOG_HEIGHT = 8;
+pub const LOG_HEIGHT = 6;
 pub const ZAP_HEIGHT = 15 + 4;
-pub const MAP_HEIGHT_R = 15;
-pub const MAP_WIDTH_R = 20;
+pub const MAP_HEIGHT_R = 12;
+pub const MAP_WIDTH_R = 12;
 
 pub const MIN_HEIGHT = (MAP_HEIGHT_R * 2) + LOG_HEIGHT + 2;
 pub const MIN_WIDTH = (MAP_WIDTH_R * 4) + LEFT_INFO_WIDTH + 2 + 1;
@@ -1865,9 +1865,9 @@ pub fn drawGameOverScreen(scoreinfo: scores.Info) void {
 
     {
         var tmpbuf = StackBuffer(u8, 128).init(null);
-        const x = player_dc.x - (32 + 4); // padding + space between @ and text
+        const x = player_dc.x -| (24 + 4); // padding + space between @ and text
 
-        tmpbuf.fmt("{s} the Oathbreaker", .{scoreinfo.username.constSlice()});
+        tmpbuf.fmt("{s} the Burdened", .{scoreinfo.username.constSlice()});
         _ = container_c.drawTextAtf(x, player_dc.y - 1, "{s: >32}", .{tmpbuf.constSlice()}, .{});
         tmpbuf.clear();
 
@@ -1893,7 +1893,7 @@ pub fn drawGameOverScreen(scoreinfo: scores.Info) void {
     }
 
     {
-        const startx = player_dc.x - 32;
+        const startx = player_dc.x - 24;
         const endx = player_dc.x + 24;
         var oy: usize = player_dc.y + 4;
 

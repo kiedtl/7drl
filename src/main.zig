@@ -752,8 +752,7 @@ pub fn actualMain() anyerror!void {
 
     ui.draw();
 
-    state.message(.Info, "You've just escaped from prison.", .{});
-    state.message(.Info, "Hurry to the stairs before the guards find you!", .{});
+    state.message(.Info, "Outer Darkness: a 2023 7drl", .{});
 
     var use_viewer: bool = undefined;
 

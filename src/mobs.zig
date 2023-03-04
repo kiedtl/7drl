@@ -61,7 +61,6 @@ pub const PLAYER_VISION = 12;
 pub const RESIST_IMMUNE = 1000;
 pub const WILL_IMMUNE = 1000;
 
-pub const HumanSpecies = Species{ .name = "human" };
 pub const GoblinSpecies = Species{ .name = "goblin" };
 pub const ImpSpecies = Species{ .name = "imp" };
 
@@ -126,7 +125,7 @@ pub const GuardTemplate = MobTemplate{
         .max_HP = 5,
         .memory_duration = 15,
 
-        .stats = .{ .Willpower = 1 },
+        .stats = .{ .Willpower = 1, .Melee = 100 },
     },
     .weapon = &items.BludgeonWeapon,
 };
@@ -146,16 +145,48 @@ pub const ArmoredGuardTemplate = MobTemplate{
         .max_HP = 7,
         .memory_duration = 15,
 
-        .stats = .{ .Willpower = 2, .Melee = 70 },
+        .stats = .{ .Willpower = 2, .Melee = 100 },
     },
     .weapon = &items.MaceWeapon,
     .armor = &items.GambesonArmor,
 };
 
+pub const GoblinTemplate = MobTemplate{
+    .mob = .{
+        .id = "goblin",
+        .species = &GoblinSpecies,
+        .tile = 'g',
+        .ai = AI{
+            .profession_name = "goblin",
+            .profession_description = "wandering",
+            .work_fn = ai.patrolWork,
+            .fight_fn = ai.meleeFight,
+            .flags = &[_]AI.Flag{.AvoidsEnemies},
+        },
+        .faction = .CaveGoblins,
+        .max_HP = 6,
+        .memory_duration = 20,
+        .stats = .{ .Willpower = 4, .Vision = 8, .Melee = 100 },
+    },
+    .squad = &[_][]const MobTemplate.SquadMember{
+        &[_]MobTemplate.SquadMember{
+            .{ .mob = "goblin", .weight = 1, .count = minmax(usize, 0, 1) },
+        },
+    },
+};
+
 pub const PlayerTemplate = MobTemplate{
     .mob = .{
         .id = "player",
-        .species = &HumanSpecies,
+        .species = &Species{
+            .name = "human",
+            .default_attack = Weapon{
+                .id = "none",
+                .name = "none",
+                .damage = 2,
+                .strs = &items.FIST_STRS,
+            },
+        },
         .tile = '@',
         .prisoner_status = .{ .of = .CaveGoblins },
         .ai = AI{
@@ -171,29 +202,10 @@ pub const PlayerTemplate = MobTemplate{
         .deg360_vision = true,
         .no_show_fov = true,
 
-        .max_HP = 14,
+        .max_HP = 30,
         .memory_duration = 10,
 
-        .stats = .{ .Willpower = 4, .Missile = 60, .Evade = 10, .Vision = PLAYER_VISION },
-    },
-};
-
-pub const GoblinTemplate = MobTemplate{
-    .mob = .{
-        .id = "goblin",
-        .species = &GoblinSpecies,
-        .tile = 'g',
-        .ai = AI{
-            .profession_name = "cave goblin",
-            .profession_description = "wandering",
-            .work_fn = ai.patrolWork,
-            .fight_fn = ai.meleeFight,
-            .flags = &[_]AI.Flag{.AvoidsEnemies},
-        },
-        .faction = .CaveGoblins,
-        .max_HP = 6,
-        .memory_duration = 20,
-        .stats = .{ .Willpower = 4, .Evade = 15, .Vision = 8 },
+        .stats = .{ .Willpower = 4, .Missile = 60, .Vision = PLAYER_VISION },
     },
 };
 
@@ -212,7 +224,7 @@ pub const WarriorTemplate = MobTemplate{
 
         .max_HP = 8,
         .memory_duration = 10,
-        .stats = .{ .Willpower = 2, .Melee = 80, .Evade = 15, .Vision = 6 },
+        .stats = .{ .Willpower = 2, .Melee = 100, .Vision = 10 },
     },
     .weapon = &items.MaceWeapon,
     .armor = &items.CuirassArmor,
@@ -221,7 +233,7 @@ pub const WarriorTemplate = MobTemplate{
 pub const EmberMageTemplate = MobTemplate{
     .mob = .{
         .id = "ember_mage",
-        .species = &HumanSpecies,
+        .species = &GoblinSpecies,
         .tile = 'Ë',
         .ai = AI{
             .profession_name = "ember mage",
@@ -242,7 +254,7 @@ pub const EmberMageTemplate = MobTemplate{
 
         .max_HP = 5,
         .memory_duration = 10,
-        .stats = .{ .Willpower = 4, .Evade = 0, .Vision = 6 },
+        .stats = .{ .Willpower = 4, .Vision = 11 },
     },
     .weapon = &items.BludgeonWeapon,
     .cloak = &items.SilCloak,
@@ -257,7 +269,7 @@ pub const EmberMageTemplate = MobTemplate{
 pub const BrimstoneMageTemplate = MobTemplate{
     .mob = .{
         .id = "brimstone_mage",
-        .species = &HumanSpecies,
+        .species = &GoblinSpecies,
         .tile = 'R',
         .ai = AI{
             .profession_name = "brimstone mage",
@@ -279,7 +291,7 @@ pub const BrimstoneMageTemplate = MobTemplate{
 
         .max_HP = 7,
         .memory_duration = 10,
-        .stats = .{ .Willpower = 6, .Evade = 10 },
+        .stats = .{ .Willpower = 6 },
     },
     .weapon = &items.MaceWeapon,
     .armor = &items.HauberkArmor,
@@ -320,7 +332,7 @@ pub const EmberlingTemplate = MobTemplate{
         .max_HP = 2,
         .memory_duration = 5,
         .innate_resists = .{ .rFume = 100, .rFire = RESIST_IMMUNE },
-        .stats = .{ .Willpower = 1, .Evade = 10, .Vision = 5, .Melee = 50 },
+        .stats = .{ .Willpower = 1, .Vision = 7, .Melee = 100 },
     },
     // XXX: Emberlings are never placed alone, this determines number of
     // summoned emberlings from CAST_CREATE_EMBERLING

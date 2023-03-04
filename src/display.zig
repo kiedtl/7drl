@@ -246,7 +246,7 @@ pub fn init(preferred_width: usize, preferred_height: usize) InitErr!void {
                 return error.SDL2InitError;
 
             // TODO: get rid of this
-            const SCALE = 1.5;
+            const SCALE = 2;
 
             // SDL2 has scaling issues on Windows when using HiDPI displays.
             //

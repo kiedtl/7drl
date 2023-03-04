@@ -3265,7 +3265,7 @@ pub const LevelConfig = struct {
     required_mobs: []const RequiredMob = &[_]RequiredMob{
         // .{ .count = 3, .template = &mobs.CleanerTemplate },
     },
-    room_crowd_max: usize = 2,
+    room_crowd_max: usize = 4,
     level_crowd_max: ?usize = null,
 
     no_lights: bool = false,
@@ -3368,49 +3368,6 @@ pub fn createLevelConfig_LAB(comptime prefabs: []const []const u8) LevelConfig {
         .allow_statues = false,
 
         .machines = &[_]*const Machine{&surfaces.Fountain},
-    };
-}
-
-pub fn createLevelConfig_SIN(comptime width: usize) LevelConfig {
-    return LevelConfig{
-        .prefabs = &[_][]const u8{"SIN_candle"},
-        .tunneler_opts = .{
-            .min_tunneler_distance = 0,
-            .turn_chance = 7,
-            .branch_chance = 6,
-            .room_tries = 1,
-            .shrink_chance = 0,
-            .grow_chance = 0,
-            .intersect_chance = 99,
-            .intersect_with_childless = true,
-            .add_extra_rooms = false,
-            .add_junctions = false,
-            .remove_childless = false,
-            .force_prefabs = true,
-
-            // Due to having 2 tunnelers, and candles having restriction=4 each branch will likely spawn only two rooms
-            .max_room_per_tunnel = 1,
-
-            .initial_tunnelers = &[_]tunneler.TunnelerOptions.InitialTunneler{
-                .{ .start = Coord.new(1, 1), .width = 0, .height = width, .direction = .East },
-                // .{ .start = Coord.new(WIDTH - 5, 1), .width = width, .height = 0, .direction = .South },
-                .{ .start = Coord.new(WIDTH - 1, HEIGHT - width - 2), .width = 0, .height = width, .direction = .West },
-                // .{ .start = Coord.new(1, HEIGHT - 1), .width = width, .height = 0, .direction = .North },
-            },
-        },
-        .prefab_chance = 100, // Only prefabs for SIN
-        .mapgen_func = tunneler.placeTunneledRooms,
-        .level_features = [_]?LevelConfig.LevelFeatureFunc{ null, null, null, null },
-        .required_mobs = &[_]LevelConfig.RequiredMob{},
-        .room_crowd_max = 1,
-        .level_crowd_max = 18,
-
-        .material = &materials.Marble,
-        .no_windows = true,
-
-        .allow_spawn_in_corridors = true,
-        .allow_statues = false,
-        .allow_extra_corridors = false,
     };
 }
 
