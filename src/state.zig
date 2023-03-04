@@ -85,6 +85,8 @@ pub var player: *Mob = undefined;
 pub var player_inited = false;
 pub var player_rage: usize = 0;
 
+pub const MAX_RAGE = 30;
+
 // zig fmt: off
 pub var night_rep = [types.Faction.TOTAL]isize{
     //

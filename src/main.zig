@@ -524,6 +524,7 @@ fn tickGame() !void {
                 state.player_turns += 1;
                 scores.recordUsize(.TurnsSpent, 1);
                 player.bookkeepingFOV();
+                player.checkRage();
                 if (player.getActiveRing()) |r|
                     player.getRingHints(r);
             }
