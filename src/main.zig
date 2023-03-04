@@ -475,6 +475,7 @@ fn tickGame() !void {
     surfaces.tickMachines(cur_level);
     fire.tickFire(cur_level);
     state.tickSound(cur_level);
+    state.tickSpatter(cur_level);
 
     if (state.ticks % 10 == 0) {
         alert.tickCheckLevelHealth(cur_level);
@@ -581,6 +582,7 @@ fn viewerTickGame(cur_level: usize) void {
     surfaces.tickMachines(cur_level);
     fire.tickFire(cur_level);
     state.tickSound(cur_level);
+    state.tickSpatter(cur_level);
 
     if (state.ticks % 10 == 0) {
         alert.tickCheckLevelHealth(cur_level);

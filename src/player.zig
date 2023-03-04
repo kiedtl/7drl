@@ -280,6 +280,25 @@ pub fn triggerStair(cur_stair: Coord, dest_floor: usize) bool {
     return true;
 }
 
+pub fn checkRage() void {
+    var enemies: usize = 0;
+    for (&DIRECTIONS) |d| {
+        if (utils.getHostileInDirection(state.player, d)) |_| {
+            enemies += 1;
+        } else |_| {}
+    }
+
+    if (state.player_rage == 0) {
+        if (enemies >= 4) {
+            state.player_rage = 5;
+        }
+    } else {
+        if (enemies < 4) {
+            state.player_rage = 0;
+        }
+    }
+}
+
 // Iterate through each tile in FOV:
 // - Add them to memory.
 // - If they haven't existed in memory before as an .Immediate tile, check for

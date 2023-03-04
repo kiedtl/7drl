@@ -1073,9 +1073,8 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
     _ = _drawStrf(bar_endx + 1, y, endx, "$pev  {: >3}%$.", .{ev}, .{});
     y += 1;
 
-    // const sneak = @intCast(usize, state.player.stat(.Sneak));
-    // const is_walking = state.player.turnsSpentMoving() >= sneak;
-    // _drawBar(y, startx, bar_endx, math.min(sneak, state.player.turnsSpentMoving()), sneak, if (is_walking) "walking" else "sneaking", if (is_walking) 0x25570e else 0x154705, 0xa5d78e, .{});
+    const blood = state.dungeon.at(state.player.coord).spatter.get(.Blood);
+    _drawBar(y, startx, bar_endx, blood / 10, 4, "blood", 0x880808, 0xffffff, .{});
     const arm = utils.SignedFormatter{ .v = state.player.resistance(.Armor) };
     _ = _drawStrf(bar_endx + 1, y, endx, "$barm {: >3}%$.", .{arm}, .{});
     y += 2;

@@ -3351,6 +3351,16 @@ pub const Mob = struct { // {{{
         assert(innate <= 100 and innate >= -100);
         r += innate;
 
+        if (self == state.player and resist == .Armor) {
+            r += @as(isize, switch (state.dungeon.at(self.coord).spatter.get(.Blood)) {
+                0...10 => 0,
+                11...20 => 20,
+                21...30 => 40,
+                31...49 => 60,
+                else => unreachable,
+            });
+        }
+
         // Check statuses
         switch (resist) {
             .Armor => if (self.isUnderStatus(.Recuperate) != null) {
@@ -4174,16 +4184,16 @@ pub const Tile = struct {
         var spattering = self.spatter.iterator();
         while (spattering.next()) |entry| {
             const spatter = entry.key;
-            const num = entry.value.*;
             const sp_color = spatter.color();
-            const q = 1 - switch (entry.value.*) {
-                0 => 0,
-                1 => 10,
-                2 => 20,
-                3 => 30,
-                4 => 40,
-            };
-            if (num > 0) cell.bg = colors.mix(sp_color, cell.bg, q);
+            const q = 1 - @as(f64, switch (entry.value.*) {
+                0 => 0.0,
+                1...10 => 0.10,
+                11...20 => 0.18,
+                21...30 => 0.26,
+                31...49 => 0.34,
+                else => unreachable,
+            });
+            cell.bg = colors.mix(sp_color, cell.bg, q);
         }
 
         return cell;
@@ -4328,14 +4338,14 @@ pub const Dungeon = struct {
 
             if (c.move(d, state.mapgeometry)) |neighbor| {
                 const prev = self.at(neighbor).spatter.get(what);
-                const new = math.min(prev + 1, 4);
+                const new = math.min(prev + 10, 49);
                 self.at(neighbor).spatter.set(what, new);
             }
         }
 
         if (rng.tenin(13)) {
             const prev = self.at(c).spatter.get(what);
-            const new = math.min(prev + 1, 4);
+            const new = math.min(prev + 10, 49);
             self.at(c).spatter.set(what, new);
         }
     }

@@ -83,6 +83,7 @@ pub var layout: [LEVELS][HEIGHT][WIDTH]Layout = [1][HEIGHT][WIDTH]Layout{[1][WID
 pub var state: GameState = .Game;
 pub var player: *Mob = undefined;
 pub var player_inited = false;
+pub var player_rage: usize = 0;
 
 // zig fmt: off
 pub var night_rep = [types.Faction.TOTAL]isize{
@@ -316,6 +317,19 @@ pub fn tickSound(cur_lev: usize) void {
             const coord = Coord.new2(cur_lev, x, y);
             const cur_sound = dungeon.soundAt(coord);
             cur_sound.state = SoundState.ageToState(ticks - cur_sound.when);
+        }
+    }
+}
+
+pub fn tickSpatter(cur_lev: usize) void {
+    var y: usize = 0;
+    while (y < HEIGHT) : (y += 1) {
+        var x: usize = 0;
+        while (x < WIDTH) : (x += 1) {
+            const coord = Coord.new2(cur_lev, x, y);
+            const blood = dungeon.at(coord).spatter.getPtr(.Blood);
+            if (blood.* > 10)
+                blood.* -|= 3;
         }
     }
 }
