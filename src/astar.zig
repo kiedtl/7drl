@@ -77,16 +77,6 @@ pub fn basePenaltyFunc(coord: Coord, opts: state.IsWalkableOptions) usize {
     };
 
     if (opts.mob) |mob| {
-        if (mob.ai.flag(.FearsDarkness)) {
-            if (!state.dungeon.lightAt(coord).*)
-                c += 50;
-        }
-
-        if (mob.ai.flag(.FearsLight)) {
-            if (state.dungeon.lightAt(coord).*)
-                c += 50;
-        }
-
         if (mob.ai.flag(.AvoidsEnemies)) {
             if (utils.getHostileAt(mob, coord)) |_| {
                 c += 20;

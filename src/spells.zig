@@ -19,7 +19,6 @@ const err = @import("err.zig");
 const player = @import("player.zig");
 const explosions = @import("explosions.zig");
 const items = @import("items.zig");
-const gas = @import("gas.zig");
 const mobs = @import("mobs.zig");
 const sound = @import("sound.zig");
 const state = @import("state.zig");
@@ -113,7 +112,6 @@ fn newCorpseSpell(
     };
 }
 
-pub const CAST_CREATE_BLOAT = newCorpseSpell("bloat", "bloat", "Bloats", &mobs.BloatTemplate, .{ .name = "chargeover-purple-green" });
 pub const CAST_CREATE_EMBERLING = newCorpseSpell("emberling", "emberling", "Emberlings", &mobs.EmberlingTemplate, .{ .name = "spawn-emberlings" });
 pub const CAST_CREATE_SPARKLING = newCorpseSpell("sparkling", "sparkling", "Sparklings", &mobs.SparklingTemplate, .{ .name = "spawn-sparklings" });
 
@@ -859,27 +857,6 @@ fn _effectHealUndead(caster: Coord, _: Spell, _: SpellOptions, coord: Coord) voi
     state.message(.SpellCast, "The {s} corpse dissolves away, healing the {s}!", .{
         corpse_name, ally.displayName(),
     });
-}
-
-pub const CAST_HASTEN_ROT = Spell{
-    .id = "sp_hasten_rot",
-    .name = "hasten rot",
-    .animation = .{ .Particle = .{ .name = "glow-purple" } },
-    .cast_type = .Smite,
-    .smite_target_type = .Corpse,
-    .effect_type = .{ .Custom = _effectHastenRot },
-    .checks_will = false,
-};
-fn _effectHastenRot(_: Coord, _: Spell, opts: SpellOptions, coord: Coord) void {
-    const corpse = state.dungeon.at(coord).surface.?.Corpse;
-    state.dungeon.at(coord).surface = null;
-
-    state.dungeon.atGas(coord)[gas.Miasma.id] = @intToFloat(f64, opts.power) / 100;
-    if (state.player.cansee(coord)) {
-        state.message(.SpellCast, "The {s} corpse explodes in a blast of foul miasma!", .{
-            corpse.displayName(),
-        });
-    }
 }
 
 pub const CAST_RESURRECT_FIRE = Spell{

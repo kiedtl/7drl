@@ -14,18 +14,12 @@
 :notraps
 :priority 100
 
-@a i potion_smoke
-@b i potion_paralysis
-@c i potion_blind
-@d i potion_disorient
-@e i potion_distract
-
 ###***###
-#a.....a#
+#.......#
 #.......#
 *.......*
-#c..@..b#
+#...@...#
 *.......*
 #.......#
-#d.....e#
+#.......#
 ###***###

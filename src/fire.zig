@@ -3,7 +3,6 @@ const math = std.math;
 const mem = std.mem;
 
 const state = @import("state.zig");
-const gas = @import("gas.zig");
 const explosions = @import("explosions.zig");
 const utils = @import("utils.zig");
 const sound = @import("sound.zig");
@@ -24,8 +23,6 @@ pub const MOB_BURN_DURATION = 7;
 pub fn tileFlammability(c: Coord) usize {
     var f: usize = 0;
 
-    f += state.dungeon.terrainAt(c).flammability;
-
     if (state.dungeon.at(c).mob) |mob| {
         if (mob.isVulnerable(.rFire)) {
             f += if (!mob.hasStatus(.Fire)) @as(usize, 20) else 10;
@@ -45,9 +42,6 @@ pub fn tileFlammability(c: Coord) usize {
 pub fn setTileOnFire(c: Coord, amount: ?usize) void {
     if (state.dungeon.at(c).type != .Floor)
         return;
-    if (state.dungeon.terrainAt(c).fire_retardant)
-        return;
-
     const flammability = tileFlammability(c);
     const newfire = amount orelse math.max(flammability, 5);
     state.dungeon.fireAt(c).* = newfire;
@@ -92,15 +86,6 @@ pub fn putFireOut(coord: Coord) void {
     //
     state.dungeon.spatter(coord, .Ash);
 
-    // Remove flammable terrain
-    //
-    // (Do this now instead of in tickFire() to ensure that things like wood
-    //  don't get destroyed immediately and stop giving their rF--)
-    //
-    if (state.dungeon.terrainAt(coord).flammability > 0) {
-        state.dungeon.at(coord).terrain = &surfaces.DefaultTerrain;
-    }
-
     state.dungeon.fireAt(coord).* = 0;
 }
 
@@ -133,10 +118,6 @@ pub fn tickFire(level: usize) void {
                             const neighborfire = state.dungeon.fireAt(neighbor).*;
                             if (neighborfire == 0 and rng.percent(oldfire * 10))
                                 setTileOnFire(neighbor, null);
-                        },
-                        .Water => {
-                            if (rng.onein(3))
-                                state.dungeon.atGas(neighbor)[gas.Steam.id] += 0.2;
                         },
                         else => {},
                     }

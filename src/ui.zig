@@ -16,7 +16,6 @@ const player = @import("player.zig");
 const spells = @import("spells.zig");
 const combat = @import("combat.zig");
 const err = @import("err.zig");
-const gas = @import("gas.zig");
 const mobs = @import("mobs.zig");
 const state = @import("state.zig");
 const surfaces = @import("surfaces.zig");
@@ -281,7 +280,6 @@ fn _formatStatusInfo(statusinfo: *const StatusDataInfo) []const u8 {
         .Prm => _writerWrite(w, "$bPrm$. {s}", .{sname}),
         .Equ => _writerWrite(w, "$bEqu$. {s}", .{sname}),
         .Tmp => _writerWrite(w, "$bTmp$. {s} $g({})$.", .{ sname, statusinfo.duration.Tmp }),
-        .Ctx => _writerWrite(w, "$bCtx$. {s}", .{sname}),
     }
 
     return fbs.getWritten();
@@ -360,7 +358,6 @@ fn _writerMobStats(
         const stat_val_raw = mob.stat(stat);
         const stat_val = utils.SignedFormatter{ .v = stat_val_raw };
 
-        if (stat == .Sneak) continue;
         _writerWrite(w, "$c{s: <8}$.   {: >5}\n", .{ stat.string(), stat_val });
     }
     _writerWrite(w, "\n", .{});
@@ -434,31 +431,6 @@ fn _writerStats(
         }
     }
     _writerWrite(w, "\n", .{});
-}
-
-fn _getTerrDescription(w: io.FixedBufferStream([]u8).Writer, terrain: *const surfaces.Terrain, linewidth: usize) void {
-    _writerWrite(w, "$c{s}$.\n", .{terrain.name});
-    _writerWrite(w, "terrain\n", .{});
-    _writerWrite(w, "\n", .{});
-
-    if (terrain.fire_retardant) {
-        _writerWrite(w, "It will put out fires.\n", .{});
-        _writerWrite(w, "\n", .{});
-    } else if (terrain.flammability > 0) {
-        _writerWrite(w, "It is flammable.\n", .{});
-        _writerWrite(w, "\n", .{});
-    }
-
-    _writerHeader(w, linewidth, "stats", .{});
-    _writerStats(w, linewidth, terrain.stats, terrain.resists);
-    _writerWrite(w, "\n", .{});
-
-    if (terrain.effects.len > 0) {
-        _writerHeader(w, linewidth, "effects", .{});
-        for (terrain.effects) |effect| {
-            _writerWrite(w, "{s}\n", .{_formatStatusInfo(&effect)});
-        }
-    }
 }
 
 fn _getSurfDescription(w: io.FixedBufferStream([]u8).Writer, surface: SurfaceItem, linewidth: usize) void {
@@ -817,145 +789,6 @@ fn _getMonsDescription(w: io.FixedBufferStream([]u8).Writer, mob: *Mob, linewidt
     }
 }
 
-fn _getItemDescription(w: io.FixedBufferStream([]u8).Writer, item: Item, linewidth: usize) void {
-    _ = linewidth;
-
-    const shortname = (item.shortName() catch err.wat()).constSlice();
-
-    //S.appendChar(w, ' ', (linewidth / 2) -| (shortname.len / 2));
-    _writerWrite(w, "$c{s}$.\n", .{shortname});
-
-    const itemtype: []const u8 = switch (item) {
-        .Ring => "ring",
-        .Consumable => |c| if (c.is_potion) "potion" else "consumable",
-        .Vial => "vial",
-        .Projectile => "projectile",
-        .Armor => "armor",
-        .Cloak => "cloak",
-        .Aux => "auxiliary item",
-        .Weapon => |wp| if (wp.martial) "martial weapon" else "weapon",
-        .Boulder => "boulder",
-        .Prop => "prop",
-        .Evocable => "evocable",
-    };
-    _writerWrite(w, "{s}\n", .{itemtype});
-
-    _writerWrite(w, "\n", .{});
-
-    switch (item) {
-        .Ring => {},
-        .Consumable => |p| {
-            _writerHeader(w, linewidth, "effects", .{});
-            for (p.effects) |effect| switch (effect) {
-                .Kit => |m| _writerWrite(w, "· $gMachine$. {s}\n", .{m.name}),
-                .Damage => |d| _writerWrite(w, "· $gIns$. {s} <$b{}$.>\n", .{ d.kind.string(), d.amount }),
-                .Heal => |h| _writerWrite(w, "· $gIns$. heal <$b{}$.>\n", .{h}),
-                .Resist => |r| _writerWrite(w, "· $gPrm$. {s: <7} $b{:>4}$.\n", .{ r.r.string(), r.change }),
-                .Stat => |s| _writerWrite(w, "· $gPrm$. {s: <7} $b{:>4}$.\n", .{ s.s.string(), s.change }),
-                .Gas => |g| _writerWrite(w, "· $gGas$. {s}\n", .{gas.Gases[g].name}),
-                .Status => |s| _writerWrite(w, "· $gTmp$. {s}\n", .{s.string(state.player)}),
-                .Custom => _writerWrite(w, "· $G(See description)$.\n", .{}),
-            };
-            _writerWrite(w, "\n", .{});
-        },
-        .Projectile => |p| {
-            const dmg = p.damage orelse @as(usize, 0);
-            _writerWrite(w, "$cdamage$.: {}\n", .{dmg});
-            switch (p.effect) {
-                .Status => |sinfo| {
-                    _writerHeader(w, linewidth, "effects", .{});
-                    _writerWrite(w, "{s}\n", .{_formatStatusInfo(&sinfo)});
-                },
-            }
-        },
-        .Cloak => |c| {
-            _writerHeader(w, linewidth, "stats", .{});
-            _writerStats(w, linewidth, c.stats, c.resists);
-        },
-        .Aux => |x| {
-            _writerHeader(w, linewidth, "stats", .{});
-            _writerStats(w, linewidth, x.stats, x.resists);
-
-            if (x.night) {
-                _writerHeader(w, linewidth, "night stats (if in dark)", .{});
-                _writerStats(w, linewidth, x.night_stats, x.night_resists);
-            }
-
-            if (x.equip_effects.len > 0) {
-                _writerHeader(w, linewidth, "on equip", .{});
-                for (x.equip_effects) |effect|
-                    _writerWrite(w, "· {s}\n", .{_formatStatusInfo(&effect)});
-                _writerWrite(w, "\n", .{});
-            }
-
-            if (x.night) {
-                _writerHeader(w, linewidth, "traits", .{});
-                _writerWrite(w, "It is a $cnight$. item and provides greater benefits if you stand on an unlit tile.\n", .{});
-            }
-        },
-        .Armor => |a| {
-            _writerHeader(w, linewidth, "stats", .{});
-            _writerStats(w, linewidth, a.stats, a.resists);
-
-            if (a.night) {
-                _writerHeader(w, linewidth, "night stats (if in dark)", .{});
-                _writerStats(w, linewidth, a.night_stats, a.night_resists);
-
-                _writerHeader(w, linewidth, "traits", .{});
-                _writerWrite(w, "It is a $cnight$. item and provides greater benefits if you stand on an unlit tile.\n", .{});
-            }
-        },
-        .Weapon => |p| {
-            // if (p.reach != 1) _writerWrite(w, "$creach:$. {}\n", .{p.reach});
-            assert(p.reach == 1);
-
-            _writerHeader(w, linewidth, "overview", .{});
-            _writerTwice(w, linewidth, "damage", "($g{s}$.) {}", .{ p.damage_kind.stringLong(), p.damage });
-            if (p.knockback != 0)
-                _writerTwice(w, linewidth, "knockback", "{}", .{p.knockback});
-            for (p.effects) |effect|
-                _writerTwice(w, linewidth, "effect", "{s}", .{_formatStatusInfo(&effect)});
-            _writerWrite(w, "\n", .{});
-
-            _writerHeader(w, linewidth, "stats", .{});
-            _writerStats(w, linewidth, p.stats, null);
-
-            if (p.equip_effects.len > 0) {
-                _writerHeader(w, linewidth, "on equip", .{});
-                for (p.equip_effects) |effect|
-                    _writerWrite(w, "· {s}\n", .{_formatStatusInfo(&effect)});
-                _writerWrite(w, "\n", .{});
-            }
-
-            _writerHeader(w, linewidth, "traits", .{});
-            if (p.martial) {
-                const stat = state.player.stat(.Martial);
-                const statfmt = utils.SignedFormatter{ .v = stat };
-                const color = if (stat < 0) @as(u21, 'r') else 'c';
-                _writerWrite(w, "$cmartial$.: You can attack up to ${u}{}$. extra time(s) (your Martial stat) if your attacks all land.\n\n", .{ color, statfmt });
-            }
-            if (p.ego.description()) |description| {
-                _writerWrite(w, "$c{s}$.: {s}\n\n", .{ p.ego.name().?, description });
-            }
-
-            _writerWrite(w, "\n", .{});
-        },
-        .Evocable => |e| {
-            _writerWrite(w, "$b{}$./$b{}$. charges.\n", .{ e.charges, e.max_charges });
-            _writerWrite(w, "$crechargable:$. {s}\n", .{_formatBool(e.rechargable)});
-            _writerWrite(w, "\n", .{});
-
-            if (e.delete_when_inert) {
-                _writerWrite(w, "$bThis item is destroyed on use.$.", .{});
-                _writerWrite(w, "\n", .{});
-            }
-        },
-        .Boulder, .Prop, .Vial => _writerWrite(w, "$G(This item is useless.)$.", .{}),
-    }
-
-    _writerWrite(w, "\n", .{});
-}
-
 // }}}
 
 fn _clearLineWith(from: usize, to: usize, y: usize, ch: u32, fg: u32, bg: u32) void {
@@ -1219,18 +1052,6 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
         y += 1;
     }
 
-    const rep = state.night_rep[@enumToInt(state.player.faction)];
-    const is_on_slade = state.dungeon.terrainAt(state.player.coord) == &surfaces.SladeTerrain;
-    if (rep != 0 or is_on_slade) {
-        const str = if (rep == 0) "$g$~ NEUTRAL $." else if (rep > 0) "$a$~ FRIENDLY $." else if (rep >= -5) "$p$~ DISLIKED $." else "$r$~ HATED $.";
-        if (is_on_slade and rep < 1) {
-            y = _drawStrf(startx, y, endx, "$cNight rep:$. {} $r$~ TRESPASSING $.", .{rep}, .{});
-        } else {
-            y = _drawStrf(startx, y, endx, "$cNight rep:$. {} {s}", .{ rep, str }, .{});
-        }
-        y += 1;
-    }
-
     const bar_endx = endx - 9;
 
     // Use red if below 40% health
@@ -1252,9 +1073,9 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
     _ = _drawStrf(bar_endx + 1, y, endx, "$pev  {: >3}%$.", .{ev}, .{});
     y += 1;
 
-    const sneak = @intCast(usize, state.player.stat(.Sneak));
-    const is_walking = state.player.turnsSpentMoving() >= sneak;
-    _drawBar(y, startx, bar_endx, math.min(sneak, state.player.turnsSpentMoving()), sneak, if (is_walking) "walking" else "sneaking", if (is_walking) 0x25570e else 0x154705, 0xa5d78e, .{});
+    // const sneak = @intCast(usize, state.player.stat(.Sneak));
+    // const is_walking = state.player.turnsSpentMoving() >= sneak;
+    // _drawBar(y, startx, bar_endx, math.min(sneak, state.player.turnsSpentMoving()), sneak, if (is_walking) "walking" else "sneaking", if (is_walking) 0x25570e else 0x154705, 0xa5d78e, .{});
     const arm = utils.SignedFormatter{ .v = state.player.resistance(.Armor) };
     _ = _drawStrf(bar_endx + 1, y, endx, "$barm {: >3}%$.", .{arm}, .{});
     y += 2;
@@ -1282,16 +1103,10 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
         if (status_drawn) y += 1;
     }
 
-    const light = state.player.isLit();
     const spotted = player.isPlayerSpotted();
-
-    if (light or spotted) {
-        const lit_str = if (light) "$C$~ Lit $. " else "";
+    if (spotted) {
         const spotted_str = if (spotted) "$bSpotted$. " else "";
-
-        y = _drawStrf(startx, y, endx, "{s}{s}", .{
-            lit_str, spotted_str,
-        }, .{});
+        y = _drawStrf(startx, y, endx, "{s}", .{spotted_str}, .{});
         y += 1;
     }
 
@@ -1333,13 +1148,7 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
                 var name = StringBuf64.init(null);
                 var priority: usize = 0;
 
-                if (state.dungeon.itemsAt(coord).len > 0) {
-                    const item = state.dungeon.itemsAt(coord).last().?;
-                    if (item != .Vial and item != .Prop and item != .Boulder) {
-                        name.appendSlice((item.shortName() catch err.wat()).constSlice()) catch err.wat();
-                    }
-                    priority = 3;
-                } else if (state.dungeon.at(coord).surface) |surf| {
+                if (state.dungeon.at(coord).surface) |surf| {
                     priority = 2;
                     name.appendSlice(switch (surf) {
                         .Machine => |m| if (m.player_interact != null) m.name else "",
@@ -1349,9 +1158,6 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
                         .Poster => "poster",
                         .Stair => |s| if (s != null) "upward stairs" else "",
                     }) catch err.wat();
-                } else if (!mem.eql(u8, state.dungeon.terrainAt(coord).id, "t_default")) {
-                    priority = 1;
-                    name.appendSlice(state.dungeon.terrainAt(coord).name) catch err.wat();
                 } else if (state.dungeon.at(coord).type != .Wall) {
                     const material = state.dungeon.at(coord).material;
                     switch (state.dungeon.at(coord).type) {
@@ -1369,7 +1175,7 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
                         }
                     }.func);
                     if (existing == null) {
-                        var tile = Tile.displayAs(coord, true, true);
+                        var tile = Tile.displayAs(coord, true);
                         tile.fl.wide = true;
 
                         features.append(FeatureInfo{
@@ -1414,7 +1220,7 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
         _clear_line(startx, endx, y);
         _clear_line(startx, endx, y + 1);
 
-        display.setCell(startx, y, Tile.displayAs(mob.coord, true, false));
+        display.setCell(startx, y, Tile.displayAs(mob.coord, false));
 
         const name = mob.displayName();
         _ = _drawStrf(startx + 2, y, endx, "$c{s}$.", .{name}, .{ .bg = null });
@@ -1542,13 +1348,8 @@ fn modifyTile(moblist: []const *Mob, coord: Coord, p_tile: display.Cell) display
     // Draw noise and indicate if that tile is visible by another mob
     switch (state.dungeon.at(coord).type) {
         .Floor => {
-            // const has_stuff = state.dungeon.at(coord).surface != null or
-            //     state.dungeon.at(coord).mob != null or
-            //     state.dungeon.itemsAt(coord).len > 0;
-
-            const light = state.dungeon.lightAt(state.player.coord).*;
             if (state.player.coord.eq(coord)) {
-                tile.fg = if (light) colors.LIGHT_CONCRETE else colors.LIGHT_STEEL_BLUE;
+                tile.fg = colors.LIGHT_CONCRETE;
             }
 
             if (_mobs_can_see(moblist, coord)) {
@@ -1650,7 +1451,7 @@ pub fn drawMap(moblist: []const *Mob, refpoint: Coord) void {
                     tile.sch = null;
                 };
             } else {
-                tile = modifyTile(moblist, coord, Tile.displayAs(coord, false, false));
+                tile = modifyTile(moblist, coord, Tile.displayAs(coord, false));
             }
 
             tile.fl.wide = true;
@@ -2243,78 +2044,78 @@ pub fn drawMessagesScreen() void {
     clearScreen();
 }
 
-pub fn drawZapScreen() void {
-    var selected: usize = 0;
-    var r_error: ?player.RingError = null;
+// pub fn drawZapScreen() void {
+//     var selected: usize = 0;
+//     var r_error: ?player.RingError = null;
 
-    while (true) {
-        r_error = player.checkRing(selected);
+//     while (true) {
+//         r_error = player.checkRing(selected);
 
-        zap_win.container.clearLineTo(0, zap_win.container.width - 1, 0, .{ .ch = '▀', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
-        zap_win.container.clearLineTo(0, zap_win.container.width - 1, zap_win.container.height - 1, .{ .ch = '▄', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
+//         zap_win.container.clearLineTo(0, zap_win.container.width - 1, 0, .{ .ch = '▀', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
+//         zap_win.container.clearLineTo(0, zap_win.container.width - 1, zap_win.container.height - 1, .{ .ch = '▄', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
 
-        var ring_count: usize = 0;
-        var y: usize = 0;
-        var ring_i: usize = 0;
-        while (ring_i <= 9) : (ring_i += 1) {
-            if (player.getRingByIndex(ring_i)) |ring| {
-                ring_count = ring_i;
-                const arrow = if (selected == ring_i) "$c>" else "$.·";
-                y += zap_win.left.drawTextAtf(0, y, "{s} {s}$.", .{ arrow, ring.name }, .{});
+//         var ring_count: usize = 0;
+//         var y: usize = 0;
+//         var ring_i: usize = 0;
+//         while (ring_i <= 9) : (ring_i += 1) {
+//             if (player.getRingByIndex(ring_i)) |ring| {
+//                 ring_count = ring_i;
+//                 const arrow = if (selected == ring_i) "$c>" else "$.·";
+//                 y += zap_win.left.drawTextAtf(0, y, "{s} {s}$.", .{ arrow, ring.name }, .{});
 
-                if (selected == ring_i) {
-                    var ry: usize = 0;
-                    const itemdesc = state.descriptions.get((Item{ .Ring = ring }).id().?).?;
-                    zap_win.right.clear();
-                    if (r_error) |r_err| {
-                        ry += zap_win.right.drawTextAtf(0, ry, "$cCannot use$.: $b{s}$.\n\n", .{r_err.text1()}, .{});
-                    } else {
-                        const active: []const u8 = if (ring.activated) "$b(active)$.\n\n" else "Press $b<Enter>$. to use.\n\n";
-                        ry += zap_win.right.drawTextAt(0, ry, active, .{});
-                    }
-                    ry += zap_win.right.drawTextAt(0, ry, itemdesc, .{});
-                }
-            } else {
-                y += zap_win.left.drawTextAt(0, y, "$g· <none>$.", .{});
-            }
-        }
+//                 if (selected == ring_i) {
+//                     var ry: usize = 0;
+//                     const itemdesc = state.descriptions.get((Item{ .Ring = ring }).id().?).?;
+//                     zap_win.right.clear();
+//                     if (r_error) |r_err| {
+//                         ry += zap_win.right.drawTextAtf(0, ry, "$cCannot use$.: $b{s}$.\n\n", .{r_err.text1()}, .{});
+//                     } else {
+//                         const active: []const u8 = if (ring.activated) "$b(active)$.\n\n" else "Press $b<Enter>$. to use.\n\n";
+//                         ry += zap_win.right.drawTextAt(0, ry, active, .{});
+//                     }
+//                     ry += zap_win.right.drawTextAt(0, ry, itemdesc, .{});
+//                 }
+//             } else {
+//                 y += zap_win.left.drawTextAt(0, y, "$g· <none>$.", .{});
+//             }
+//         }
 
-        zap_win.container.renderFullyW(.Zap);
+//         zap_win.container.renderFullyW(.Zap);
 
-        display.present();
+//         display.present();
 
-        switch (display.waitForEvent(null) catch err.wat()) {
-            .Quit => {
-                state.state = .Quit;
-                break;
-            },
-            .Key => |k| switch (k) {
-                .CtrlC, .CtrlG, .Esc => break,
-                .ArrowUp => selected -|= 1,
-                .ArrowDown => selected = math.min(ring_count, selected + 1),
-                .Enter => if (r_error == null) {
-                    clearScreen();
-                    player.beginUsingRing(selected);
-                    break;
-                },
-                else => {},
-            },
-            .Char => |c| switch (c) {
-                'w', 'k' => selected -|= 1,
-                'x', 'j' => selected = math.min(ring_count, selected + 1),
-                else => {},
-            },
-            else => {},
-        }
-    }
+//         switch (display.waitForEvent(null) catch err.wat()) {
+//             .Quit => {
+//                 state.state = .Quit;
+//                 break;
+//             },
+//             .Key => |k| switch (k) {
+//                 .CtrlC, .CtrlG, .Esc => break,
+//                 .ArrowUp => selected -|= 1,
+//                 .ArrowDown => selected = math.min(ring_count, selected + 1),
+//                 .Enter => if (r_error == null) {
+//                     clearScreen();
+//                     player.beginUsingRing(selected);
+//                     break;
+//                 },
+//                 else => {},
+//             },
+//             .Char => |c| switch (c) {
+//                 'w', 'k' => selected -|= 1,
+//                 'x', 'j' => selected = math.min(ring_count, selected + 1),
+//                 else => {},
+//             },
+//             else => {},
+//         }
+//     }
 
-    // FIXME: remove once all of ui.* is converted to subconsole system and
-    // artifacts are auto-cleared
-    clearScreen();
-}
+//     // FIXME: remove once all of ui.* is converted to subconsole system and
+//     // artifacts are auto-cleared
+//     clearScreen();
+// }
 
 // Examine mode {{{
-pub const ExamineTileFocus = enum { Item, Surface, Mob };
+pub const ExamineTileFocus = enum { Surface, Mob };
 
 pub fn drawExamineScreen(starting_focus: ?ExamineTileFocus) bool {
     const logw = dimensions(.Log);
@@ -2336,12 +2137,11 @@ pub fn drawExamineScreen(starting_focus: ?ExamineTileFocus) bool {
     defer map_win.map.renderFullyW(.Main);
 
     while (true) {
-        const has_item = state.dungeon.itemsAt(coord).len > 0;
         const has_mons = state.dungeon.at(coord).mob != null;
-        const has_surf = state.dungeon.at(coord).surface != null or !mem.eql(u8, state.dungeon.terrainAt(coord).id, "t_default");
+        const has_surf = state.dungeon.at(coord).surface != null;
 
         // Draw side info pane.
-        if (state.player.cansee(coord) and has_mons or has_surf or has_item) {
+        if (state.player.cansee(coord) and has_mons or has_surf) {
             const linewidth = @intCast(usize, infow.endx - infow.startx);
 
             var textbuf: [4096]u8 = undefined;
@@ -2350,8 +2150,7 @@ pub fn drawExamineScreen(starting_focus: ?ExamineTileFocus) bool {
 
             const mons_tab = if (tile_focus == .Mob) "$cMob$." else "$gMob$.";
             const surf_tab = if (tile_focus == .Surface) "$cSurface$." else "$gSurface$.";
-            const item_tab = if (tile_focus == .Item) "$cItem$." else "$gItem$.";
-            _writerWrite(writer, "{s} · {s} · {s}$.\n", .{ mons_tab, surf_tab, item_tab });
+            _writerWrite(writer, "{s} · {s}$.\n", .{ mons_tab, surf_tab });
 
             _writerWrite(writer, "Press $b<>$. to switch tabs.\n", .{});
             _writerWrite(writer, "\n", .{});
@@ -2373,10 +2172,8 @@ pub fn drawExamineScreen(starting_focus: ?ExamineTileFocus) bool {
                 if (state.dungeon.at(coord).surface) |surf| {
                     _getSurfDescription(writer, surf, linewidth);
                 } else {
-                    _getTerrDescription(writer, state.dungeon.terrainAt(coord), linewidth);
+                    assert(false);
                 }
-            } else if (tile_focus == .Item and has_item) {
-                _getItemDescription(writer, state.dungeon.itemsAt(coord).last().?, linewidth);
             }
 
             // Add keybinding descriptions
@@ -2444,21 +2241,7 @@ pub fn drawExamineScreen(starting_focus: ?ExamineTileFocus) bool {
                         _writerWrite(writer, "{s}", .{surfdesc});
                         _writerWrite(writer, "\n\n", .{});
                     }
-                } else {
-                    const id = state.dungeon.terrainAt(coord).id;
-                    if (state.descriptions.get(id)) |terraindesc| {
-                        _writerWrite(writer, "{s}", .{terraindesc});
-                        _writerWrite(writer, "\n\n", .{});
-                    }
-                }
-            }
-
-            if (tile_focus == .Item and state.dungeon.itemsAt(coord).len > 0) {
-                if (state.dungeon.itemsAt(coord).data[0].id()) |id|
-                    if (state.descriptions.get(id)) |itemdesc| {
-                        _writerWrite(writer, "{s}", .{itemdesc});
-                        _writerWrite(writer, "\n\n", .{});
-                    };
+                } else assert(false);
             }
 
             var y = log_starty;
@@ -2523,16 +2306,14 @@ pub fn drawExamineScreen(starting_focus: ?ExamineTileFocus) bool {
                 '>' => {
                     tile_focus = switch (tile_focus) {
                         .Mob => .Surface,
-                        .Surface => .Item,
-                        .Item => .Mob,
+                        .Surface => .Mob,
                     };
                     if (tile_focus == .Mob) mob_tile_focus = .Main;
                 },
                 '<' => {
                     tile_focus = switch (tile_focus) {
-                        .Mob => .Item,
+                        .Mob => .Surface,
                         .Surface => .Mob,
-                        .Item => .Surface,
                     };
                     if (tile_focus == .Mob) mob_tile_focus = .Main;
                 },
@@ -2659,203 +2440,6 @@ pub fn waitForInput(default_input: ?u8) ?u32 {
                 else => {},
             },
             .Char => |c| return c,
-            else => {},
-        }
-    }
-}
-
-pub fn drawInventoryScreen() bool {
-    const main_window = dimensions(.Main);
-    const iteminfo_window = dimensions(.PlayerInfo);
-    const log_window = dimensions(.Log);
-
-    const ItemListType = enum { Pack, Equip };
-
-    var desc_scroll: usize = 0;
-    var chosen: usize = 0;
-    var chosen_itemlist: ItemListType = if (state.player.inventory.pack.len == 0) .Equip else .Pack;
-    var y: usize = 0;
-
-    while (true) {
-        clearScreen();
-
-        const starty = main_window.starty;
-        const x = main_window.startx;
-        const endx = main_window.endx;
-
-        const itemlist_len = if (chosen_itemlist == .Pack) state.player.inventory.pack.len else state.player.inventory.equ_slots.len;
-        const chosen_item: ?Item = if (chosen_itemlist == .Pack) state.player.inventory.pack.data[chosen] else state.player.inventory.equ_slots[chosen];
-
-        // Draw list of items
-        {
-            y = starty;
-            y = _drawStr(x, y, endx, "$cInventory:$.", .{});
-            for (state.player.inventory.pack.constSlice()) |item, i| {
-                const startx = x;
-
-                const name = (item.longName() catch err.wat()).constSlice();
-                const color = if (i == chosen and chosen_itemlist == .Pack) colors.LIGHT_CONCRETE else colors.GREY;
-                const arrow = if (i == chosen and chosen_itemlist == .Pack) ">" else " ";
-                _clear_line(startx, endx, y);
-                y = _drawStrf(startx, y, endx, "{s} {s}", .{ arrow, name }, .{ .fg = color });
-            }
-
-            y = starty;
-            const startx = endx - @divTrunc(endx - x, 2);
-            y = _drawStr(startx, y, endx, "$cEquipment:$.", .{});
-            inline for (@typeInfo(Mob.Inventory.EquSlot).Enum.fields) |slots_f, i| {
-                const slot = @intToEnum(Mob.Inventory.EquSlot, slots_f.value);
-                const arrow = if (i == chosen and chosen_itemlist == .Equip) ">" else "·";
-                const color = if (i == chosen and chosen_itemlist == .Equip) colors.LIGHT_CONCRETE else colors.GREY;
-
-                _clear_line(startx, endx, y);
-
-                if (state.player.inventory.equipment(slot).*) |item| {
-                    const name = (item.longName() catch unreachable).constSlice();
-                    y = _drawStrf(startx, y, endx, "{s} {s: >6}: {s}", .{ arrow, slot.name(), name }, .{ .fg = color });
-                } else {
-                    y = _drawStrf(startx, y, endx, "{s} {s: >6}:", .{ arrow, slot.name() }, .{ .fg = color });
-                }
-            }
-        }
-
-        var usable = false;
-        var throwable = false;
-
-        if (chosen_item != null and itemlist_len > 0) switch (chosen_item.?) {
-            .Consumable => |p| {
-                usable = true;
-                throwable = p.throwable;
-            },
-            .Evocable => usable = true,
-            .Projectile => throwable = true,
-            else => {},
-        };
-
-        // Draw item info
-        if (chosen_item != null and itemlist_len > 0) {
-            const ii_startx = iteminfo_window.startx;
-            const ii_endx = iteminfo_window.endx;
-            const ii_starty = iteminfo_window.starty;
-            const ii_endy = iteminfo_window.endy;
-
-            var ii_y = ii_starty;
-            while (ii_y < ii_endy) : (ii_y += 1)
-                _clear_line(ii_startx, ii_endx, ii_y);
-
-            var descbuf: [4096]u8 = undefined;
-            var descbuf_stream = io.fixedBufferStream(&descbuf);
-            var writer = descbuf_stream.writer();
-            _getItemDescription(
-                descbuf_stream.writer(),
-                chosen_item.?,
-                LEFT_INFO_WIDTH - 1,
-            );
-
-            if (usable) writer.print("$b<Enter>$. to use.\n", .{}) catch err.wat();
-            if (throwable) writer.print("$bt$. to throw.\n", .{}) catch err.wat();
-
-            _ = _drawStr(ii_startx, ii_starty, ii_endx, descbuf_stream.getWritten(), .{});
-        }
-
-        // Draw item description
-        if (chosen_item != null) {
-            const log_startx = log_window.startx;
-            const log_endx = log_window.endx;
-            const log_starty = log_window.starty;
-            const log_endy = log_window.endy;
-
-            if (itemlist_len > 0) {
-                const id = chosen_item.?.id();
-                const default_desc = "(Missing description)";
-                const desc: []const u8 = if (id) |i_id| state.descriptions.get(i_id) orelse default_desc else default_desc;
-
-                const ending_y = _drawStr(log_startx, log_starty, log_endx, desc, .{
-                    .skip_lines = desc_scroll,
-                    .endy = log_endy,
-                });
-
-                if (desc_scroll > 0) {
-                    _ = _drawStr(log_endx - 14, log_starty, log_endx, " $p-- PgUp --$.", .{});
-                }
-                if (ending_y == log_endy) {
-                    _ = _drawStr(log_endx - 14, log_endy - 1, log_endx, " $p-- PgDn --$.", .{});
-                }
-            } else {
-                _ = _drawStr(log_startx, log_starty, log_endx, "Your inventory is empty.", .{});
-            }
-        }
-
-        display.present();
-
-        switch (display.waitForEvent(null) catch err.wat()) {
-            .Quit => {
-                state.state = .Quit;
-                return false;
-            },
-            .Key => |k| switch (k) {
-                .ArrowRight => {
-                    chosen_itemlist = .Equip;
-                    chosen = 0;
-                },
-                .ArrowLeft => {
-                    chosen_itemlist = .Pack;
-                    chosen = 0;
-                },
-                .ArrowDown => if (chosen < itemlist_len - 1) {
-                    chosen += 1;
-                },
-                .ArrowUp => chosen -|= 1,
-                .PgUp => desc_scroll -|= 1,
-                .PgDn => desc_scroll += 1,
-                .CtrlC, .Esc => return false,
-                .Enter => if (chosen_itemlist == .Pack) {
-                    if (itemlist_len > 0)
-                        return player.useItem(chosen);
-                } else if (chosen_item) |item| {
-                    switch (item) {
-                        .Weapon => drawAlert("Bump into enemies to attack.", .{}),
-                        .Ring => {
-                            const slot = @intToEnum(Mob.Inventory.EquSlot, chosen);
-                            player.beginUsingRing(player.getRingIndexBySlot(slot));
-                            return false;
-                        },
-                        else => drawAlert("You can't use that!", .{}),
-                    }
-                } else {
-                    drawAlert("You can't use that!", .{});
-                },
-                else => {},
-            },
-            .Char => |c| switch (c) {
-                'd' => if (chosen_itemlist == .Pack) {
-                    if (itemlist_len > 0)
-                        if (player.dropItem(chosen)) return true;
-                } else {
-                    drawAlert("You can't drop that!", .{});
-                },
-                't' => if (chosen_itemlist == .Pack) {
-                    if (itemlist_len > 0)
-                        if (player.throwItem(chosen)) return true;
-                } else {
-                    drawAlert("You can't throw that!", .{});
-                },
-                'l' => {
-                    chosen_itemlist = .Equip;
-                    chosen = 0;
-                },
-                'h' => {
-                    chosen_itemlist = .Pack;
-                    chosen = 0;
-                },
-                'j' => if (itemlist_len > 0 and chosen < itemlist_len - 1) {
-                    chosen += 1;
-                },
-                'k' => if (itemlist_len > 0 and chosen > 0) {
-                    chosen -= 1;
-                },
-                else => {},
-            },
             else => {},
         }
     }
@@ -3090,26 +2674,6 @@ pub fn drawYesNoPrompt(comptime fmt: []const u8, args: anytype) bool {
 pub fn drawContinuePrompt(comptime fmt: []const u8, args: anytype) void {
     state.message(.Info, fmt, args);
     _ = drawChoicePrompt(fmt, args, &[_][]const u8{"Press $b<Enter>$. to continue."});
-}
-
-pub fn drawItemChoicePrompt(comptime fmt: []const u8, args: anytype, items: []const Item) ?usize {
-    assert(items.len > 0); // This should have been handled previously.
-
-    // A bit messy.
-    var namebuf = std.ArrayList([]const u8).init(state.GPA.allocator());
-    defer {
-        for (namebuf.items) |str| state.GPA.allocator().free(str);
-        namebuf.deinit();
-    }
-
-    for (items) |item| {
-        const itemname = item.longName() catch err.wat();
-        const string = state.GPA.allocator().alloc(u8, itemname.len) catch err.wat();
-        std.mem.copy(u8, string, itemname.constSlice());
-        namebuf.append(string) catch err.wat();
-    }
-
-    return drawChoicePrompt(fmt, args, namebuf.items);
 }
 
 pub const Console = struct {

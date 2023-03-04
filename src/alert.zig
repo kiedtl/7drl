@@ -68,16 +68,8 @@ pub const Alert = struct {
     };
 };
 
-fn isMobInVault(mob: *Mob) bool {
-    return switch (state.layout[mob.coord.z][mob.coord.y][mob.coord.x]) {
-        .Unknown => false,
-        .Room => |r| state.rooms[mob.coord.z].items[r].is_vault != null,
-    };
-}
-
 fn isMobNotable(mob: *Mob) bool {
-    return !isMobInVault(mob) and
-        mob.faction == .Necromancer and mob.life_type == .Living;
+    return mob.faction == .Necromancer and mob.life_type == .Living;
 }
 
 pub fn tickCheckLevelHealth(level: usize) void {

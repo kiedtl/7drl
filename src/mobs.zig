@@ -4,7 +4,6 @@ const assert = std.debug.assert;
 
 const ai = @import("ai.zig");
 const state = @import("state.zig");
-const gas = @import("gas.zig");
 const items = @import("items.zig");
 const buffer = @import("buffer.zig");
 const dijkstra = @import("dijkstra.zig");
@@ -285,25 +284,6 @@ pub const WatcherTemplate = MobTemplate{
     },
 };
 
-pub const ShriekerTemplate = MobTemplate{
-    .mob = .{
-        .id = "shrieker",
-        .species = &ImpSpecies,
-        .tile = 'ל',
-        .ai = AI{
-            .profession_name = "shrieker",
-            .profession_description = "guarding",
-            .work_fn = ai.watcherWork,
-            .fight_fn = ai.shriekerFight,
-            .is_curious = false,
-            .flags = &[_]AI.Flag{.FearsDarkness},
-        },
-        .max_HP = 3,
-        .memory_duration = 20,
-        .stats = .{ .Willpower = 3, .Evade = 40 },
-    },
-};
-
 pub const GuardTemplate = MobTemplate{
     .mob = .{
         .id = "guard",
@@ -343,59 +323,6 @@ pub const ArmoredGuardTemplate = MobTemplate{
     },
     .weapon = &items.MaceWeapon,
     .armor = &items.GambesonArmor,
-};
-
-pub const JavelineerTemplate = MobTemplate{
-    .mob = .{
-        .id = "javelineer",
-        .species = &GoblinSpecies,
-        .tile = 'j',
-        .ai = AI{
-            .profession_name = "javelineer",
-            .profession_description = "guarding",
-            .work_fn = ai.standStillAndGuardWork,
-            .fight_fn = ai.rangedFight,
-            .flee_effect = .{
-                .status = .Enraged,
-                .duration = .{ .Tmp = 10 },
-                .exhausting = true,
-            },
-        },
-
-        .max_HP = 6,
-        .memory_duration = 10,
-        .stats = .{ .Willpower = 2, .Evade = 10, .Missile = 80, .Vision = 5 },
-    },
-    .weapon = &items.MaceWeapon,
-    .armor = &items.GambesonArmor,
-    .projectile = &items.JavelinProj,
-};
-
-pub const DefenderTemplate = MobTemplate{
-    .mob = .{
-        .id = "defender",
-        .species = &HumanSpecies,
-        .tile = 'ץ',
-        .ai = AI{
-            .profession_name = "defender",
-            .profession_description = "guarding",
-            .work_fn = ai.watcherWork,
-            .fight_fn = ai.rangedFight,
-            .is_curious = false,
-            .flee_effect = .{
-                .status = .Enraged,
-                .duration = .{ .Tmp = 10 },
-                .exhausting = true,
-            },
-        },
-
-        .max_HP = 6,
-        .memory_duration = 20,
-        .stats = .{ .Willpower = 3, .Evade = 10, .Missile = 90 },
-    },
-    .weapon = &items.SwordWeapon,
-    .armor = &items.HauberkArmor,
-    .projectile = &items.NetProj,
 };
 
 pub const LeadTurtleTemplate = MobTemplate{
@@ -556,7 +483,7 @@ pub const PlayerTemplate = MobTemplate{
         .max_HP = 14,
         .memory_duration = 10,
 
-        .stats = .{ .Willpower = 4, .Missile = 60, .Evade = 10, .Vision = PLAYER_VISION, .Sneak = 4 },
+        .stats = .{ .Willpower = 4, .Missile = 60, .Evade = 10, .Vision = PLAYER_VISION },
     },
     .weapon = &items.DaggerWeapon,
     // .backup_weapon = &items.ShadowMaulWeapon,
@@ -635,36 +562,6 @@ pub const VapourMageTemplate = MobTemplate{
         .stats = .{ .Willpower = 6, .Speed = 200, .Vision = 6 },
     },
     .armor = &items.HauberkArmor,
-    .squad = &[_][]const MobTemplate.SquadMember{
-        &[_]MobTemplate.SquadMember{
-            .{ .mob = "dustling", .weight = 1, .count = minmax(usize, 2, 3) },
-        },
-    },
-};
-
-pub const DustlingTemplate = MobTemplate{
-    .mob = .{
-        .id = "dustling",
-        .species = &Species{
-            .name = "dustling",
-            .default_attack = &Weapon{ .damage = 1, .strs = &items.FIST_STRS },
-        },
-        .tile = 'ð',
-        .ai = AI{
-            .profession_description = "wandering",
-            .work_fn = ai.patrolWork,
-            .fight_fn = ai.meleeFight,
-        },
-        .max_HP = 1,
-        .memory_duration = 3,
-        .life_type = .Construct,
-        .blood = .Dust,
-        .blood_spray = gas.Dust.id,
-        .corpse = .None,
-        .base_night_vision = true,
-        .innate_resists = .{ .rFire = -25, .rElec = -25, .rFume = 100 },
-        .stats = .{ .Willpower = 4, .Melee = 50, .Vision = 3 },
-    },
     .squad = &[_][]const MobTemplate.SquadMember{
         &[_]MobTemplate.SquadMember{
             .{ .mob = "dustling", .weight = 1, .count = minmax(usize, 2, 3) },
@@ -891,7 +788,7 @@ pub const BartenderTemplate = MobTemplate{
             .profession_name = "bartender",
             .profession_description = "serving",
             .work_fn = ai.bartenderWork,
-            .fight_fn = ai.shriekerFight,
+            .fight_fn = ai.watcherFight,
             .is_combative = true,
             .is_curious = false,
         },
@@ -927,50 +824,6 @@ pub const AlchemistTemplate = MobTemplate{
         .memory_duration = 10,
 
         .stats = .{ .Willpower = 2, .Evade = 10, .Vision = 6 },
-    },
-};
-
-pub const CleanerTemplate = MobTemplate{
-    .mob = .{
-        .id = "cleaner",
-        .species = &GoblinSpecies,
-        .tile = 'w',
-        .ai = AI{
-            .profession_name = "cleaner",
-            .profession_description = "cleaning",
-            .work_fn = ai.cleanerWork,
-            .fight_fn = null,
-            .is_combative = false,
-            .is_curious = false,
-            .work_phase = .CleanerScan,
-        },
-
-        .max_HP = 10,
-        .memory_duration = 5,
-        .stats = .{ .Willpower = 2, .Evade = 10 },
-    },
-};
-
-pub const HaulerTemplate = MobTemplate{
-    .mob = .{
-        .id = "hauler",
-        .species = &GoblinSpecies,
-        .tile = 'h',
-        .ai = AI{
-            .profession_name = "hauler",
-            .profession_description = "hauling",
-            .work_fn = ai.haulerWork,
-            .fight_fn = null,
-            .is_combative = false,
-            .is_curious = false,
-            .work_phase = .HaulerScan,
-        },
-
-        .max_HP = 10,
-        .memory_duration = 8,
-        // extra speed doesn't really make sense, but is necessary to prevent it
-        // from being behind on order
-        .stats = .{ .Willpower = 2, .Evade = 10, .Speed = 50 },
     },
 };
 
@@ -1348,74 +1201,6 @@ pub const LightningMageTemplate = MobTemplate{
         &[_]MobTemplate.SquadMember{
             .{ .mob = "sparkling", .weight = 1, .count = minmax(usize, 2, 3) },
         },
-    },
-};
-
-pub const BloatTemplate = MobTemplate{
-    .mob = .{
-        .id = "bloat",
-        .species = &Species{
-            .name = "bloat",
-            .default_attack = &Weapon{ .damage = 1, .strs = &items.FIST_STRS },
-        },
-        .tile = 'n',
-        .ai = AI{
-            .profession_description = "dormant",
-            .work_fn = ai.dummyWork,
-            .fight_fn = ai.meleeFight,
-            .is_fearless = true,
-        },
-
-        .max_HP = 21,
-        .memory_duration = 20,
-
-        //.deaf = true,
-        .life_type = .Undead,
-        .blood = null,
-        .blood_spray = gas.Miasma.id,
-        .corpse = .None,
-        .base_night_vision = true,
-
-        .innate_resists = .{ .rFume = 100 },
-        .stats = .{ .Willpower = 4, .Melee = 80, .Speed = 150 },
-    },
-
-    .statuses = &[_]StatusDataInfo{
-        .{ .status = .Sleeping, .duration = .Prm },
-    },
-};
-
-pub const ThrashingSculptorTemplate = MobTemplate{
-    .mob = .{
-        .id = "thrashing_sculptor",
-        .species = &Species{
-            .name = "thrashing sculptor",
-            .default_attack = &Weapon{ .damage = 0, .knockback = 2, .strs = &items.CLAW_STRS },
-        },
-        .tile = 'T',
-        .ai = AI{
-            .profession_description = "dormant",
-            .work_fn = ai.watcherWork,
-            .fight_fn = ai.mageFight,
-            .is_fearless = true,
-            .spellcaster_backup_action = .Melee,
-            .flags = &[_]AI.Flag{.MovesDiagonally},
-        },
-
-        .spells = &[_]SpellOptions{
-            .{ .MP_cost = 10, .spell = &spells.CAST_CREATE_BLOAT },
-        },
-        .max_MP = 10,
-
-        .max_HP = 12,
-        .memory_duration = 20,
-        .base_night_vision = true,
-
-        .life_type = .Undead,
-        .corpse = .None,
-
-        .innate_resists = .{ .rFume = 100 },
-        .stats = .{ .Willpower = 5, .Evade = 20, .Melee = 100, .Vision = 6 },
     },
 };
 
@@ -1879,249 +1664,6 @@ pub const SpectralSabreTemplate = MobTemplate{
     },
 };
 
-pub const SpectralTotemTemplate = MobTemplate{
-    .mob = .{
-        .id = "spec_totem",
-        .species = &Species{ .name = "spectral totem" },
-        .tile = 'Д',
-        .ai = AI{
-            .profession_description = "watching",
-            .work_fn = ai.dummyWork,
-            .fight_fn = ai.mageFight,
-            .is_curious = false,
-            .is_fearless = true,
-            .work_phase = .NC_Guard,
-        },
-
-        .spells = &[_]SpellOptions{
-            .{ .MP_cost = 6, .spell = &spells.BOLT_CONJURE },
-        },
-        .max_MP = 6,
-
-        .deaf = true,
-        .deg360_vision = true,
-        .base_night_vision = true,
-
-        .immobile = true,
-        .faction = .Night,
-        .max_HP = 15,
-        .memory_duration = 999,
-
-        .life_type = .Spectral,
-        .blood = null,
-        .corpse = .None,
-
-        .innate_resists = .{ .rFume = 100, .Armor = 75, .rElec = RESIST_IMMUNE, .rFire = -50 },
-        .stats = .{ .Willpower = 10, .Conjuration = 4, .Vision = 7 },
-    },
-};
-
-pub const NightReaperTemplate = MobTemplate{
-    .mob = .{
-        .id = "night_reaper",
-        .species = &Species{ .name = "night reaper" },
-        .tile = 'Я',
-        .ai = AI{
-            .profession_description = "watching",
-            .work_fn = ai.nightCreatureWork,
-            .fight_fn = ai.mageFight,
-            .is_curious = false,
-            .is_fearless = true,
-            .spellcaster_backup_action = .Melee,
-            .work_phase = .NC_Guard,
-            .flags = &[_]AI.Flag{ .AvoidsEnemies, .FearsLight },
-        },
-
-        .spells = &[_]SpellOptions{
-            .{ .MP_cost = 8, .spell = &spells.BOLT_AOE_INSANITY, .duration = 10 },
-        },
-        .max_MP = 16,
-
-        .base_night_vision = true,
-
-        .faction = .Night,
-        .max_HP = 10,
-        .memory_duration = 15,
-
-        .life_type = .Spectral,
-        .blood = null,
-        .corpse = .None,
-
-        .innate_resists = .{ .rFume = 100, .rElec = 25 }, // -25% rFire from shadow mail
-        .stats = .{ .Willpower = 10, .Melee = 80, .Evade = 15, .Vision = 8 },
-    },
-    .weapon = &items.ShadowMaulWeapon,
-    .armor = &items.ShadowMailArmor,
-};
-
-pub const GrueTemplate = MobTemplate{
-    .mob = .{
-        .id = "grue",
-        .species = &Species{ .name = "grue" },
-        .tile = 'Ю',
-        .ai = AI{
-            .profession_description = "TODO: remove profession descriptions",
-            .work_fn = ai.nightCreatureWork,
-            .fight_fn = ai.grueFight,
-            .is_curious = false,
-            .is_fearless = true,
-            .work_phase = .NC_Guard,
-            .flags = &[_]AI.Flag{ .AvoidsEnemies, .FearsLight },
-        },
-
-        .base_night_vision = true,
-        .deg360_vision = true,
-
-        .faction = .Night,
-        .max_HP = 20,
-        .memory_duration = 99999,
-
-        .life_type = .Spectral,
-        .blood = null,
-        .blood_spray = gas.Darkness.id,
-        .corpse = .None,
-
-        .innate_resists = .{ .rFume = 100, .rFire = -25, .rElec = 25 },
-        .stats = .{ .Willpower = 10, .Spikes = 2, .Vision = 7 },
-    },
-};
-
-const SLINKING_TERROR_CLAW_WEAPON = Weapon{
-    .damage = 1,
-    .ego = .NC_Insane,
-    .strs = &items.CLAW_STRS,
-};
-
-pub const SlinkingTerrorTemplate = MobTemplate{
-    .mob = .{
-        .id = "slinking_terror",
-        .species = &Species{
-            .name = "slinking terror",
-            .default_attack = &SLINKING_TERROR_CLAW_WEAPON,
-            .aux_attacks = &[_]*const Weapon{
-                &SLINKING_TERROR_CLAW_WEAPON,
-                &SLINKING_TERROR_CLAW_WEAPON,
-                &SLINKING_TERROR_CLAW_WEAPON,
-                &SLINKING_TERROR_CLAW_WEAPON,
-                &SLINKING_TERROR_CLAW_WEAPON,
-            },
-        },
-        .tile = 'Ж',
-        .ai = AI{
-            .profession_description = "TODO: remove profession descriptions",
-            .work_fn = ai.nightCreatureWork,
-            .fight_fn = ai.meleeFight,
-            .is_curious = false,
-            .is_fearless = true,
-            .work_phase = .NC_Guard,
-            .flags = &[_]AI.Flag{ .AvoidsEnemies, .FearsLight, .WallLover },
-        },
-
-        .base_night_vision = true,
-        .deg360_vision = true,
-
-        .faction = .Night,
-        .max_HP = 8,
-        .memory_duration = 99999,
-
-        .life_type = .Spectral,
-        .blood = null,
-        .corpse = .None,
-
-        .innate_resists = .{ .rFume = 100, .rFire = -25, .rElec = 25 },
-        .stats = .{ .Willpower = 10, .Melee = 80, .Vision = 7 },
-    },
-};
-
-const CREEPING_DEATH_CLAW_WEAPON = Weapon{
-    .damage = 1,
-    .ego = .NC_Insane,
-    .strs = &items.CLAW_STRS,
-};
-
-pub const CreepingDeathTemplate = MobTemplate{
-    .mob = .{
-        .id = "creeping_death",
-        .species = &Species{
-            .name = "creeping_death",
-            .default_attack = &Weapon{
-                .damage = 1,
-                .ego = .NC_Insane,
-                .strs = &items.BITING_STRS,
-            },
-            .aux_attacks = &[_]*const Weapon{
-                &CREEPING_DEATH_CLAW_WEAPON,
-                &CREEPING_DEATH_CLAW_WEAPON,
-            },
-        },
-        .tile = 'Э',
-        .ai = AI{
-            .profession_description = "TODO: remove profession descriptions",
-            .work_fn = ai.nightCreatureWork,
-            .fight_fn = ai.mageFight,
-            .is_curious = false,
-            .is_fearless = true,
-            .work_phase = .NC_Guard,
-            .spellcaster_backup_action = .Melee,
-            .flags = &[_]AI.Flag{ .AvoidsEnemies, .FearsLight },
-        },
-
-        .base_night_vision = true,
-        .deg360_vision = true,
-
-        .faction = .Night,
-        .max_HP = 7,
-        .memory_duration = 99999,
-
-        .life_type = .Spectral,
-        .blood = null,
-        .corpse = .None,
-
-        .innate_resists = .{ .rFume = 100, .rFire = -25, .rElec = 25 },
-        .stats = .{ .Willpower = 8, .Melee = 90, .Vision = PLAYER_VISION + 2 },
-    },
-};
-
-pub const CinderBruteTemplate = MobTemplate{
-    .mob = .{
-        .id = "cinder_brute",
-        .species = &Species{
-            .name = "cinder brute",
-            .default_attack = &Weapon{
-                .damage = 1,
-                .strs = &items.BITING_STRS,
-            },
-        },
-        .tile = '¢',
-        .ai = AI{
-            .profession_description = "wandering",
-            .work_fn = ai.standStillAndGuardWork,
-            .fight_fn = ai.mageFight,
-            .flags = &[_]AI.Flag{.DetectWithHeat},
-        },
-        .max_HP = 6,
-
-        .spells = &[_]SpellOptions{
-            // Have cooldown period that matches time needed for flames to
-            // die out, so that the brute isn't constantly vomiting fire when
-            // its surroundings are already in flames
-            //
-            // TODO: check this in spells.zig
-            .{ .MP_cost = 10, .spell = &spells.CAST_FIREBLAST, .power = 4 },
-        },
-        .max_MP = 10,
-
-        .memory_duration = 10,
-        .blood = .Ash,
-        .blood_spray = gas.SmokeGas.id,
-        .corpse = .None,
-        .faction = .Revgenunkim,
-        .innate_resists = .{ .rFire = RESIST_IMMUNE, .rElec = -25, .rFume = 100 },
-        .stats = .{ .Willpower = 6, .Melee = 80, .Vision = 4 },
-    },
-    .statuses = &[_]StatusDataInfo{.{ .status = .Fire, .duration = .Prm }},
-};
-
 const BURNING_BRUTE_CLAW_WEAPON = Weapon{
     .damage = 2,
     .strs = &items.CLAW_STRS,
@@ -2182,11 +1724,8 @@ pub const MOBS = [_]MobTemplate{
     CoronerTemplate,
     ExecutionerTemplate,
     WatcherTemplate,
-    ShriekerTemplate,
     GuardTemplate,
     ArmoredGuardTemplate,
-    JavelineerTemplate,
-    DefenderTemplate,
     LeadTurtleTemplate,
     IronWaspTemplate,
     CopperHornetTemplate,
@@ -2195,7 +1734,6 @@ pub const MOBS = [_]MobTemplate{
     GoblinTemplate,
     ConvultTemplate,
     VapourMageTemplate,
-    DustlingTemplate,
     WarOlgTemplate,
     MellaentTemplate,
     IronSpireTemplate,
@@ -2207,8 +1745,6 @@ pub const MOBS = [_]MobTemplate{
     CrystalStatueTemplate,
     AlchemistTemplate,
     BartenderTemplate,
-    CleanerTemplate,
-    HaulerTemplate,
     AncientMageTemplate,
     //SpectreMageTemplate,
     RecruitTemplate,
@@ -2221,8 +1757,6 @@ pub const MOBS = [_]MobTemplate{
     BrimstoneMageTemplate,
     SparkMageTemplate,
     LightningMageTemplate,
-    BloatTemplate,
-    ThrashingSculptorTemplate,
     SkeletonTemplate,
     StalkerTemplate,
     BoneRatTemplate,
@@ -2235,12 +1769,6 @@ pub const MOBS = [_]MobTemplate{
     BallLightningTemplate,
     SpectralSwordTemplate,
     SpectralSabreTemplate,
-    SpectralTotemTemplate,
-    NightReaperTemplate,
-    GrueTemplate,
-    SlinkingTerrorTemplate,
-    CreepingDeathTemplate,
-    CinderBruteTemplate,
     BurningBruteTemplate,
 };
 
@@ -2304,11 +1832,6 @@ pub fn placeMob(
         mob.addStatus(s, 0, .Prm);
     if (opts.prm_status2) |s|
         mob.addStatus(s, 0, .Prm);
-
-    if (template.weapon) |w| mob.equipItem(.Weapon, Item{ .Weapon = w });
-    if (template.backup_weapon) |w| mob.equipItem(.Backup, Item{ .Weapon = w });
-    if (template.armor) |a| mob.equipItem(.Armor, Item{ .Armor = a });
-    if (template.cloak) |c| mob.equipItem(.Cloak, Item{ .Cloak = c });
 
     if (opts.facing) |dir| mob.facing = dir;
     mob.ai.work_area.append(opts.work_area orelse coord) catch err.wat();

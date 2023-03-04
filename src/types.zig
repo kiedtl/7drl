@@ -26,7 +26,6 @@ const fire = @import("fire.zig");
 const fov = @import("fov.zig");
 const font = @import("font.zig");
 const mobs = @import("mobs.zig");
-const gas = @import("gas.zig");
 const items = @import("items.zig");
 const literature = @import("literature.zig");
 const mapgen = @import("mapgen.zig");
@@ -65,7 +64,6 @@ pub const CARDINAL_DIRECTIONS = [_]Direction{ .North, .South, .East, .West };
 pub const DIRECTIONS = [_]Direction{ .North, .South, .East, .West, .NorthEast, .NorthWest, .SouthEast, .SouthWest };
 
 pub const CoordArrayList = std.ArrayList(Coord);
-pub const StockpileArrayList = std.ArrayList(Stockpile);
 pub const MessageArrayList = std.ArrayList(Message);
 pub const StatusArray = enums.EnumArray(Status, StatusDataInfo);
 pub const SpatterArray = enums.EnumArray(Spatter, usize);
@@ -694,112 +692,6 @@ test "Rect.rectIter" {
     for (matrix) |row| {
         try testing.expect(mem.allEqual(usize, row[0..], 1));
     }
-}
-
-pub const Stockpile = struct {
-    room: Rect,
-    type: ItemType,
-    boulder_material_type: ?Material.MaterialType = null,
-
-    pub fn findEmptySlot(self: *const Stockpile) ?Coord {
-        var y: usize = self.room.start.y;
-        while (y < self.room.end().y) : (y += 1) {
-            var x: usize = self.room.start.x;
-            while (x < self.room.end().x) : (x += 1) {
-                const coord = Coord.new2(self.room.start.z, x, y);
-
-                if (state.dungeon.at(coord).type != .Floor) {
-                    continue;
-                }
-
-                if (state.dungeon.hasContainer(coord)) |container|
-                    if (!container.items.isFull()) {
-                        return coord;
-                    };
-                if (!state.dungeon.itemsAt(coord).isFull()) {
-                    return coord;
-                }
-            }
-        }
-        return null;
-    }
-
-    pub fn findItem(self: *const Stockpile) ?Coord {
-        var y: usize = self.room.start.y;
-        while (y < self.room.end().y) : (y += 1) {
-            var x: usize = self.room.start.x;
-            while (x < self.room.end().x) : (x += 1) {
-                const coord = Coord.new2(self.room.start.z, x, y);
-                if (state.dungeon.hasContainer(coord)) |container|
-                    if (container.items.len > 0) {
-                        return coord;
-                    };
-                if (state.dungeon.itemsAt(coord).len > 0) {
-                    return coord;
-                }
-            }
-        }
-        return null;
-    }
-
-    // TODO: rewrite this monstrosity
-    pub fn isStockpileOfSameType(a: *const Stockpile, b: *const Stockpile) bool {
-        if (a.type != b.type) {
-            return false;
-        }
-
-        if (a.boulder_material_type) |mat| {
-            if (b.boulder_material_type == null) return false;
-            if (b.boulder_material_type != mat) return false;
-        }
-
-        if (b.boulder_material_type) |mat| {
-            if (a.boulder_material_type == null) return false;
-            if (a.boulder_material_type != mat) return false;
-        }
-
-        return true;
-    }
-
-    pub fn isItemOfSameType(self: *const Stockpile, item: *const Item) bool {
-        if (self.type != std.meta.activeTag(item.*)) {
-            return false;
-        }
-
-        switch (item.*) {
-            .Boulder => |b| if (b.type != self.boulder_material_type.?) return false,
-            else => {},
-        }
-
-        return true;
-    }
-
-    pub fn inferType(self: *Stockpile) bool {
-        if (self.findItem()) |item_location| {
-            const item = if (state.dungeon.hasContainer(item_location)) |container|
-                container.items.data[0]
-            else
-                state.dungeon.itemsAt(item_location).data[0];
-
-            self.type = std.meta.activeTag(item);
-            switch (self.type) {
-                .Boulder => self.boulder_material_type = item.Boulder.type,
-                else => {},
-            }
-
-            return true;
-        } else {
-            return false;
-        }
-    }
-};
-
-test "stockpile type equality" {
-    try std.testing.expect((Stockpile{ .room = undefined, .type = .Weapon }).isItemOfSameType(&Item{ .Weapon = undefined }));
-    try std.testing.expect((Stockpile{ .room = undefined, .type = .Boulder, .boulder_material_type = .Metal }).isItemOfSameType(&Item{ .Boulder = &materials.Iron }));
-    try std.testing.expect((Stockpile{ .room = undefined, .type = .Boulder, .boulder_material_type = .I_Stone }).isItemOfSameType(&Item{ .Boulder = &materials.Basalt }));
-    try std.testing.expect(!(Stockpile{ .room = undefined, .type = .Boulder, .boulder_material_type = .I_Stone }).isItemOfSameType(&Item{ .Boulder = &materials.Iron }));
-    try std.testing.expect(!(Stockpile{ .room = undefined, .type = .Boulder, .boulder_material_type = .Metal }).isItemOfSameType(&Item{ .Boulder = &materials.Hematite }));
 }
 
 pub const Path = struct { from: Coord, to: Coord, confused_state: bool };
@@ -1479,11 +1371,6 @@ pub const Status = enum {
     }
 
     pub fn tickFire(mob: *Mob) void {
-        if (state.dungeon.terrainAt(mob.coord).fire_retardant) {
-            mob.cancelStatus(.Fire);
-            return;
-        }
-
         if (!mob.isFullyResistant(.rFire)) { // Don't spam "you are scorched" messages
             if (rng.percent(@as(usize, 50))) {
                 mob.takeDamage(.{ .amount = 1, .kind = .Fire, .blood = false }, .{
@@ -1624,7 +1511,6 @@ pub const StatusDataInfo = struct {
         Prm,
         Equ,
         Tmp: usize,
-        Ctx: ?*const surfaces.Terrain,
 
         pub fn jsonStringify(val: Duration, opts: std.json.StringifyOptions, stream: anytype) !void {
             try stream.writeByte('{');
@@ -1638,13 +1524,9 @@ pub const StatusDataInfo = struct {
             // val.Ctx should never be null, in theory, but it is an optional
             // for some reason... Just putting a check here to be safe...
             //
-            if (val == .Tmp or (val == .Ctx and val.Ctx != null)) {
+            if (val == .Tmp) {
                 try stream.writeAll("\"duration_arg\":");
-                if (val == .Tmp) {
-                    try std.json.stringify(val.Tmp, opts, stream);
-                } else {
-                    try std.json.stringify(val.Ctx.?.id, opts, stream);
-                }
+                try std.json.stringify(val.Tmp, opts, stream);
             }
 
             try stream.writeByte('}');
@@ -1691,10 +1573,6 @@ pub const AI = struct {
     // The "target" in any phase (except .Hunt, the target for that is in
     // the enemy records).
     target: ?Coord = null,
-
-    // For a laborer (cleaner/hauler), the associated task ID.
-    // The task ID is simply the index for state.tasks.
-    task_id: ?usize = null,
 
     phase: AIPhase = .Work,
 
@@ -1838,7 +1716,6 @@ pub const Stat = enum {
     Martial,
     Evade,
     Speed,
-    Sneak,
     Vision,
     Willpower,
     Spikes,
@@ -1851,7 +1728,6 @@ pub const Stat = enum {
             .Martial => "martial",
             .Evade => "evade%",
             .Speed => "speed",
-            .Sneak => "sneak",
             .Vision => "vision",
             .Willpower => "will",
             .Spikes => "spikes",
@@ -1862,7 +1738,6 @@ pub const Stat = enum {
     pub fn showMobStat(self: Stat, value: isize) bool {
         return switch (self) {
             .Melee, .Evade, .Vision, .Willpower => true,
-            .Sneak => false,
             .Missile => value != 40,
             .Speed => value != 100,
             .Martial, .Spikes, .Conjuration => value > 0,
@@ -1950,7 +1825,6 @@ pub const Mob = struct { // {{{
     immobile: bool = false,
     innate_resists: enums.EnumFieldStruct(Resistance, isize, 0) = .{},
     blood: ?Spatter = .Blood,
-    blood_spray: ?usize = null, // Gas ID
     corpse: enum { Normal, Wall, Dust, None } = .Normal,
     slain_trigger: union(enum) { None, Disintegrate: []const *const mobs.MobTemplate } = .None,
 
@@ -1971,7 +1845,6 @@ pub const Mob = struct { // {{{
         Martial: isize = 0,
         Evade: isize = 0,
         Speed: isize = 100,
-        Sneak: isize = 1,
         Vision: isize = 7,
         Willpower: isize = 3,
         Spikes: isize = 0,
@@ -2091,9 +1964,6 @@ pub const Mob = struct { // {{{
 
         if (self.isUnderStatus(.Sleeping)) |_| return;
 
-        const is_blinded = self.isUnderStatus(.Blind) != null;
-        const light_needs = [_]bool{ self.canSeeInLight(false), self.canSeeInLight(true) };
-
         const vision = @intCast(usize, self.stat(.Vision));
         const energy = math.clamp(vision * Dungeon.FLOOR_OPACITY, 0, 100);
         const direction = if (self.deg360_vision) null else self.facing;
@@ -2117,23 +1987,6 @@ pub const Mob = struct { // {{{
         var gen = Generator(Rect.rectIter).init(eyes);
         while (gen.next()) |eye_coord|
             fov.rayCast(eye_coord, vision, energy, Dungeon.tileOpacity, &self.fov, direction, self == state.player);
-
-        for (self.fov) |row, y| for (row) |_, x| {
-            if (self.fov[y][x] > 0) {
-                const fc = Coord.new2(self.coord.z, x, y);
-                const light = state.dungeon.lightAt(fc).*;
-
-                // If a tile is too dim to be seen by a mob and the tile isn't
-                // adjacent to that mob, mark it as unlit.
-                if (fc.distance(self.coordMT(fc)) > 1 and
-                    (!light_needs[@boolToInt(light)] or is_blinded))
-                {
-                    self.fov[y][x] = 0;
-                    continue;
-                }
-            }
-        };
-        self.fov[self.coord.y][self.coord.x] = 100;
 
         // Clear out linked-fovs list of dead/non-z-level mobs
         if (self.linked_fovs.len > 0) {
@@ -2161,14 +2014,6 @@ pub const Mob = struct { // {{{
     pub fn tick_env(self: *Mob) void {
         self.push_flag = false;
         self.MP = math.clamp(self.MP + 1, 0, self.max_MP);
-
-        // Gases
-        const gases = state.dungeon.atGas(self.coord);
-        for (gases) |quantity, gasi| {
-            if ((rng.range(usize, 0, 100) < self.resistance(.rFume) or gas.Gases[gasi].not_breathed) and quantity > 0.0) {
-                gas.Gases[gasi].trigger(self, quantity);
-            }
-        }
 
         // Corruption effects
         if (self.life_type == .Living and !self.hasStatus(.Corruption)) {
@@ -2220,19 +2065,6 @@ pub const Mob = struct { // {{{
     // Decrement status durations, and do stuff for various statuses that need
     // babysitting each turn.
     pub fn tickStatuses(self: *Mob) void {
-        const terrain = state.dungeon.terrainAt(self.coord);
-        for (terrain.effects) |effect| {
-            var adj_effect = effect;
-
-            // Set the dummy .Ctx durations' values.
-            //
-            if (meta.activeTag(effect.duration) == .Ctx) {
-                adj_effect.duration = .{ .Ctx = terrain };
-            }
-
-            self.applyStatus(adj_effect, .{});
-        }
-
         inline for (@typeInfo(Status).Enum.fields) |status| {
             const status_e = @field(Status, status.name);
 
@@ -2246,10 +2078,6 @@ pub const Mob = struct { // {{{
                         .add_duration = false,
                         .replace_duration = true,
                     });
-                } else if (status_type == .Ctx) {
-                    if (status_data.duration.Ctx != terrain) {
-                        self.cancelStatus(status_e);
-                    }
                 }
             }
 
@@ -2272,61 +2100,6 @@ pub const Mob = struct { // {{{
                 }
             }
         }
-    }
-
-    pub fn swapWeapons(self: *Mob) void {
-        const weapon = self.inventory.equipment(.Weapon).*;
-        const backup = self.inventory.equipment(.Backup).*;
-
-        if (weapon) |_| self.dequipItem(.Weapon, null);
-        if (backup) |_| self.dequipItem(.Backup, null);
-
-        if (weapon) |i| self.equipItem(.Backup, i);
-        if (backup) |i| self.equipItem(.Weapon, i);
-    }
-
-    pub fn equipItem(self: *Mob, slot: Inventory.EquSlot, item: Item) void {
-        if (slot != .Backup) {
-            switch (item) {
-                .Weapon => |w| for (w.equip_effects) |effect| self.applyStatus(effect, .{}),
-                .Armor => |a| for (a.equip_effects) |effect| self.applyStatus(effect, .{}),
-                .Aux => |a| for (a.equip_effects) |effect| self.applyStatus(effect, .{}),
-                else => {},
-            }
-        }
-        self.inventory.equipment(slot).* = item;
-    }
-
-    pub fn dequipItem(self: *Mob, slot: Inventory.EquSlot, drop_coord: ?Coord) void {
-        const item = self.inventory.equipment(slot).*.?;
-        if (slot != .Backup and
-            (item == .Weapon or item == .Aux))
-        {
-            const equip_effects = switch (item) {
-                .Weapon => |w| w.equip_effects,
-                .Armor => |a| a.equip_effects,
-                .Aux => |a| a.equip_effects,
-                else => unreachable,
-            };
-
-            for (equip_effects) |effect| {
-                if (self.isUnderStatus(effect.status)) |effect_info| {
-                    if (effect_info.duration == .Equ) {
-                        self.cancelStatus(effect.status);
-                    }
-                }
-            }
-        }
-        if (drop_coord) |c|
-            state.dungeon.itemsAt(c).append(item) catch err.wat();
-        self.inventory.equipment(slot).* = null;
-    }
-
-    pub fn removeItem(self: *Mob, index: usize) !Item {
-        if (index >= self.inventory.pack.len)
-            return error.IndexOutOfRange;
-
-        return self.inventory.pack.orderedRemove(index) catch err.wat();
     }
 
     // This is what happens when you flail to dodge a net.
@@ -2369,7 +2142,6 @@ pub const Mob = struct { // {{{
 
         for (item.effects) |effect| switch (effect) {
             .Status => |s| if (direct) self.addStatus(s, 0, .{ .Tmp = Status.MAX_DURATION }),
-            .Gas => |s| state.dungeon.atGas(self.coord)[s] = 1.0,
             .Damage => |d| self.takeDamage(.{
                 .lethal = d.lethal,
                 .amount = d.amount,
@@ -2394,116 +2166,6 @@ pub const Mob = struct { // {{{
             },
             .Custom => |c| c(self, self.coord),
         };
-    }
-
-    pub fn dropItem(self: *Mob, item: Item, at: Coord) bool {
-        // Some faulty AI might be doing this. Or maybe a stockpile is
-        // configured incorrectly and a hauler is trying to drop items in the
-        // wrong place.
-        if (state.dungeon.at(at).type == .Wall) return false;
-
-        if (state.dungeon.at(at).surface) |surface| {
-            switch (surface) {
-                .Container => |container| {
-                    if (container.items.len >= container.capacity) {
-                        return false;
-                    } else {
-                        container.items.append(item) catch err.wat();
-                        self.declareAction(.Drop);
-                        return true;
-                    }
-                },
-                else => {},
-            }
-        }
-
-        if (state.dungeon.itemsAt(at).isFull()) {
-            return false;
-        } else {
-            state.dungeon.itemsAt(at).append(item) catch err.wat();
-            self.declareAction(.Drop);
-            return true;
-        }
-    }
-
-    pub fn throwItem(self: *Mob, item: *const Item, at: Coord, alloc: mem.Allocator) void {
-        const item_name = (item.*.shortName() catch err.wat()).constSlice();
-
-        self.declareAction(.Throw);
-        state.messageAboutMob(self, self.coord, .Info, "throw a {s}!", .{item_name}, "throws a {s}!", .{item_name});
-
-        if (self == state.player) {
-            scores.recordTaggedUsize(.ItemsThrown, .{ .I = item.* }, 1);
-        }
-
-        const dodgeable = switch (item.*) {
-            .Projectile => true,
-            .Consumable => |c| if (c.throwable) false else err.wat(),
-            else => err.wat(),
-        };
-
-        const trajectory = self.coord.drawLine(at, state.mapgeometry, 3);
-        const landed: ?Coord = for (trajectory.constSlice()) |coord| {
-            if (self.coord.eq(coord)) continue;
-
-            if (!state.is_walkable(coord, .{
-                .right_now = true,
-                .only_if_breaks_lof = true,
-            })) {
-                if (state.dungeon.at(coord).mob) |mob| {
-                    const land_chance = combat.chanceOfMissileLanding(mob);
-                    const evade_chance = combat.chanceOfAttackEvaded(mob, null);
-                    if (dodgeable and (!rng.percent(land_chance) or rng.percent(evade_chance))) {
-                        state.messageAboutMob(mob, self.coord, .CombatUnimportant, "dodge the {s}.", .{item_name}, "dodges the {s}.", .{item_name});
-                        continue; // Evaded, onward!
-                    } else {
-                        //state.messageAboutMob(mob, self.coord, .Combat, "are hit by the {s}.", .{item_name}, "is hit by the {s}.", .{item_name});
-                    }
-                }
-
-                break coord;
-            }
-        } else null;
-
-        const tile = item.*.tile();
-        ui.Animation.apply(.{ .TraverseLine = .{
-            .start = self.coord,
-            .end = landed orelse at,
-            .char = tile.ch,
-            .fg = tile.fg,
-        } });
-
-        switch (item.*) {
-            .Projectile => |proj| {
-                if (landed != null and state.dungeon.at(landed.?).mob != null) {
-                    const mob = state.dungeon.at(landed.?).mob.?;
-                    if (proj.damage) |max_damage| {
-                        const damage = rng.range(usize, max_damage / 2, max_damage);
-                        const msg_noun = StringBuf64.initFmt("The {s}", .{proj.name});
-                        mob.takeDamage(.{ .amount = damage, .source = .RangedAttack, .by_mob = self }, .{ .noun = msg_noun.constSlice() });
-                    }
-                    switch (proj.effect) {
-                        .Status => |s| mob.applyStatus(s, .{}),
-                    }
-                } else {
-                    const spot = state.nextAvailableSpaceForItem(at, alloc);
-                    if (spot) |_spot|
-                        state.dungeon.itemsAt(_spot).append(item.*) catch err.wat();
-                }
-            },
-            .Consumable => |c| {
-                const coord = landed orelse at;
-                if (state.dungeon.at(coord).mob) |mob| {
-                    mob.useConsumable(c, false) catch |e|
-                        err.bug("Couldn't use thrown consumable: {}", .{e});
-                } else for (c.effects) |effect| switch (effect) {
-                    .Gas => |s| state.dungeon.atGas(coord)[s] = 1.0,
-                    .Custom => |f| f(null, coord),
-                    else => {},
-                };
-            },
-            else => err.wat(),
-        }
     }
 
     pub fn declareAction(self: *Mob, action: Activity) void {
@@ -2713,10 +2375,6 @@ pub const Mob = struct { // {{{
             } else {
                 self.declareAction(Activity{ .Teleport = dest });
             }
-        }
-
-        if (self.hasStatus(.FumesVest) and direction != null) {
-            state.dungeon.atGas(coord)[gas.Darkness.id] += 0.02;
         }
 
         if (state.dungeon.at(dest).surface) |surface| {
@@ -2942,16 +2600,6 @@ pub const Mob = struct { // {{{
                 }
             }
 
-            if (recipient.isUnderStatus(.EtherealShield)) |_| {
-                if (!recipient.isLit() and !attacker.isLit() and
-                    spells.willSucceedAgainstMob(recipient, attacker))
-                {
-                    const d = acoord.closestDirectionTo(rcoord, state.mapgeometry).opposite();
-                    const w = @intCast(usize, recipient.stat(.Willpower));
-                    combat.throwMob(recipient, attacker, d, w);
-                }
-            }
-
             return;
         }
 
@@ -2988,40 +2636,6 @@ pub const Mob = struct { // {{{
                     attacker.canSwapWith(recipient, .{ .ignore_hostility = true }))
                 {
                     _ = attacker.teleportTo(recipient.coord, null, true, true);
-                }
-            },
-            .NC_Insane => {
-                if (!recipient.isLit() and !attacker.isLit() and
-                    spells.willSucceedAgainstMob(attacker, recipient))
-                {
-                    recipient.addStatus(.Insane, 0, .{ .Tmp = 20 });
-                }
-            },
-            .NC_MassPara => {
-                if (!attacker.isLit()) {
-                    var iter = state.mobs.iterator();
-                    while (iter.next()) |mob| {
-                        if (mob.coord.z == attacker.coord.z and attacker.canSeeMob(mob) and
-                            mob.distance(attacker) > 1 and mob.isHostileTo(attacker) and
-                            spells.willSucceedAgainstMob(attacker, mob) and !mob.isLit())
-                        {
-                            const dist = mob.distance(attacker);
-                            const dur = rng.range(usize, dist / 2, dist);
-                            mob.addStatus(.Paralysis, 0, .{ .Tmp = dur });
-                        }
-                    }
-                }
-            },
-            .NC_Duplicate => {
-                if (!recipient.should_be_dead() and
-                    recipient.faction != .Night and recipient.life_type != .Spectral and
-                    !recipient.isLit() and !attacker.isLit() and
-                    spells.willSucceedAgainstMob(attacker, recipient))
-                {
-                    const new = recipient.duplicateIntoSpectral();
-                    if (new) |new_mob| {
-                        new_mob.addStatus(.Lifespan, 0, .{ .Tmp = @intCast(usize, attacker.stat(.Willpower)) * 2 });
-                    }
                 }
             },
             else => {},
@@ -3202,8 +2816,6 @@ pub const Mob = struct { // {{{
             if (d.amount > 0) {
                 if (self.blood) |s|
                     state.dungeon.spatter(self.coord, s);
-                if (self.blood_spray) |g|
-                    state.dungeon.atGas(self.coord)[g] += 0.2;
             }
         }
 
@@ -3669,7 +3281,6 @@ pub const Mob = struct { // {{{
                     }
                 }
             },
-            .Ctx => p_se.duration = s.duration,
         }
 
         p_se.exhausting = s.exhausting;
@@ -3726,7 +3337,6 @@ pub const Mob = struct { // {{{
         const has_status = switch (se.duration) {
             .Prm, .Equ => true,
             .Tmp => |turns| turns > 0,
-            .Ctx => se.duration.Ctx == state.dungeon.terrainAt(self.coord),
         };
         return if (has_status) se else null;
     }
@@ -3787,19 +3397,7 @@ pub const Mob = struct { // {{{
             }
         }
 
-        if (self.faction == .Night and
-            state.night_rep[@enumToInt(othermob.faction)] > -5 and
-            (state.night_rep[@enumToInt(othermob.faction)] > 0 or
-            state.dungeon.terrainAt(othermob.coord) != &surfaces.SladeTerrain))
-        {
-            hostile = false;
-        }
-
         return hostile;
-    }
-
-    pub fn isLit(self: *const Mob) bool {
-        return state.dungeon.lightAt(self.coord).*;
     }
 
     pub fn canSeeMob(self: *const Mob, mob: *const Mob) bool {
@@ -3871,10 +3469,6 @@ pub const Mob = struct { // {{{
         const innate = utils.getFieldByEnum(Stat, self.stats, _stat);
         val += innate;
 
-        // Check terrain.
-        const terrain = state.dungeon.terrainAt(self.coord);
-        val += utils.getFieldByEnum(Stat, terrain.stats, _stat);
-
         // Check statuses.
         switch (_stat) {
             .Speed => {
@@ -3884,35 +3478,8 @@ pub const Mob = struct { // {{{
             else => {},
         }
 
-        // Check equipment.
-        if (self.inventory.equipmentConst(.Weapon).*) |weapon|
-            val += utils.getFieldByEnum(Stat, weapon.Weapon.stats, _stat);
-        if (self.inventory.equipmentConst(.Cloak).*) |clk|
-            val += utils.getFieldByEnum(Stat, clk.Cloak.stats, _stat);
-        if (self.inventory.equipmentConst(.Armor).*) |arm| {
-            if (arm.Armor.night and !self.isLit()) {
-                val += utils.getFieldByEnum(Stat, arm.Armor.night_stats, _stat);
-            } else {
-                val += utils.getFieldByEnum(Stat, arm.Armor.stats, _stat);
-            }
-        }
-        if (self.inventory.equipmentConst(.Aux).*) |aux| {
-            if (aux.Aux.night and !self.isLit()) {
-                val += utils.getFieldByEnum(Stat, aux.Aux.night_stats, _stat);
-            } else {
-                val += utils.getFieldByEnum(Stat, aux.Aux.stats, _stat);
-            }
-        }
-
-        // Check rings.
-        for (Inventory.RING_SLOTS) |ring_slot|
-            if (self.inventory.equipmentConst(ring_slot).*) |ring| {
-                val += utils.getFieldByEnum(Stat, ring.Ring.stats, _stat);
-            };
-
         // Clamp value.
         val = switch (_stat) {
-            .Sneak => math.clamp(val, 0, 10),
             // Should never be below 0
             .Vision, .Spikes => math.max(0, val),
             else => val,
@@ -3945,28 +3512,6 @@ pub const Mob = struct { // {{{
         assert(innate <= 100 and innate >= -100);
         r += innate;
 
-        // Check terrain.
-        const terrain = state.dungeon.terrainAt(self.coord);
-        r += utils.getFieldByEnum(Resistance, terrain.resists, resist);
-
-        // Check armor and cloaks
-        if (self.inventory.equipmentConst(.Cloak).*) |clk|
-            r += utils.getFieldByEnum(Resistance, clk.Cloak.resists, resist);
-        if (self.inventory.equipmentConst(.Armor).*) |arm| {
-            if (arm.Armor.night and !self.isLit()) {
-                r += utils.getFieldByEnum(Resistance, arm.Armor.night_resists, resist);
-            } else {
-                r += utils.getFieldByEnum(Resistance, arm.Armor.resists, resist);
-            }
-        }
-        if (self.inventory.equipmentConst(.Aux).*) |aux| {
-            if (aux.Aux.night and !self.isLit()) {
-                r += utils.getFieldByEnum(Resistance, aux.Aux.night_resists, resist);
-            } else {
-                r += utils.getFieldByEnum(Resistance, aux.Aux.resists, resist);
-            }
-        }
-
         // Check statuses
         switch (resist) {
             .Armor => if (self.isUnderStatus(.Recuperate) != null) {
@@ -3997,9 +3542,6 @@ pub const Mob = struct { // {{{
         var activity_iter = self.activities.iterator();
         while (activity_iter.next()) |activity|
             activities[activity_iter.counter - 1] = activity;
-
-        // Walking pattern
-        if (!self.isCreeping()) self.makeNoise(.Movement, .Medium);
 
         self.forEachRing(struct {
             pub fn f(mself: *Mob, ring: *Ring) void {
@@ -4032,10 +3574,6 @@ pub const Mob = struct { // {{{
 
         for (&Inventory.RING_SLOTS) |r| if (self.inventory.equipment(r).*) |ring_item|
             (func)(self, ring_item.Ring);
-    }
-
-    pub fn isCreeping(self: *const Mob) bool {
-        return self.turnsSpentMoving() <= @intCast(usize, self.stat(.Sneak));
     }
 
     // Find out how many turns spent in moving
@@ -4232,34 +3770,6 @@ pub const Machine = struct {
         else
             self.unpowered_luminescence;
     }
-
-    // Utility funcs to aid machine definition creation
-
-    pub fn createGasTrap(comptime gstr: []const u8, g: *const gas.Gas) Machine {
-        return Machine{
-            .name = gstr ++ " trap",
-            .powered_tile = '^',
-            .unpowered_tile = '^',
-            .evoke_confirm = "Really trigger the " ++ gstr ++ " trap?",
-            .on_power = struct {
-                fn f(machine: *Machine) void {
-                    if (machine.last_interaction) |mob| {
-                        if (mob.faction == .Necromancer) return;
-
-                        for (machine.props) |maybe_prop| if (maybe_prop) |vent| {
-                            state.dungeon.atGas(vent.coord)[g.id] = 1.0;
-                        };
-
-                        state.message(.Trap, "{c} triggers a " ++ gstr ++ " trap!", .{mob});
-                        state.message(.Trap, "Noxious fumes seep through nearby vents!", .{});
-
-                        machine.disabled = true;
-                        state.dungeon.at(machine.coord).surface = null;
-                    }
-                }
-            }.f,
-        };
-    }
 };
 
 pub const Prop = struct {
@@ -4401,9 +3911,6 @@ pub const Weapon = struct {
         None,
         Bone,
         Copper,
-        NC_Insane,
-        NC_MassPara,
-        NC_Duplicate,
         Swap,
 
         pub fn name(self: Ego) ?[]const u8 {
@@ -4411,9 +3918,6 @@ pub const Weapon = struct {
                 .None => null,
                 .Bone => "bone",
                 .Copper => "copper",
-                .NC_Insane => "insanity",
-                .NC_MassPara => "mass paralysis",
-                .NC_Duplicate => "duplicity",
                 .Swap => "swapping",
             };
         }
@@ -4423,9 +3927,6 @@ pub const Weapon = struct {
                 .None => null,
                 .Bone => "More damage will be dealt to living enemies, and less to undead.",
                 .Copper => "When standing on copper ground, you deal $b+3$. electric damage.",
-                .NC_Insane => "When both you and your foe are in an unlit area, you have a will-checked chance to send your foe insane with your attacks.",
-                .NC_MassPara => "When you are attacking from an unlit area, you have a will-checked chance to paralyse nearby foes if they are also standing in the dark. The duration of the paralysis will always be less than the time needed to reach them.",
-                .NC_Duplicate => "When both you and your foe are in an unlit area, you have a will-checked chance to create a spectral copy of your foe. The spectral copy will be aligned with the Night Creatures, and will last for $bwillpower * 2$. turns.",
                 .Swap => "When you land a successful hit, you have a chance to swap places with your foe.",
             };
         }
@@ -4677,7 +4178,6 @@ pub const Tile = struct {
     material: *const Material = &materials.Basalt,
     mob: ?*Mob = null,
     surface: ?SurfaceItem = null,
-    terrain: *const surfaces.Terrain = &surfaces.DefaultTerrain,
     spatter: SpatterArray = SpatterArray.initFill(0),
 
     // A random value that's set at the beginning of the game.
@@ -4685,7 +4185,7 @@ pub const Tile = struct {
     // won't change over time, is needed.
     rand: usize = 0,
 
-    pub fn displayAs(coord: Coord, ignore_lights: bool, ignore_mobs: bool) display.Cell {
+    pub fn displayAs(coord: Coord, ignore_mobs: bool) display.Cell {
         var self = state.dungeon.at(coord);
         var cell = display.Cell{};
 
@@ -4709,22 +4209,11 @@ pub const Tile = struct {
                 .sbg = self.material.color_sbg orelse self.material.color_bg orelse colors.BG,
             },
             .Floor => {
-                cell.ch = self.terrain.tile;
-                cell.sch = self.terrain.sprite;
-                cell.fg = self.terrain.color;
+                cell.ch = '·';
+                cell.sch = null;
+                cell.fg = colors.DOBALENE_BLUE;
                 cell.bg = colors.BG;
             },
-        }
-
-        const gases = state.dungeon.atGas(coord);
-        for (gases) |q, g| {
-            const gcolor = gas.Gases[g].color;
-            // const aq = 1 - math.clamp(q, 0.19, 1);
-            if (q > 0) {
-                cell.fg = gcolor; //colors.mix(gcolor, cell.bg, aq);
-                cell.ch = '§';
-                cell.sch = null;
-            }
         }
 
         if (self.mob != null and !ignore_mobs) {
@@ -4767,12 +4256,6 @@ pub const Tile = struct {
             cell.ch = fire.fireGlyph(famount);
             cell.sch = null;
             cell.fg = fire.fireColor(famount);
-        } else if (state.dungeon.itemsAt(coord).last()) |item| {
-            err.ensure(self.type != .Wall, "Item {s} located in wall @({},{})", .{ item.id().?, coord.x, coord.y }) catch {
-                return .{ .fg = 0xffffff, .bg = 0xff0000, .sfg = 0, .sbg = 0, .ch = 'X', .sch = null };
-            };
-
-            cell = item.tile();
         } else if (state.dungeon.at(coord).surface) |surfaceitem| {
             err.ensure(self.type != .Wall, "Surface {s} located in wall @({},{})", .{ surfaceitem.id(), coord.x, coord.y }) catch {
                 return .{ .fg = 0xffffff, .bg = 0xff0000, .sfg = 0, .sbg = 0, .ch = 'X', .sch = null };
@@ -4849,12 +4332,6 @@ pub const Tile = struct {
             }
         }
 
-        if (!ignore_lights and self.type == .Floor) {
-            if (!state.dungeon.lightAt(coord).*) {
-                cell.fg = colors.percentageOf(cell.fg, 60);
-            }
-        }
-
         // var spattering = self.spatter.iterator();
         // while (spattering.next()) |entry| {
         //     const spatter = entry.key;
@@ -4871,10 +4348,7 @@ pub const Tile = struct {
 
 pub const Dungeon = struct {
     map: [LEVELS][HEIGHT][WIDTH]Tile = [1][HEIGHT][WIDTH]Tile{[1][WIDTH]Tile{[1]Tile{.{}} ** WIDTH} ** HEIGHT} ** LEVELS,
-    items: [LEVELS][HEIGHT][WIDTH]ItemBuffer = [1][HEIGHT][WIDTH]ItemBuffer{[1][WIDTH]ItemBuffer{[1]ItemBuffer{ItemBuffer.init(null)} ** WIDTH} ** HEIGHT} ** LEVELS,
-    gas: [LEVELS][HEIGHT][WIDTH][gas.GAS_NUM]f64 = [1][HEIGHT][WIDTH][gas.GAS_NUM]f64{[1][WIDTH][gas.GAS_NUM]f64{[1][gas.GAS_NUM]f64{[1]f64{0} ** gas.GAS_NUM} ** WIDTH} ** HEIGHT} ** LEVELS,
     sound: [LEVELS][HEIGHT][WIDTH]Sound = [1][HEIGHT][WIDTH]Sound{[1][WIDTH]Sound{[1]Sound{.{}} ** WIDTH} ** HEIGHT} ** LEVELS,
-    light: [LEVELS][HEIGHT][WIDTH]bool = [1][HEIGHT][WIDTH]bool{[1][WIDTH]bool{[1]bool{false} ** WIDTH} ** HEIGHT} ** LEVELS,
     fire: [LEVELS][HEIGHT][WIDTH]usize = [1][HEIGHT][WIDTH]usize{[1][WIDTH]usize{[1]usize{0} ** WIDTH} ** HEIGHT} ** LEVELS,
     stairs: [LEVELS]StairBuffer = [_]StairBuffer{StairBuffer.init(null)} ** LEVELS,
     entries: [LEVELS]Coord = [_]Coord{Coord.new2(0, 0, 0)} ** LEVELS,
@@ -4886,14 +4360,6 @@ pub const Dungeon = struct {
 
     pub const MOB_OPACITY: usize = 0;
     pub const FLOOR_OPACITY: usize = 10;
-
-    // Return the terrain if no surface item, else the default terrain.
-    //
-    pub fn terrainAt(self: *Dungeon, coord: Coord) *const surfaces.Terrain {
-        const tile = self.at(coord);
-        if (tile.type != .Floor) return &surfaces.DefaultTerrain;
-        return if (tile.surface == null) tile.terrain else &surfaces.DefaultTerrain;
-    }
 
     pub fn isTileOpaque(coord: Coord) bool {
         const tile = state.dungeon.at(coord);
@@ -4909,11 +4375,6 @@ pub const Dungeon = struct {
             }
         }
 
-        const gases = state.dungeon.atGas(coord);
-        for (gases) |q, g| {
-            if (q > 0 and gas.Gases[g].opacity >= 1.0) return true;
-        }
-
         return false;
     }
 
@@ -4924,8 +4385,6 @@ pub const Dungeon = struct {
         if (tile.type == .Wall)
             return @floatToInt(usize, tile.material.opacity * 100);
 
-        o += state.dungeon.terrainAt(coord).opacity;
-
         if (tile.mob) |_|
             o += MOB_OPACITY;
 
@@ -4935,11 +4394,6 @@ pub const Dungeon = struct {
                 .Prop => |p| o += @floatToInt(usize, p.opacity * 100),
                 else => {},
             }
-        }
-
-        const gases = state.dungeon.atGas(coord);
-        for (gases) |q, g| {
-            if (q > 0) o += @floatToInt(usize, gas.Gases[g].opacity * 100);
         }
 
         o += fire.fireOpacity(state.dungeon.fireAt(coord).*);
@@ -5024,16 +4478,6 @@ pub const Dungeon = struct {
         return ctr;
     }
 
-    // Get an item from the ground or a container (if it exists), otherwise
-    // return null;
-    pub fn getItem(self: *Dungeon, c: Coord) !Item {
-        if (self.hasContainer(c)) |container| {
-            return try container.items.orderedRemove(0);
-        } else {
-            return try self.itemsAt(c).pop();
-        }
-    }
-
     pub fn spatter(self: *Dungeon, c: Coord, what: Spatter) void {
         for (&DIRECTIONS) |d| {
             if (!rng.onein(4)) continue;
@@ -5070,25 +4514,12 @@ pub const Dungeon = struct {
         return null;
     }
 
-    // STYLE: rename to gasAt
-    pub inline fn atGas(self: *Dungeon, c: Coord) []f64 {
-        return &self.gas[c.z][c.y][c.x];
-    }
-
     pub inline fn soundAt(self: *Dungeon, c: Coord) *Sound {
         return &self.sound[c.z][c.y][c.x];
     }
 
     pub inline fn fireAt(self: *Dungeon, c: Coord) *usize {
         return &self.fire[c.z][c.y][c.x];
-    }
-
-    pub inline fn lightAt(self: *Dungeon, c: Coord) *bool {
-        return &self.light[c.z][c.y][c.x];
-    }
-
-    pub inline fn itemsAt(self: *Dungeon, c: Coord) *ItemBuffer {
-        return &self.items[c.z][c.y][c.x];
     }
 };
 

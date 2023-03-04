@@ -29,7 +29,6 @@ const ATTACKER_HELD_NBONUS: isize = 20;
 const ATTACKER_DRUNK_NBONUS: isize = 10;
 const ATTACKER_STUN_NBONUS: isize = 15;
 
-const DEFENDER_UNLIT_BONUS: isize = 5;
 const DEFENDER_INVIGORATED_BONUS: isize = 10;
 const DEFENDER_OPEN_SPACE_BONUS: isize = 10;
 const DEFENDER_ENRAGED_NBONUS: isize = 10;
@@ -121,8 +120,6 @@ pub fn chanceOfAttackEvaded(defender: *const Mob, attacker: ?*const Mob) usize {
     if (attacker) |a| if (isAttackStab(a, defender)) return 0;
     if (defender.immobile) return 0;
 
-    const tile_light = state.dungeon.lightAt(defender.coord).*;
-
     var nearby_walls: isize = 0;
     for (&CARDINAL_DIRECTIONS) |d| if (defender.coord.move(d, state.mapgeometry)) |neighbor| {
         if (!state.is_walkable(neighbor, .{ .ignore_mobs = true, .right_now = true }))
@@ -133,7 +130,6 @@ pub fn chanceOfAttackEvaded(defender: *const Mob, attacker: ?*const Mob) usize {
 
     chance += if (defender.isUnderStatus(.Invigorate)) |_| DEFENDER_INVIGORATED_BONUS else 0;
     chance += if (nearby_walls == 0) DEFENDER_OPEN_SPACE_BONUS else 0;
-    chance += if (!tile_light) DEFENDER_UNLIT_BONUS else 0;
 
     chance -= if (defender.isUnderStatus(.Held)) |_| DEFENDER_HELD_NBONUS else 0;
     chance -= if (defender.isUnderStatus(.Debil)) |_| DEFENDER_STUN_NBONUS else 0;

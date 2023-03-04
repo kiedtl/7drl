@@ -17,11 +17,9 @@ const font = @import("font.zig");
 const events = @import("events.zig");
 const literature = @import("literature.zig");
 const explosions = @import("explosions.zig");
-const tasks = @import("tasks.zig");
 const fire = @import("fire.zig");
 const items = @import("items.zig");
 const utils = @import("utils.zig");
-const gas = @import("gas.zig");
 const mapgen = @import("mapgen.zig");
 const mobs = @import("mobs.zig");
 const surfaces = @import("surfaces.zig");
@@ -51,10 +49,8 @@ const ContainerList = types.ContainerList;
 const Message = types.Message;
 const MessageArrayList = types.MessageArrayList;
 const MobArrayList = types.MobArrayList;
-const StockpileArrayList = types.StockpileArrayList;
 const DIRECTIONS = types.DIRECTIONS;
 
-const TaskArrayList = tasks.TaskArrayList;
 const PosterArrayList = literature.PosterArrayList;
 const EvocableList = items.EvocableList;
 
@@ -134,7 +130,6 @@ fn initGame() bool {
 
     state.memory = state.MemoryTileMap.init(state.GPA.allocator());
 
-    state.tasks = TaskArrayList.init(state.GPA.allocator());
     state.squads = Squad.List.init(state.GPA.allocator());
     state.mobs = MobList.init(state.GPA.allocator());
     state.rings = RingList.init(state.GPA.allocator());
@@ -160,9 +155,6 @@ fn initGame() bool {
     events.executeGlobalEvents();
 
     for (state.dungeon.map) |*map, level| {
-        state.stockpiles[level] = StockpileArrayList.init(state.GPA.allocator());
-        state.inputs[level] = StockpileArrayList.init(state.GPA.allocator());
-        state.outputs[level] = Rect.ArrayList.init(state.GPA.allocator());
         state.rooms[level] = mapgen.Room.ArrayList.init(state.GPA.allocator());
 
         for (map) |*row| for (row) |*tile| {
@@ -204,13 +196,9 @@ fn deinitGame() void {
     while (s_iter.next()) |squad|
         squad.deinit();
     for (state.dungeon.map) |_, level| {
-        state.stockpiles[level].deinit();
-        state.inputs[level].deinit();
-        state.outputs[level].deinit();
         state.rooms[level].deinit();
     }
 
-    state.tasks.deinit();
     state.squads.deinit();
     state.mobs.deinit();
     state.rings.deinit();
@@ -447,39 +435,16 @@ fn readInput() !bool {
             else => false,
         },
         .Char => |c| switch (c) {
-            ' ' => b: {
-                _ = ui.drawZapScreen();
-                break :b false;
-            },
-            't' => b: {
-                player.auto_wait_enabled = !player.auto_wait_enabled;
-                const str = if (player.auto_wait_enabled)
-                    @as([]const u8, "enabled")
-                else
-                    "disabled";
-                state.message(.Info, "Auto-waiting: {s}", .{str});
-                break :b false;
-            },
-            '\'' => b: {
-                state.player.swapWeapons();
-                if (state.player.inventory.equipment(.Weapon).*) |weapon| {
-                    state.message(.Inventory, "Now wielding a {s}.", .{
-                        (weapon.longName() catch err.wat()).constSlice(),
-                    });
-                } else {
-                    state.message(.Inventory, "You aren't wielding anything now.", .{});
-                }
-                break :b false;
-            },
+            // ' ' => b: {
+            //     _ = ui.drawZapScreen();
+            //     break :b false;
+            // },
             'A' => player.activateSurfaceItem(state.player.coord),
-            'i' => ui.drawInventoryScreen(),
             'v' => ui.drawExamineScreen(null),
-            '@' => ui.drawExamineScreen(.Mob),
             'M' => b: {
                 ui.drawMessagesScreen();
                 break :b false;
             },
-            ',' => player.grabItem(),
             's', '.' => player.tryRest(),
             'q', 'y' => player.moveOrFight(.NorthWest),
             'w', 'k' => player.moveOrFight(.North),
@@ -510,15 +475,11 @@ fn tickGame() !void {
     state.ticks += 1;
     surfaces.tickMachines(cur_level);
     fire.tickFire(cur_level);
-    gas.tickGasEmitters(cur_level);
-    gas.tickGases(cur_level);
     state.tickSound(cur_level);
-    state.tickLight(cur_level);
 
     if (state.ticks % 10 == 0) {
         alert.tickCheckLevelHealth(cur_level);
         alert.tickActOnAlert(cur_level);
-        tasks.tickTasks(cur_level);
     }
 
     var iter = state.mobs.iterator();
@@ -563,7 +524,6 @@ fn tickGame() !void {
                 state.player_turns += 1;
                 scores.recordUsize(.TurnsSpent, 1);
                 player.bookkeepingFOV();
-                player.checkForGarbage();
                 if (player.getActiveRing()) |r|
                     player.getRingHints(r);
             }
@@ -621,15 +581,11 @@ fn viewerTickGame(cur_level: usize) void {
     state.ticks += 1;
     surfaces.tickMachines(cur_level);
     fire.tickFire(cur_level);
-    gas.tickGasEmitters(cur_level);
-    gas.tickGases(cur_level);
     state.tickSound(cur_level);
-    state.tickLight(cur_level);
 
     if (state.ticks % 10 == 0) {
         alert.tickCheckLevelHealth(cur_level);
         alert.tickActOnAlert(cur_level);
-        tasks.tickTasks(cur_level);
     }
 
     var iter = state.mobs.iterator();

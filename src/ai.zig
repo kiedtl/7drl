@@ -680,7 +680,7 @@ pub fn patrolWork(mob: *Mob, _: mem.Allocator) void {
             const room = rng.chooseUnweighted(mapgen.Room, state.rooms[mob.coord.z].items);
             const point = room.rect.randomCoord();
 
-            if (state.dungeon.at(point).prison or room.is_vault != null or room.is_lair)
+            if (state.dungeon.at(point).prison)
                 continue;
 
             if (mob.nextDirectionTo(point)) |_| {
@@ -849,130 +849,6 @@ pub fn watcherWork(mob: *Mob, _: mem.Allocator) void {
         const prev_facing = mob.facing;
         mob.tryMoveTo(post);
         guardGlanceLeftRight(mob, prev_facing);
-    }
-}
-
-pub fn cleanerWork(mob: *Mob, _: mem.Allocator) void {
-    switch (mob.ai.work_phase) {
-        .CleanerScan => {
-            if (mob.ai.work_area.items.len > 0 and
-                mob.coord.distance(mob.ai.work_area.items[0]) > 1)
-            {
-                mob.tryMoveTo(mob.ai.work_area.items[0]);
-            } else {
-                tryRest(mob);
-            }
-
-            for (state.tasks.items) |*task, id|
-                if (!task.completed and task.assigned_to == null) {
-                    switch (task.type) {
-                        .Clean => |_| {
-                            mob.ai.task_id = id;
-                            task.assigned_to = mob;
-                            mob.ai.work_phase = .CleanerClean;
-                            break;
-                        },
-                        else => {},
-                    }
-                };
-        },
-        .CleanerClean => {
-            const task = state.tasks.items[mob.ai.task_id.?];
-            const target = task.type.Clean;
-
-            if (target.distance(mob.coord) > 1) {
-                mob.tryMoveTo(target);
-            } else {
-                tryRest(mob);
-
-                var was_clean = true;
-                var spattering = state.dungeon.at(target).spatter.iterator();
-
-                while (spattering.next()) |entry| {
-                    const spatter = entry.key;
-                    const num = entry.value.*;
-                    if (num > 0) {
-                        was_clean = false;
-                        state.dungeon.at(target).spatter.set(spatter, num - 1);
-                    }
-                }
-
-                if (was_clean) {
-                    mob.ai.work_phase = .CleanerScan;
-                    state.tasks.items[mob.ai.task_id.?].completed = true;
-                    mob.ai.task_id = null;
-                }
-            }
-        },
-        else => unreachable,
-    }
-}
-
-pub fn haulerWork(mob: *Mob, alloc: mem.Allocator) void {
-    switch (mob.ai.work_phase) {
-        .HaulerScan => {
-            if (mob.ai.work_area.items.len > 0 and
-                mob.coord.distance(mob.ai.work_area.items[0]) > 1)
-            {
-                mob.tryMoveTo(mob.ai.work_area.items[0]);
-            } else {
-                tryRest(mob);
-            }
-
-            for (state.tasks.items) |*task, id|
-                if (!task.completed and task.assigned_to == null) {
-                    switch (task.type) {
-                        .Haul => |_| {
-                            mob.ai.task_id = id;
-                            task.assigned_to = mob;
-                            mob.ai.work_phase = .HaulerTake;
-                            break;
-                        },
-                        else => {},
-                    }
-                };
-        },
-        .HaulerTake => {
-            const task = state.tasks.items[mob.ai.task_id.?];
-            const itemcoord = task.type.Haul.from;
-
-            if (itemcoord.distance(mob.coord) > 1) {
-                mob.tryMoveTo(itemcoord);
-            } else {
-                const item = state.dungeon.getItem(itemcoord) catch {
-                    // Somehow the item disappeared, resume job-hunting
-                    tryRest(mob);
-                    state.tasks.items[mob.ai.task_id.?].completed = true;
-                    mob.ai.task_id = null;
-                    mob.ai.work_phase = .HaulerScan;
-                    return;
-                };
-                mob.inventory.pack.append(item) catch unreachable;
-                mob.declareAction(.Grab);
-                mob.ai.work_phase = .HaulerDrop;
-            }
-        },
-        .HaulerDrop => {
-            const task = state.tasks.items[mob.ai.task_id.?];
-            const dest = task.type.Haul.to;
-
-            if (dest.distance(mob.coord) > 1) {
-                mob.tryMoveTo(dest);
-            } else {
-                const item = mob.inventory.pack.pop() catch unreachable;
-                if (!mob.dropItem(item, dest)) {
-                    // Somehow the item place disappeared, dump the item somewhere.
-                    // If there's no place to dump, just let the item disappear :P
-                    const spot = state.nextAvailableSpaceForItem(mob.coord, alloc);
-                    if (spot) |dst| _ = mob.dropItem(item, dst);
-                }
-
-                state.tasks.items[mob.ai.task_id.?].completed = true;
-                mob.ai.task_id = null;
-                mob.ai.work_phase = .HaulerScan;
-            }
-        },
-        else => unreachable,
     }
 }
 
@@ -1197,7 +1073,7 @@ pub fn nightCreatureWork(mob: *Mob, alloc: mem.Allocator) void {
 
                 var possibles = StackBuffer(Coord, 2).init(null);
                 for (state.rooms[mob.coord.z].items) |*room| {
-                    if ((cur_room != null and room == cur_room.?) or !room.is_lair)
+                    if (cur_room != null and room == cur_room.?)
                         continue;
 
                     const point = room.rect.randomCoord();
@@ -1320,30 +1196,10 @@ pub fn watcherFight(mob: *Mob, alloc: mem.Allocator) void {
     }
 }
 
-pub fn shriekerFight(mob: *Mob, alloc: mem.Allocator) void {
-    const target = currentEnemy(mob).mob;
-
-    mob.makeNoise(.Shout, .Loud);
-
-    const mob_lit = state.dungeon.lightAt(mob.coord).*;
-    const target_lit = state.dungeon.lightAt(target.coord).*;
-
-    if (!mob.cansee(target.coord) and
-        // Can't lure me to darker areas!
-        (target_lit or !mob_lit))
-    {
-        mob.tryMoveTo(target.coord);
-    } else {
-        alertAllyOfHostile(mob);
-        if (!keepDistance(mob, target.coord, 8))
-            meleeFight(mob, alloc);
-    }
-}
-
 pub fn coronerFight(mob: *Mob, alloc: mem.Allocator) void {
     const target = currentEnemy(mob).mob;
     alert.announceEnemyAlert(target);
-    shriekerFight(mob, alloc);
+    watcherFight(mob, alloc);
 }
 
 pub fn stalkerFight(mob: *Mob, alloc: mem.Allocator) void {
@@ -1574,9 +1430,6 @@ pub fn _Job_SPC_NCAlignment(mob: *Mob, job: *types.AIJob) types.AIJob.JStatus {
 
     var path: ?Coord = null;
     for (state.rooms[mob.coord.z].items) |*room| {
-        if (!room.is_lair)
-            continue;
-
         const point = room.rect.randomCoord();
         if (mob.nextDirectionTo(point)) |_| {
             path = point;

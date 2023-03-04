@@ -16,7 +16,6 @@ const mobs_m = @import("mobs.zig");
 const fire = @import("fire.zig");
 const items = @import("items.zig");
 const utils = @import("utils.zig");
-const gas = @import("gas.zig");
 const rng = @import("rng.zig");
 const literature = @import("literature.zig");
 const fov = @import("fov.zig");
@@ -31,8 +30,6 @@ const Coord = types.Coord;
 const Dungeon = types.Dungeon;
 const Tile = types.Tile;
 const Status = types.Status;
-const Stockpile = types.Stockpile;
-const StockpileArrayList = types.StockpileArrayList;
 const Rect = types.Rect;
 const MobList = types.MobList;
 const RingList = types.RingList;
@@ -50,7 +47,6 @@ const CARDINAL_DIRECTIONS = types.CARDINAL_DIRECTIONS;
 
 const Alert = @import("alert.zig").Alert;
 const SoundState = @import("sound.zig").SoundState;
-const TaskArrayList = @import("tasks.zig").TaskArrayList;
 const EvocableList = @import("items.zig").EvocableList;
 const PosterArrayList = literature.PosterArrayList;
 const Generator = @import("generators.zig").Generator;
@@ -59,10 +55,10 @@ const GeneratorCtx = @import("generators.zig").GeneratorCtx;
 pub const GameState = union(enum) { Game, Win, Lose, Quit };
 pub const Layout = union(enum) { Unknown, Room: usize };
 
-pub const HEIGHT = 60;
-pub const WIDTH = 60;
-pub const LEVELS = 14; //21;
-pub const PLAYER_STARTING_LEVEL = 13; //19; // TODO: define in data file
+pub const HEIGHT = 120;
+pub const WIDTH = 120;
+pub const LEVELS = 6;
+pub const PLAYER_STARTING_LEVEL = 0;
 
 // Should only be used directly by functions in main.zig. For other applications,
 // should be passed as a parameter by caller.
@@ -147,9 +143,6 @@ pub var memory: MemoryTileMap = undefined;
 pub var descriptions: std.StringHashMap([]const u8) = undefined;
 
 pub var rooms: [LEVELS]mapgen.Room.ArrayList = undefined;
-pub var stockpiles: [LEVELS]StockpileArrayList = undefined;
-pub var inputs: [LEVELS]StockpileArrayList = undefined;
-pub var outputs: [LEVELS]Rect.ArrayList = undefined;
 
 pub const MapgenInfos = struct {
     has_vault: bool = false,
@@ -157,7 +150,6 @@ pub const MapgenInfos = struct {
 pub var mapgen_infos = [1]MapgenInfos{.{}} ** LEVELS;
 
 // Data objects
-pub var tasks: TaskArrayList = undefined;
 pub var squads: Squad.List = undefined;
 pub var mobs: MobList = undefined;
 pub var rings: RingList = undefined;
@@ -187,47 +179,6 @@ pub fn nextSpotForMob(crd: Coord, mob: ?*Mob) ?Coord {
         if (!child.eq(crd) and !dungeon.at(child).prison)
             break child;
     } else null;
-}
-
-// Find the nearest space in which an item can be dropped.
-//
-// First attempt to find a tile without any items on it; if there are no such
-// spaces within 3 spaces, grab the nearest place where an item can be dropped.
-//
-pub fn nextAvailableSpaceForItem(c: Coord, a: mem.Allocator) ?Coord {
-    const S = struct {
-        pub fn _helper(strict: bool, crd: Coord, alloc: mem.Allocator) ?Coord {
-            const S = struct {
-                pub fn _isFull(strict_: bool, coord: Coord) bool {
-                    if (dungeon.at(coord).surface) |_| {
-                        if (strict_) return true;
-                        // switch (surface) {
-                        //     .Container => |container| return container.items.isFull(),
-                        //     else => if (!strict_) return true,
-                        // }
-                    }
-
-                    return if (strict_)
-                        dungeon.itemsAt(coord).len > 0
-                    else
-                        dungeon.itemsAt(coord).isFull();
-                }
-            };
-
-            if (is_walkable(crd, .{ .right_now = true }) and !S._isFull(strict, crd))
-                return crd;
-
-            var dijk = dijkstra.Dijkstra.init(crd, mapgeometry, 3, is_walkable, .{ .right_now = true }, alloc);
-            defer dijk.deinit();
-
-            return while (dijk.next()) |child| {
-                if (!S._isFull(strict, child))
-                    break child;
-            } else null;
-        }
-    };
-
-    return S._helper(true, c, a) orelse S._helper(false, c, a);
 }
 
 pub const IsWalkableOptions = struct {
@@ -354,43 +305,6 @@ pub fn createMobList(include_player: bool, only_if_infov: bool, level: usize, al
     std.sort.insertionSort(*Mob, moblist.items, {}, S._sortFunc);
 
     return moblist;
-}
-
-pub fn tickLight(level: usize) void {
-    const light_buffer = &dungeon.light[level];
-
-    // Clear out previous light levels.
-    for (light_buffer) |*row| for (row) |*cell| {
-        cell.* = false;
-    };
-
-    // Now for the actual party...
-
-    var y: usize = 0;
-    while (y < HEIGHT) : (y += 1) {
-        var x: usize = 0;
-        while (x < WIDTH) : (x += 1) {
-            const coord = Coord.new2(level, x, y);
-            const light = dungeon.emittedLight(coord);
-
-            // A memorial to my stupidity:
-            //
-            // When I first created the lighting system, I omitted the below
-            // check (light > 0) and did raycasting *on every tile on the map*.
-            // I chalked the resulting lag (2 seconds for every turn!) to
-            // the lack of optimizations in the raycasting routine, and spent
-            // hours trying to write and rewrite a better raycasting function.
-            //
-            // Thankfully, I only wasted about two days of tearing out my hair
-            // before noticing the issue.
-            //
-            if (light > 0) {
-                //fov.rayCast(coord, 20, light, Dungeon.tileOpacity, light_buffer, null);
-                const r = light / Dungeon.FLOOR_OPACITY;
-                fov.shadowCast(coord, r, mapgeometry, light_buffer, Dungeon.isTileOpaque);
-            }
-        }
-    }
 }
 
 // Make sound "decay" each tick.

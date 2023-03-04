@@ -44,23 +44,23 @@ pub const Event = struct {
     pub const AList = std.ArrayList(@This());
 };
 
-pub const EV_SYMBOL_DISALLOW = Event{
-    .id = "ev_symbol_disallow",
-    .checked_when = .MapgenBeginning,
-    .global_incompats = &[_][]const u8{"ev_symbol_restrict_to_upper_shrine"},
-    .effect = &[_]Effect{.{ .SetPrefabGlobalRestriction = .{ .prefab = "SIN_symbol", .val = 0 } }},
-};
+// pub const EV_SYMBOL_DISALLOW = Event{
+//     .id = "ev_symbol_disallow",
+//     .checked_when = .MapgenBeginning,
+//     .global_incompats = &[_][]const u8{"ev_symbol_restrict_to_upper_shrine"},
+//     .effect = &[_]Effect{.{ .SetPrefabGlobalRestriction = .{ .prefab = "SIN_symbol", .val = 0 } }},
+// };
 
-pub const EV_SYMBOL_RESTRICT_TO_UPPER_SHRINE = Event{
-    .id = "ev_symbol_restrict_to_upper_shrine",
-    .checked_when = .MapgenBeginning,
-    .global_incompats = &[_][]const u8{"ev_symbol_disallow"},
-    .effect = &[_]Effect{.{ .AppendPrefabWhitelist = .{ .prefab = "SIN_symbol", .val = "6/Shrine" } }},
-};
+// pub const EV_SYMBOL_RESTRICT_TO_UPPER_SHRINE = Event{
+//     .id = "ev_symbol_restrict_to_upper_shrine",
+//     .checked_when = .MapgenBeginning,
+//     .global_incompats = &[_][]const u8{"ev_symbol_disallow"},
+//     .effect = &[_]Effect{.{ .AppendPrefabWhitelist = .{ .prefab = "SIN_symbol", .val = "6/Shrine" } }},
+// };
 
 pub const EVENTS = [_]struct { p: usize, v: *const Event }{
-    .{ .p = 30, .v = &EV_SYMBOL_DISALLOW },
-    .{ .p = 30, .v = &EV_SYMBOL_RESTRICT_TO_UPPER_SHRINE },
+    // .{ .p = 30, .v = &EV_SYMBOL_DISALLOW },
+    // .{ .p = 30, .v = &EV_SYMBOL_RESTRICT_TO_UPPER_SHRINE },
 };
 
 pub var completed_events: Event.AList = undefined;

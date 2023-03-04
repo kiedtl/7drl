@@ -44,7 +44,6 @@ const SpatterType = types.SpatterType;
 const TileType = types.TileType;
 const Consumable = items.Consumable;
 const SpatterArray = types.SpatterArray;
-const Stockpile = types.Stockpile;
 const ContainerArrayList = types.ContainerArrayList;
 const CoordArrayList = types.CoordArrayList;
 const Material = types.Material;
@@ -64,85 +63,7 @@ const EvocableList = items.EvocableList;
 const Cloak = items.Cloak;
 const Poster = literature.Poster;
 
-// Individual configurations.
-//
-// Deliberately kept separate from LevelConfigs because it applies as a whole
-// to all levels.
-//
-// TODO: some of these will eventually (when?) be moved to level configs.
-//
-// {{{
 const CONNECTIONS_MAX = 4;
-
-pub const TRAPS = &[_]*const Machine{
-    &surfaces.ParalysisGasTrap,
-    &surfaces.DisorientationGasTrap,
-    &surfaces.SeizureGasTrap,
-    &surfaces.BlindingGasTrap,
-};
-pub const TRAP_WEIGHTS = &[_]usize{ 2, 3, 2, 1 };
-
-pub const VaultType = enum(usize) {
-    Iron = 0,
-    Gold = 1,
-    Marble = 2,
-    Tavern = 3,
-    Cuprite = 4,
-    Obsidian = 5,
-};
-pub const VAULT_MATERIALS = [VAULT_KINDS]*const Material{
-    &materials.Rust,
-    &materials.Gold,
-    &materials.Marble,
-    &materials.PaintedConcrete,
-};
-pub const VAULT_DOORS = [VAULT_KINDS]*const Machine{
-    &surfaces.IronVaultDoor,
-    &surfaces.GoldVaultDoor,
-    &surfaces.MarbleVaultDoor,
-    &surfaces.TavernVaultDoor,
-};
-// zig fmt: off
-//
-pub const VAULT_LEVELS = [LEVELS][]const VaultType{
-    &.{                          }, // -1/Crypt/3
-    &.{        .Marble           }, // -1/Crypt/2
-    &.{        .Marble           }, // -1/Crypt
-    &.{ .Gold, .Marble           }, // -1/Prison
-    &.{ .Gold, .Marble           }, // -2/Prison
-    // &.{                          }, // -3/Laboratory/3
-    // &.{                          }, // -3/Laboratory/2
-    &.{                          }, // -3/Shrine
-    &.{ .Gold, .Marble, .Tavern  }, // -3/Laboratory
-    &.{ .Gold, .Marble, .Tavern  }, // -4/Prison
-    // &.{                          }, // -5/Caverns/3
-    // &.{                          }, // -5/Caverns/2
-    &.{                          }, // -5/Caverns
-    &.{ .Iron, .Marble, .Tavern  }, // -5/Prison
-    // &.{ .Iron, .Marble, .Tavern  }, // -6/Workshop/3
-    // &.{ .Iron,          .Tavern  }, // -6/Workshop/2
-    &.{                          }, // -6/Shrine
-    &.{ .Iron,          .Tavern  }, // -6/Workshop
-    &.{ .Iron,          .Tavern  }, // -7/Prison
-    &.{ .Iron                    }, // -8/Prison
-
-    // &.{                          }, // Tutorial
-};
-// zig fmt: on
-pub const VAULT_KINDS = 4;
-pub const VAULT_SUBROOMS = [VAULT_KINDS]?[]const u8{
-    null,
-    null,
-    "ANY_s_marble_vlts",
-    "ANY_s_tavern_vlts",
-};
-pub const VAULT_CROWD = [VAULT_KINDS]MinMax(usize){
-    minmax(usize, 7, 14),
-    minmax(usize, 7, 14),
-    minmax(usize, 1, 4),
-    minmax(usize, 14, 28),
-};
-// }}}
 
 // TODO: replace with MinMax
 const Range = struct { from: Coord, to: Coord };
@@ -415,7 +336,7 @@ const VALID_FEATURE_TILE_PATTERNS = [_][]const u8{
 };
 
 fn isTileAvailable(coord: Coord) bool {
-    return state.dungeon.at(coord).type == .Floor and state.dungeon.at(coord).mob == null and state.dungeon.at(coord).surface == null and state.dungeon.itemsAt(coord).len == 0;
+    return state.dungeon.at(coord).type == .Floor and state.dungeon.at(coord).mob == null and state.dungeon.at(coord).surface == null;
 }
 
 fn choosePoster(level: usize) ?*const Poster {
@@ -811,9 +732,6 @@ pub fn excavatePrefab(
                             .Stair => |dest| {
                                 state.dungeon.at(rc).surface = .{ .Stair = dest };
                             },
-                            .Item => |template| {
-                                state.dungeon.itemsAt(rc).append(items.createItemFromTemplate(template.*)) catch err.wat();
-                            },
                             .Mob => |mob| {
                                 _ = mobs.placeMob(allocator, mob, rc, .{});
                             },
@@ -864,20 +782,9 @@ pub fn excavatePrefab(
                 .HeavyLockedDoor => _place_machine(rc, &surfaces.HeavyLockedDoor),
                 .Door => placeDoor(rc, false),
                 .Brazier => _place_machine(rc, Configs[room.rect.start.z].light),
-                .ShallowWater => state.dungeon.at(rc).terrain = &surfaces.ShallowWaterTerrain,
                 .Bars => {
                     const p_ind = utils.findById(surfaces.props.items, Configs[room.rect.start.z].bars);
                     _ = placeProp(rc, &surfaces.props.items[p_ind.?]);
-                },
-                .Loot1 => {
-                    const drop_list = if (room.is_lair) &items.NIGHT_ITEM_DROPS else &items.ITEM_DROPS;
-                    const loot_item1 = _chooseLootItem(drop_list, minmax(usize, 60, 200), null);
-                    state.dungeon.itemsAt(rc).append(items.createItemFromTemplate(loot_item1)) catch err.wat();
-                },
-                .RareLoot => {
-                    const drop_list = if (room.is_lair) &items.NIGHT_ITEM_DROPS else &items.ITEM_DROPS;
-                    const rare_loot_item = _chooseLootItem(drop_list, minmax(usize, 0, 60), null);
-                    state.dungeon.itemsAt(rc).append(items.createItemFromTemplate(rare_loot_item)) catch err.wat();
                 },
                 .Corpse => {
                     if (state.dungeon.at(rc).mob != null) {
@@ -888,10 +795,6 @@ pub fn excavatePrefab(
                         prisoner.prisoner_status = Prisoner{ .of = .Necromancer };
                         prisoner.deinit();
                     }
-                },
-                .Ring => {
-                    const ring = items.createItem(Ring, chooseRing(room.is_lair));
-                    state.dungeon.itemsAt(rc).append(.{ .Ring = ring }) catch err.wat();
                 },
                 else => {},
             }
@@ -951,63 +854,6 @@ pub fn excavatePrefab(
             while (p_x < prison_end.x) : (p_x += 1) {
                 state.dungeon.at(Coord.new2(room.rect.start.z, p_x, p_y)).prison = true;
             }
-        }
-    }
-
-    if (fab.stockpile) |stockpile| {
-        const room_start = Coord.new2(
-            room.rect.start.z,
-            stockpile.start.x + room.rect.start.x + startx,
-            stockpile.start.y + room.rect.start.y + starty,
-        );
-        var stckpl = Stockpile{
-            .room = Rect{
-                .start = room_start,
-                .width = stockpile.width,
-                .height = stockpile.height,
-            },
-            .type = undefined,
-        };
-        const inferred = stckpl.inferType();
-        if (!inferred) {
-            std.log.err("{s}: Couldn't infer type for stockpile! (skipping)", .{fab.name.constSlice()});
-        } else {
-            state.stockpiles[room.rect.start.z].append(stckpl) catch err.wat();
-        }
-    }
-
-    if (fab.output) |output| {
-        const room_start = Coord.new2(
-            room.rect.start.z,
-            output.start.x + room.rect.start.x + startx,
-            output.start.y + room.rect.start.y + starty,
-        );
-        state.outputs[room.rect.start.z].append(Rect{
-            .start = room_start,
-            .width = output.width,
-            .height = output.height,
-        }) catch err.wat();
-    }
-
-    if (fab.input) |input| {
-        const room_start = Coord.new2(
-            room.rect.start.z,
-            input.start.x + room.rect.start.x + startx,
-            input.start.y + room.rect.start.y + starty,
-        );
-        var input_stckpl = Stockpile{
-            .room = Rect{
-                .start = room_start,
-                .width = input.width,
-                .height = input.height,
-            },
-            .type = undefined,
-        };
-        const inferred = input_stckpl.inferType();
-        if (!inferred) {
-            std.log.err("{s}: Couldn't infer type for input area! (skipping)", .{fab.name.constSlice()});
-        } else {
-            state.inputs[room.rect.start.z].append(input_stckpl) catch err.wat();
         }
     }
 
@@ -1076,14 +922,10 @@ pub fn resetLevel(level: usize) void {
             tile.spatter = SpatterArray.initFill(0);
 
             state.layout[level][y][x] = .Unknown;
-            state.dungeon.itemsAt(coord).clear();
         }
     }
 
     state.rooms[level].shrinkRetainingCapacity(0);
-    state.stockpiles[level].shrinkRetainingCapacity(0);
-    state.inputs[level].shrinkRetainingCapacity(0);
-    state.outputs[level].shrinkRetainingCapacity(0);
 
     state.dungeon.entries[level] = undefined;
     state.dungeon.stairs[level].clear();
@@ -1173,126 +1015,6 @@ pub fn validateLevel(level: usize, alloc: mem.Allocator) !void {
     }
 }
 
-pub fn selectLevelVault(level: usize) void {
-    if (VAULT_LEVELS[level].len == 0) {
-        return;
-    }
-
-    const vault_kind = rng.chooseUnweighted(VaultType, VAULT_LEVELS[level]);
-
-    var candidates = std.ArrayList(usize).init(state.GPA.allocator());
-    defer candidates.deinit();
-
-    for (state.rooms[level].items) |room, i| {
-        if (room.connections.len == 1 and
-            !room.is_lair and !room.is_extension_room and !room.has_subroom and room.prefab == null and
-            !state.mapgen_infos[level].has_vault)
-        {
-            candidates.append(i) catch err.wat();
-        }
-    }
-
-    if (candidates.items.len == 0) {
-        return;
-    }
-
-    const selected_room_i = rng.chooseUnweighted(usize, candidates.items);
-    state.rooms[level].items[selected_room_i].is_vault = vault_kind;
-}
-
-pub fn modifyRoomToLair(room: *Room) void {
-    room.is_lair = true;
-
-    // Reset room to walls
-    {
-        var y: usize = room.rect.start.y;
-        while (y < room.rect.end().y) : (y += 1) {
-            var x: usize = room.rect.start.x;
-            while (x < room.rect.end().x) : (x += 1) {
-                const coord = Coord.new2(room.rect.start.z, x, y);
-                state.dungeon.at(coord).type = .Wall;
-            }
-        }
-    }
-
-    const config = BlobConfig{
-        .type = .Floor,
-        .min_blob_width = minmax(usize, room.rect.width * 60 / 100, room.rect.width * 60 / 100),
-        .min_blob_height = minmax(usize, room.rect.height * 60 / 100, room.rect.height * 60 / 100),
-        .max_blob_width = minmax(usize, room.rect.width - 1, room.rect.width - 1),
-        .max_blob_height = minmax(usize, room.rect.height - 1, room.rect.height - 1),
-        .ca_rounds = 5,
-        .ca_percent_seeded = 50,
-        .ca_birth_params = "ffffftttt",
-        .ca_survival_params = "ffffttttt",
-    };
-
-    placeBlob(config, Coord.new2(room.rect.start.z, room.rect.start.x + 1, room.rect.start.y + 1));
-
-    var walkable_coord: Coord = undefined;
-
-    {
-        var y: usize = room.rect.start.y;
-        walkable_coord_search: while (y < room.rect.end().y) : (y += 1) {
-            var x: usize = room.rect.start.x;
-            while (x < room.rect.end().x) : (x += 1) {
-                const coord = Coord.new2(room.rect.start.z, x, y);
-                if (state.dungeon.at(coord).type == .Floor) {
-                    walkable_coord = coord;
-                    break :walkable_coord_search;
-                }
-            }
-        }
-    }
-
-    // FIXME: the door var should never, never be null...
-    //
-    if (room.connections.last().?.door != null) {
-        const path = astar.path(walkable_coord, room.connections.last().?.door.?, state.mapgeometry, struct {
-            pub fn f(c: Coord, opts: state.IsWalkableOptions) bool {
-                return opts.confines.intersects(&c.asRect(), 1);
-            }
-        }.f, .{ .confines = room.rect }, struct {
-            pub fn f(c: Coord, opts: state.IsWalkableOptions) usize {
-                if (!opts.confines.intersects(&c.asRect(), 0)) {
-                    return 10000;
-                }
-                return if (state.dungeon.at(c).type == .Wall) 10 else 0;
-            }
-        }.f, &CARDINAL_DIRECTIONS, state.GPA.allocator()) orelse return;
-        defer path.deinit();
-        for (path.items) |coord| {
-            state.dungeon.at(coord).type = .Floor;
-        }
-    }
-}
-
-pub fn selectLevelLairs(level: usize) void {
-    if (Configs[level].lair_max == 0)
-        return;
-
-    var candidates = std.ArrayList(usize).init(state.GPA.allocator());
-    defer candidates.deinit();
-
-    for (state.rooms[level].items) |room, i| {
-        if (room.connections.len == 1 and
-            !room.is_extension_room and !room.has_subroom and room.prefab == null and
-            room.rect.width >= 8 and room.rect.height >= 8)
-        {
-            candidates.append(i) catch err.wat();
-        }
-    }
-
-    if (candidates.items.len == 0)
-        return;
-    rng.shuffle(usize, candidates.items);
-
-    var lair_count = rng.range(usize, 1, math.min(candidates.items.len, Configs[level].lair_max));
-    while (lair_count > 0) : (lair_count -= 1) {
-        modifyRoomToLair(&state.rooms[level].items[candidates.items[lair_count - 1]]);
-    }
-}
-
 pub fn placeMoarCorridors(level: usize, alloc: mem.Allocator) void {
     var newrooms = Room.ArrayList.init(alloc);
     defer newrooms.deinit();
@@ -1304,9 +1026,7 @@ pub fn placeMoarCorridors(level: usize, alloc: mem.Allocator) void {
         const parent = &rooms.items[i];
 
         for (rooms.items) |*child| {
-            if (parent.is_lair or child.is_lair or
-                parent.is_vault != null or child.is_vault != null or
-                parent.connections.isFull() or
+            if (parent.connections.isFull() or
                 child.connections.isFull() or
                 parent.hasCloseConnectionTo(child.rect) or
                 child.hasCloseConnectionTo(parent.rect))
@@ -2049,200 +1769,6 @@ pub fn placeBSPRooms(level: usize, allocator: mem.Allocator) void {
     }
 }
 
-pub fn _strewItemsAround(room: *Room, max_items: usize) void {
-    var items_placed: usize = 0;
-
-    while (items_placed < max_items) : (items_placed += 1) {
-        var item_coord: Coord = undefined;
-        var tries: usize = 500;
-        while (true) {
-            item_coord = room.rect.randomCoord();
-
-            if (isTileAvailable(item_coord) and
-                !state.dungeon.at(item_coord).prison)
-                break; // we found a valid coord
-
-            // didn't find a coord, bail out
-            if (tries == 0) return;
-            tries -= 1;
-        }
-
-        const t = _chooseLootItem(&items.ITEM_DROPS, minmax(usize, 0, 200), null);
-        const item = items.createItemFromTemplate(t);
-        state.dungeon.itemsAt(item_coord).append(item) catch err.wat();
-    }
-}
-
-pub fn _placeLootChest(room: *Room, max_items: usize) void {
-    var tries: usize = 1000;
-    const container_coord = while (tries > 0) : (tries -= 1) {
-        var item_coord = room.rect.randomCoord();
-        if (isTileAvailable(item_coord) and
-            !state.dungeon.at(item_coord).prison and
-            utils.walkableNeighbors(item_coord, false, .{}) >= 3)
-        {
-            break item_coord;
-        }
-    } else return;
-
-    const container_template = rng.choose(
-        *const Container,
-        &surfaces.LOOT_CONTAINERS,
-        &surfaces.LOOT_CONTAINER_WEIGHTS,
-    ) catch err.wat();
-    placeContainer(container_coord, container_template);
-    const container_ref = state.dungeon.at(container_coord).surface.?.Container;
-    const item_class = container_ref.type.itemType().?;
-
-    var items_placed: usize = 0;
-
-    while (items_placed < max_items and !container_ref.isFull()) : (items_placed += 1) {
-        const chosen_item_class = rng.chooseUnweighted(ItemTemplate.Type, item_class);
-        const t = _chooseLootItem(&items.ITEM_DROPS, minmax(usize, 0, 200), chosen_item_class);
-        const item = items.createItemFromTemplate(t);
-        container_ref.items.append(item) catch err.wat();
-    }
-}
-
-pub fn placeItems(level: usize) void {
-    // Now drop items that the player could use.
-    for (state.rooms[level].items) |*room| {
-        // Don't place items if:
-        // - Room is a corridor. Loot in corridors is dumb (looking at you, DCSS).
-        // - Room is a lair of the night creatures.
-        // - Room has a subroom (might be too crowded!).
-        // - Room is a prefab and the prefab forbids items.
-        // - Random chance.
-        //
-        if (room.type == .Corridor or
-            room.has_subroom or room.is_lair or
-            (room.prefab != null and room.prefab.?.noitems) or
-            rng.tenin(25))
-        {
-            continue;
-        }
-
-        if (rng.onein(2)) {
-            // 1/8 chance to have chest full of rubbish
-            if (rng.onein(8)) {
-                _placeLootChest(room, 0);
-            } else {
-                _placeLootChest(room, rng.range(usize, 1, 3));
-            }
-
-            if (room.is_vault != null) {
-                _placeLootChest(room, rng.range(usize, 2, 4));
-                _placeLootChest(room, rng.range(usize, 2, 4));
-            }
-        } else {
-            const max_items = if (room.is_vault != null) rng.range(usize, 3, 7) else rng.range(usize, 1, 2);
-            _strewItemsAround(room, max_items);
-        }
-    }
-
-    // Now fill up containers, including any ones we placed earlier in this
-    // function
-    //
-    var containers = state.containers.iterator();
-    while (containers.next()) |container| {
-        if (container.coord.z != level) continue;
-        if (container.items.isFull()) continue;
-
-        // 1/3 chance to skip filling a container if it already has items
-        if (container.items.len > 0 and rng.onein(3)) continue;
-
-        // How much should we fill the container?
-        const fill = rng.rangeClumping(usize, 0, container.capacity - container.items.len, 2);
-
-        const maybe_item_list: ?[]const Prop = switch (container.type) {
-            .Drinkables => surfaces.bottle_props.items,
-            .Smackables => surfaces.weapon_props.items,
-            .Evocables => surfaces.tools_props.items,
-            .Utility => if (Configs[level].utility_items.*.len > 0) Configs[level].utility_items.* else null,
-            else => null,
-        };
-
-        if (maybe_item_list) |item_list| {
-            var item = &item_list[rng.range(usize, 0, item_list.len - 1)];
-            var i: usize = 0;
-            while (i < fill) : (i += 1) {
-                if (!rng.percent(container.item_repeat)) {
-                    item = &item_list[rng.range(usize, 0, item_list.len - 1)];
-                }
-
-                container.items.append(Item{ .Prop = item }) catch err.wat();
-            }
-        }
-    }
-}
-
-pub fn placeTraps(level: usize) void {
-    room_iter: for (state.rooms[level].items) |maproom| {
-        if (maproom.prefab) |rfb| if (rfb.notraps) continue;
-        if (maproom.has_subroom) continue; // Too cluttered
-        if (maproom.is_lair) continue;
-
-        const room = maproom.rect;
-
-        // Don't place traps in places where it's impossible to avoid
-        if (room.height == 1 or room.width == 1 or maproom.type != .Room)
-            continue;
-
-        if (!rng.percent(Configs[level].room_trapped_chance))
-            continue;
-
-        var tries: usize = 1000;
-        var trap_coord: Coord = undefined;
-
-        while (true) {
-            trap_coord = room.randomCoord();
-
-            if (isTileAvailable(trap_coord) and
-                !state.dungeon.at(trap_coord).prison and
-                state.dungeon.neighboringWalls(trap_coord, true) <= 1)
-            {
-                break; // we found a valid coord
-            }
-
-            // didn't find a coord, continue to the next room
-            if (tries == 0) continue :room_iter;
-            tries -= 1;
-        }
-
-        var trap = (rng.choose(*const Machine, TRAPS, TRAP_WEIGHTS) catch err.wat()).*;
-
-        var num_of_vents = rng.range(usize, 1, 3);
-        var v_tries: usize = 1000;
-        while (v_tries > 0 and num_of_vents > 0) : (v_tries -= 1) {
-            const vent = room.randomCoord();
-
-            var avg_dist: usize = undefined;
-            var count: usize = 0;
-            for (trap.props) |maybe_prop| if (maybe_prop) |prop| {
-                avg_dist += vent.distance(prop.coord);
-                count += 1;
-            };
-            avg_dist += vent.distance(trap_coord);
-            avg_dist /= (count + 1);
-
-            if (vent.distance(trap_coord) < 3 or
-                avg_dist < 4 or
-                state.dungeon.at(vent).surface != null or
-                state.dungeon.at(vent).type != .Floor)
-            {
-                continue;
-            }
-
-            state.dungeon.at(vent).type = .Floor;
-            const p_ind = utils.findById(surfaces.props.items, Configs[room.start.z].vent);
-            const prop = placeProp(vent, &surfaces.props.items[p_ind.?]);
-            trap.props[num_of_vents] = prop;
-            num_of_vents -= 1;
-        }
-        _place_machine(trap_coord, &trap);
-    }
-}
-
 pub fn placeMobs(level: usize, alloc: mem.Allocator) void {
     var level_mob_count: usize = 0;
 
@@ -2257,21 +1783,9 @@ pub fn placeMobs(level: usize, alloc: mem.Allocator) void {
         if (room.type == .Corridor and !Configs[level].allow_spawn_in_corridors) continue;
         if (room.rect.height * room.rect.width < 25) continue;
 
-        const vault_type: ?usize = if (room.is_vault) |v| @enumToInt(v) else null;
+        const max_crowd = rng.range(usize, 1, Configs[level].room_crowd_max);
 
-        const max_crowd = if (room.is_lair)
-            rng.range(usize, 1, 2)
-        else if (room.is_vault != null)
-            rng.range(usize, VAULT_CROWD[vault_type.?].min, VAULT_CROWD[vault_type.?].max)
-        else
-            rng.range(usize, 1, Configs[level].room_crowd_max);
-
-        const sptable: *MobSpawnInfo.AList = if (room.is_lair)
-            &spawn_tables_lairs[0]
-        else if (room.is_vault != null)
-            &spawn_tables_vaults[vault_type.?]
-        else
-            &spawn_tables[level];
+        const sptable: *MobSpawnInfo.AList = &spawn_tables[level];
 
         loop: while (room.mob_count < max_crowd) {
             const mob_spawn_info = rng.choose2(MobSpawnInfo, sptable.items, "weight") catch err.wat();
@@ -2280,7 +1794,7 @@ pub fn placeMobs(level: usize, alloc: mem.Allocator) void {
                 .{mob_spawn_info.id},
             );
 
-            var tries: usize = if (room.is_lair) 800 else 250;
+            var tries: usize = 250;
             while (tries > 0) : (tries -= 1) {
                 const post_coord = room.rect.randomCoord();
 
@@ -2411,129 +1925,13 @@ fn _placePropAlongRange(level: usize, where: Range, prop: *const Prop, max: usiz
     return placed;
 }
 
-pub fn setVaultFeatures(room: *Room) void {
-    const level = room.rect.start.z;
-
-    const wall_areas = computeWallAreas(&room.rect, true);
-    for (&wall_areas) |wall_area| {
-        var y: usize = wall_area.from.y;
-        while (y <= wall_area.to.y) : (y += 1) {
-            var x: usize = wall_area.from.x;
-            while (x <= wall_area.to.x) : (x += 1) {
-                const coord = Coord.new2(level, x, y);
-
-                // Material
-                state.dungeon.at(coord).material = VAULT_MATERIALS[@enumToInt(room.is_vault.?)];
-
-                // Door
-                // XXX: hacky, in the future we should store door coords.
-                if ((state.dungeon.at(coord).surface != null and
-                    state.dungeon.at(coord).surface.? == .Machine and
-                    mem.startsWith(u8, state.dungeon.at(coord).surface.?.Machine.id, "door")) or
-                    (state.dungeon.at(coord).surface == null and
-                    state.dungeon.at(coord).type == .Floor))
-                {
-                    assert(state.dungeon.at(coord).type == .Floor);
-                    if (state.dungeon.at(coord).surface != null) {
-                        state.dungeon.at(coord).surface.?.Machine.disabled = true;
-                        state.dungeon.at(coord).surface = null;
-                    }
-                    _place_machine(coord, VAULT_DOORS[@enumToInt(room.is_vault.?)]);
-                }
-            }
-        }
-    }
-
-    // Subroom, if any
-    if (VAULT_SUBROOMS[@enumToInt(room.is_vault.?)]) |fab_name| {
-        _ = placeSubroom(room, &Rect{
-            .start = Coord.new(0, 0),
-            .width = room.rect.width,
-            .height = room.rect.height,
-        }, state.GPA.allocator(), .{ .specific_id = fab_name });
-    }
-}
-
-pub fn setLairFeatures(room: *Room) void {
-    const level = room.rect.start.z;
-
-    // const wall_areas = computeWallAreas(&room.rect, true);
-    // for (&wall_areas) |wall_area| {
-    //     var y: usize = wall_area.from.y;
-    //     while (y <= wall_area.to.y) : (y += 1) {
-    //         var x: usize = wall_area.from.x;
-    //         while (x <= wall_area.to.x) : (x += 1) {
-    //             const coord = Coord.new2(level, x, y);
-    //             state.dungeon.at(coord).material = &materials.Slade;
-    //         }
-    //     }
-    // }
-
-    const door_c = room.connections.slice()[0].door.?;
-    if (state.dungeon.at(door_c).surface != null) {
-        state.dungeon.at(door_c).surface.?.Machine.disabled = true;
-        state.dungeon.at(door_c).surface = null;
-    }
-    _place_machine(door_c, &surfaces.SladeDoor);
-
-    var walkable_point: Coord = undefined;
-
-    // Set the entire room to rough slade
-    var y: usize = room.rect.start.y;
-    while (y < room.rect.end().y) : (y += 1) {
-        var x: usize = room.rect.start.x;
-        while (x < room.rect.end().x) : (x += 1) {
-            const coord = Coord.new2(level, x, y);
-            if (state.dungeon.at(coord).type == .Floor)
-                walkable_point = coord;
-            state.dungeon.at(coord).material = &materials.Slade;
-        }
-    }
-
-    // Set polished slade areas
-    var dijk = dijkstra.Dijkstra.init(walkable_point, state.mapgeometry, 100, dijkstra.dummyIsValid, .{}, state.GPA.allocator());
-    defer dijk.deinit();
-    while (dijk.next()) |child| {
-        if (child.asRect().overflowsLimit(&room.rect)) {
-            dijk.skip();
-        } else if (state.dungeon.at(child).type == .Wall) {
-            dijk.skip();
-            if (child.x > room.rect.start.x and child.x < room.rect.end().x - 1 and
-                child.y > room.rect.start.y and child.y < room.rect.end().y - 1)
-            {
-                state.dungeon.at(child).material = &materials.PolishedSlade;
-            }
-        }
-    }
-
-    // Find areas to place subroom
-    const subroom_area = Rect.new(
-        Coord.new2(room.rect.start.z, room.rect.start.x + 1, room.rect.start.y + 1),
-        room.rect.width - 1,
-        room.rect.height - 1,
-    );
-    var tries: usize = 300;
-    while (tries > 0) : (tries -= 1) {
-        const coord = subroom_area.randomCoord();
-        if (state.dungeon.at(coord).type == .Floor) {
-            if (placeSubroom(room, &Rect{
-                .start = Coord.new(coord.x - room.rect.start.x, coord.y - room.rect.start.y),
-                .width = room.rect.end().x - coord.x,
-                .height = room.rect.end().y - coord.y,
-            }, state.GPA.allocator(), .{ .for_lair = true })) {
-                break;
-            }
-        }
-    }
-}
-
 pub fn placeRoomFeatures(level: usize, alloc: mem.Allocator) void {
     for (state.rooms[level].items) |*room| {
         const rect = room.rect;
         const room_area = rect.height * rect.width;
 
         // Don't light up narrow corridors
-        if (room.rect.width > 2 and room.rect.height > 2 and !room.is_lair)
+        if (room.rect.width > 2 and room.rect.height > 2)
             placeLights(room);
 
         // Don't fill small rooms or corridors.
@@ -2545,13 +1943,6 @@ pub fn placeRoomFeatures(level: usize, alloc: mem.Allocator) void {
 
         if (room.prefab != null) continue;
         if (room.has_subroom and room_area < 25) continue;
-
-        if (room.is_vault != null) {
-            setVaultFeatures(room);
-        } else if (room.is_lair) {
-            setLairFeatures(room);
-            continue;
-        }
 
         const rect_end = rect.end();
 
@@ -2659,113 +2050,6 @@ pub fn placeRoomFeatures(level: usize, alloc: mem.Allocator) void {
     }
 }
 
-fn _setTerrain(coord: Coord, terrain: *const surfaces.Terrain) void {
-    if (mem.eql(u8, state.dungeon.at(coord).terrain.id, "t_default")) {
-        state.dungeon.at(coord).terrain = terrain;
-    }
-}
-
-pub fn placeRoomTerrain(level: usize) void {
-    var weights = StackBuffer(usize, surfaces.TERRAIN.len).init(null);
-    var terrains = StackBuffer(*const surfaces.Terrain, surfaces.TERRAIN.len).init(null);
-    for (&surfaces.TERRAIN) |terrain| {
-        var allowed_for_level = for (terrain.for_levels) |allowed_id| {
-            if (mem.eql(u8, allowed_id, state.levelinfo[level].id) or
-                mem.eql(u8, allowed_id, "ANY"))
-            {
-                break true;
-            }
-        } else false;
-
-        if (allowed_for_level) {
-            weights.append(terrain.weight) catch err.wat();
-            terrains.append(terrain) catch err.wat();
-        }
-    }
-
-    for (state.rooms[level].items) |*room| {
-        if (!room.is_lair and (rng.percent(@as(usize, 60)) or
-            room.rect.width <= 4 or room.rect.height <= 4))
-        {
-            continue;
-        }
-
-        const rect = room.rect;
-
-        const chosen_terrain = if (room.is_lair)
-            &surfaces.SladeTerrain
-        else
-            rng.choose(
-                *const surfaces.Terrain,
-                terrains.constSlice(),
-                weights.constSlice(),
-            ) catch err.wat();
-
-        switch (chosen_terrain.placement) {
-            .EntireRoom, .RoomPortion => {
-                var location = rect;
-                if (chosen_terrain.placement == .RoomPortion) {
-                    location = Rect{
-                        .width = rng.range(usize, rect.width / 2, rect.width),
-                        .height = rng.range(usize, rect.height / 2, rect.height),
-                        .start = rect.start,
-                    };
-                    location.start = location.start.add(Coord.new(
-                        rng.range(usize, 0, rect.width / 2),
-                        rng.range(usize, 0, rect.height / 2),
-                    ));
-                }
-
-                var y: usize = location.start.y;
-                while (y < location.end().y) : (y += 1) {
-                    var x: usize = location.start.x;
-                    while (x < location.end().x) : (x += 1) {
-                        const coord = Coord.new2(level, x, y);
-                        if (coord.x >= WIDTH or coord.y >= HEIGHT)
-                            continue;
-                        _setTerrain(coord, chosen_terrain);
-                    }
-                }
-            },
-            .RoomSpotty => |r| {
-                const count = math.min(r, (rect.width * rect.height) * r / 100);
-
-                var placed: usize = 0;
-                while (placed < count) {
-                    const coord = room.rect.randomCoord();
-                    if (state.dungeon.at(coord).type == .Floor and
-                        state.dungeon.at(coord).surface == null)
-                    {
-                        _setTerrain(coord, chosen_terrain);
-                        placed += 1;
-                    }
-                }
-            },
-            .RoomBlob => {
-                const config_min_width = minmax(usize, rect.width / 2, rect.width / 2);
-                const config_max_width = minmax(usize, rect.width, rect.width);
-                const config_min_height = minmax(usize, rect.height / 2, rect.height / 2);
-                const config_max_height = minmax(usize, rect.height, rect.height);
-
-                const config = BlobConfig{
-                    .type = null,
-                    .terrain = chosen_terrain,
-                    .min_blob_width = config_min_width,
-                    .min_blob_height = config_min_height,
-                    .max_blob_width = config_max_width,
-                    .max_blob_height = config_max_height,
-                    .ca_rounds = 5,
-                    .ca_percent_seeded = 55,
-                    .ca_birth_params = "ffffffttt",
-                    .ca_survival_params = "ffffttttt",
-                };
-
-                placeBlob(config, rect.start);
-            },
-        }
-    }
-}
-
 pub fn placeStair(level: usize, dest_floor: usize, alloc: mem.Allocator) void {
     // Find coord candidates for stairs placement. Usually this will be in a room,
     // but we're not forcing it because that wouldn't work well for Caverns.
@@ -2783,7 +2067,7 @@ pub fn placeStair(level: usize, dest_floor: usize, alloc: mem.Allocator) void {
                 };
 
                 if (state.dungeon.at(coord).prison or
-                    room != null and ((room.?.prefab != null and room.?.prefab.?.nostairs) or room.?.is_lair or room.?.has_stair or room.?.is_vault != null))
+                    room != null and ((room.?.prefab != null and room.?.prefab.?.nostairs) or room.?.has_stair))
                 {
                     continue :coord_search;
                 }
@@ -2909,7 +2193,7 @@ pub fn placeEntry(level: usize, alloc: mem.Allocator) void {
             };
 
             if (state.dungeon.at(coord).prison or
-                room != null and ((room.?.prefab != null and room.?.prefab.?.nostairs) or room.?.is_lair or room.?.has_stair or room.?.is_vault != null))
+                room != null and ((room.?.prefab != null and room.?.prefab.?.nostairs) or room.?.has_stair))
             {
                 continue :coord_search;
             }
@@ -2953,7 +2237,6 @@ pub const BlobConfig = struct {
     number: MinMax(usize) = MinMax(usize){ .min = 1, .max = 1 },
 
     type: ?TileType,
-    terrain: *const surfaces.Terrain = &surfaces.DefaultTerrain,
     min_blob_width: MinMax(usize),
     min_blob_height: MinMax(usize),
     max_blob_width: MinMax(usize),
@@ -2997,7 +2280,6 @@ fn placeBlob(cfg: BlobConfig, start: Coord) void {
 
             if (grid[blob_x][blob_y] != 0) {
                 if (cfg.type) |tiletype| state.dungeon.at(coord).type = tiletype;
-                _setTerrain(coord, cfg.terrain);
             }
         }
     }
@@ -3278,41 +2560,6 @@ fn levelFeaturePrisoners(_: usize, coord: Coord, _: *const Room, _: *const Prefa
         };
 }
 
-fn levelFeatureVials(_: usize, coord: Coord, _: *const Room, _: *const Prefab, _: mem.Allocator) void {
-    state.dungeon.itemsAt(coord).append(
-        Item{ .Vial = rng.choose(Vial, &Vial.VIALS, &Vial.VIAL_COMMONICITY) catch err.wat() },
-    ) catch err.wat();
-}
-
-// Randomly place a vial ore. If the Y coordinate is even, create a container and
-// fill it up halfway; otherwise, place only one item on the ground.
-fn levelFeatureOres(_: usize, coord: Coord, _: *const Room, _: *const Prefab, _: mem.Allocator) void {
-    var using_container: ?*Container = null;
-
-    if ((coord.y % 2) == 0) {
-        placeContainer(coord, &surfaces.VOreCrate);
-        using_container = state.dungeon.at(coord).surface.?.Container;
-    }
-
-    var placed: usize = rng.rangeClumping(usize, 3, 8, 2);
-    var tries: usize = 50;
-    while (tries > 0) : (tries -= 1) {
-        const v = rng.choose(Vial.OreAndVial, &Vial.VIAL_ORES, &Vial.VIAL_COMMONICITY) catch err.wat();
-
-        if (v.m) |material| {
-            const item = Item{ .Boulder = material };
-            if (using_container) |container| {
-                container.items.append(item) catch err.wat();
-                if (placed == 0) break;
-                placed -= 1;
-            } else {
-                state.dungeon.itemsAt(coord).append(item) catch err.wat();
-                break;
-            }
-        }
-    }
-}
-
 pub fn initLevel(level: usize) void {
     rng.useTemp(floor_seeds[level]);
 
@@ -3324,8 +2571,6 @@ pub fn initLevel(level: usize) void {
         initGif();
         placeBlobs(level);
         (Configs[level].mapgen_func)(level, state.GPA.allocator());
-        selectLevelLairs(level);
-        selectLevelVault(level);
         if (Configs[level].allow_extra_corridors)
             placeMoarCorridors(level, state.GPA.allocator());
         generateLayoutMap(level);
@@ -3358,9 +2603,6 @@ pub fn initLevel(level: usize) void {
 
         emitGif(level);
         placeRoomFeatures(level, state.GPA.allocator());
-        placeRoomTerrain(level);
-        placeTraps(level);
-        placeItems(level);
         placeMobs(level, state.GPA.allocator());
         setLevelMaterial(level);
 
@@ -3388,9 +2630,7 @@ pub const Room = struct {
     has_window: bool = false,
     has_stair: bool = false,
     mob_count: usize = 0,
-    is_vault: ?VaultType = null,
     is_extension_room: bool = false,
-    is_lair: bool = false,
 
     connections: ConnectionsBuf = ConnectionsBuf.init(null),
 
@@ -3455,9 +2695,6 @@ pub const Prefab = struct {
     prisons: StackBuffer(Rect, 16) = StackBuffer(Rect, 16).init(null),
     subroom_areas: StackBuffer(SubroomArea, 8) = StackBuffer(SubroomArea, 8).init(null),
     whitelist: StackBuffer(usize, LEVELS) = StackBuffer(usize, LEVELS).init(null),
-    stockpile: ?Rect = null,
-    input: ?Rect = null,
-    output: ?Rect = null,
 
     pub const MAX_NAME_SIZE = 64;
 
@@ -3500,7 +2737,6 @@ pub const Prefab = struct {
     };
 
     pub const Feature = union(enum) {
-        Item: *const items.ItemTemplate,
         Mob: *const mobs.MobTemplate,
         // Same as Mob, but with more options
         CMob: struct {
@@ -3620,9 +2856,6 @@ pub const Prefab = struct {
                     mem.set(?Connection, &f.connections, null);
                     mem.set(?Feature, &f.features, null);
                     mem.set(?FeatureMob, &f.mobs, null);
-                    f.stockpile = null;
-                    f.input = null;
-                    f.output = null;
                     f.tunneler_orientation = @TypeOf(f.tunneler_orientation).init(null);
                     f.tunneler_inset = false;
                 },
@@ -3758,63 +2991,6 @@ pub const Prefab = struct {
                     } else if (mem.eql(u8, key, "g_nopadding")) {
                         if (val.len != 0) return error.UnexpectedMetadataValue;
                         f.nopadding = true;
-                    } else if (mem.eql(u8, key, "stockpile")) {
-                        if (f.stockpile) |_| return error.StockpileAlreadyDefined;
-
-                        var rect_start = Coord.new(0, 0);
-                        var width: usize = 0;
-                        var height: usize = 0;
-
-                        var rect_start_tokens = mem.tokenize(u8, val, ",");
-                        const rect_start_str_a = rect_start_tokens.next() orelse return error.InvalidMetadataValue;
-                        const rect_start_str_b = rect_start_tokens.next() orelse return error.InvalidMetadataValue;
-                        rect_start.x = std.fmt.parseInt(usize, rect_start_str_a, 0) catch return error.InvalidMetadataValue;
-                        rect_start.y = std.fmt.parseInt(usize, rect_start_str_b, 0) catch return error.InvalidMetadataValue;
-
-                        const width_str = words.next() orelse return error.ExpectedMetadataValue;
-                        const height_str = words.next() orelse return error.ExpectedMetadataValue;
-                        width = std.fmt.parseInt(usize, width_str, 0) catch return error.InvalidMetadataValue;
-                        height = std.fmt.parseInt(usize, height_str, 0) catch return error.InvalidMetadataValue;
-
-                        f.stockpile = .{ .start = rect_start, .width = width, .height = height };
-                    } else if (mem.eql(u8, key, "output")) {
-                        if (f.output) |_| return error.OutputAreaAlreadyDefined;
-
-                        var rect_start = Coord.new(0, 0);
-                        var width: usize = 0;
-                        var height: usize = 0;
-
-                        var rect_start_tokens = mem.tokenize(u8, val, ",");
-                        const rect_start_str_a = rect_start_tokens.next() orelse return error.InvalidMetadataValue;
-                        const rect_start_str_b = rect_start_tokens.next() orelse return error.InvalidMetadataValue;
-                        rect_start.x = std.fmt.parseInt(usize, rect_start_str_a, 0) catch return error.InvalidMetadataValue;
-                        rect_start.y = std.fmt.parseInt(usize, rect_start_str_b, 0) catch return error.InvalidMetadataValue;
-
-                        const width_str = words.next() orelse return error.ExpectedMetadataValue;
-                        const height_str = words.next() orelse return error.ExpectedMetadataValue;
-                        width = std.fmt.parseInt(usize, width_str, 0) catch return error.InvalidMetadataValue;
-                        height = std.fmt.parseInt(usize, height_str, 0) catch return error.InvalidMetadataValue;
-
-                        f.output = .{ .start = rect_start, .width = width, .height = height };
-                    } else if (mem.eql(u8, key, "input")) {
-                        if (f.input) |_| return error.InputAreaAlreadyDefined;
-
-                        var rect_start = Coord.new(0, 0);
-                        var width: usize = 0;
-                        var height: usize = 0;
-
-                        var rect_start_tokens = mem.tokenize(u8, val, ",");
-                        const rect_start_str_a = rect_start_tokens.next() orelse return error.InvalidMetadataValue;
-                        const rect_start_str_b = rect_start_tokens.next() orelse return error.InvalidMetadataValue;
-                        rect_start.x = std.fmt.parseInt(usize, rect_start_str_a, 0) catch return error.InvalidMetadataValue;
-                        rect_start.y = std.fmt.parseInt(usize, rect_start_str_b, 0) catch return error.InvalidMetadataValue;
-
-                        const width_str = words.next() orelse return error.ExpectedMetadataValue;
-                        const height_str = words.next() orelse return error.ExpectedMetadataValue;
-                        width = std.fmt.parseInt(usize, width_str, 0) catch return error.InvalidMetadataValue;
-                        height = std.fmt.parseInt(usize, height_str, 0) catch return error.InvalidMetadataValue;
-
-                        f.input = .{ .start = rect_start, .width = width, .height = height };
                     } else return error.InvalidMetadataValue;
                 },
                 '@' => {
@@ -3897,13 +3073,6 @@ pub const Prefab = struct {
                                 },
                             };
                             mem.copy(u8, &f.features[identifier].?.Machine.id, id orelse return error.MalformedFeatureDefinition);
-                        },
-                        'i' => {
-                            if (items.findItemById(id orelse return error.MalformedFeatureDefinition)) |template| {
-                                f.features[identifier] = Feature{ .Item = template };
-                            } else {
-                                return error.NoSuchItem;
-                            }
                         },
                         else => return error.InvalidFeatureType,
                     }
@@ -4014,9 +3183,6 @@ pub fn readPrefabs(alloc: mem.Allocator) void {
 
         Prefab.parseAndLoad(fab_file.name, buf[0..read]) catch |e| {
             const msg = switch (e) {
-                error.StockpileAlreadyDefined => "Stockpile already defined for prefab",
-                error.OutputAreaAlreadyDefined => "Output area already defined for prefab",
-                error.InputAreaAlreadyDefined => "Input area already defined for prefab",
                 error.TooManyPrisons => "Too many prisons",
                 error.TooManySubrooms => "Too many subroom areas",
                 error.InvalidFabTile => "Invalid prefab tile",
@@ -4026,7 +3192,6 @@ pub fn readPrefabs(alloc: mem.Allocator) void {
                 error.InvalidFeatureType => "Unknown feature type encountered",
                 error.MalformedFeatureDefinition => "Invalid syntax for feature definition",
                 error.NoSuchMob => "Encountered non-existent mob id",
-                error.NoSuchItem => "Encountered non-existent item id",
                 error.MalformedMetadata => "Malformed metadata",
                 error.InvalidMetadataValue => "Invalid value for metadata",
                 error.UnexpectedMetadataValue => "Unexpected value for metadata",
@@ -4050,9 +3215,7 @@ pub const MobSpawnInfo = struct {
     const AList = std.ArrayList(@This());
 };
 pub var spawn_tables: [LEVELS]MobSpawnInfo.AList = undefined;
-pub var spawn_tables_vaults: [VAULT_KINDS]MobSpawnInfo.AList = undefined;
 pub var spawn_tables_stairs: [LEVELS]MobSpawnInfo.AList = undefined;
-pub var spawn_tables_lairs: [1]MobSpawnInfo.AList = undefined;
 
 pub fn readSpawnTables(alloc: mem.Allocator) void {
     const TmpMobSpawnData = struct {
@@ -4069,9 +3232,7 @@ pub fn readSpawnTables(alloc: mem.Allocator) void {
         backwards: bool = false,
     }{
         .{ .filename = "spawns.tsv", .sptable = &spawn_tables, .backwards = true },
-        .{ .filename = "spawns_vaults.tsv", .sptable = &spawn_tables_vaults },
         .{ .filename = "spawns_stairs.tsv", .sptable = &spawn_tables_stairs, .backwards = true },
-        .{ .filename = "spawns_lairs.tsv", .sptable = &spawn_tables_lairs, .backwards = true },
     };
 
     // We need `inline for` because the schema needs to be comptime...
@@ -4123,21 +3284,11 @@ pub fn freeSpawnTables(alloc: mem.Allocator) void {
         table.deinit();
     }
 
-    for (spawn_tables_vaults) |table| {
-        for (table.items) |spawn_info|
-            alloc.free(spawn_info.id);
-        table.deinit();
-    }
-
     for (spawn_tables_stairs) |table| {
         for (table.items) |spawn_info|
             alloc.free(spawn_info.id);
         table.deinit();
     }
-
-    for (spawn_tables_lairs[0].items) |spawn_info|
-        alloc.free(spawn_info.id);
-    spawn_tables_lairs[0].deinit();
 }
 
 pub const LevelConfig = struct {
@@ -4178,7 +3329,6 @@ pub const LevelConfig = struct {
     },
     room_crowd_max: usize = 2,
     level_crowd_max: ?usize = null,
-    lair_max: usize = 3,
 
     no_lights: bool = false,
     no_windows: bool = false,
@@ -4259,13 +3409,12 @@ pub fn createLevelConfig_LAB(comptime prefabs: []const []const u8) LevelConfig {
         },
         .prefab_chance = 60,
         .mapgen_func = tunneler.placeTunneledRooms,
-        .lair_max = 1,
 
         .level_features = [_]?LevelConfig.LevelFeatureFunc{
-            levelFeatureVials,
+            null,
             levelFeaturePrisoners,
             levelFeatureDormantConstruct,
-            levelFeatureOres,
+            null,
         },
 
         .material = &materials.Dobalene,
@@ -4319,7 +3468,6 @@ pub fn createLevelConfig_SIN(comptime width: usize) LevelConfig {
         .required_mobs = &[_]LevelConfig.RequiredMob{},
         .room_crowd_max = 1,
         .level_crowd_max = 18,
-        .lair_max = 0,
 
         .material = &materials.Marble,
         .no_windows = true,
@@ -4351,7 +3499,6 @@ pub fn createLevelConfig_CRY() LevelConfig {
         .min_room_height = 4,
         .max_room_width = 10,
         .max_room_height = 10,
-        .lair_max = 0,
 
         .level_features = [_]?LevelConfig.LevelFeatureFunc{ null, null, null, null },
 
@@ -4384,13 +3531,11 @@ pub fn createLevelConfig_WRK(comptime prefabs: []const []const u8) LevelConfig {
         .mapgen_func = tunneler.placeTunneledRooms,
 
         .level_features = [_]?LevelConfig.LevelFeatureFunc{
-            levelFeatureVials,
+            null,
             levelFeaturePrisoners,
             levelFeatureDormantConstruct,
-            levelFeatureOres,
+            null,
         },
-
-        .lair_max = 1,
 
         .material = &materials.Dobalene,
         .window_material = &materials.LabGlass,
@@ -4455,7 +3600,6 @@ pub const CAV_BASE_LEVELCONFIG = LevelConfig{
         .{
             .number = MinMax(usize){ .min = 10, .max = 15 },
             .type = null,
-            .terrain = &surfaces.DeadFungiTerrain,
             .min_blob_width = minmax(usize, 2, 8),
             .min_blob_height = minmax(usize, 2, 8),
             .max_blob_width = minmax(usize, 9, 20),
@@ -4484,35 +3628,11 @@ pub const CAV_BASE_LEVELCONFIG = LevelConfig{
     },
 };
 
-pub const TUT_BASE_LEVELCONFIG = LevelConfig{
-    .prefabs = &[_][]const u8{"TUT_basic"},
-    .mapgen_func = placeRandomRooms,
-    .prefab_chance = 100,
-    .mapgen_iters = 0,
-    .level_features = [_]?LevelConfig.LevelFeatureFunc{ null, null, null, null },
-};
-
 pub var Configs = [LEVELS]LevelConfig{
-    createLevelConfig_CRY(),
-    createLevelConfig_CRY(),
-    createLevelConfig_CRY(),
-    createLevelConfig_PRI(&[_][]const u8{"PRI_main_exit"}),
-    createLevelConfig_PRI(&[_][]const u8{}),
-    // createLevelConfig_LAB(&[_][]const u8{}),
-    // createLevelConfig_LAB(&[_][]const u8{}),
-    createLevelConfig_SIN(6),
-    createLevelConfig_LAB(&[_][]const u8{"LAB_s_SIN_stair_1"}),
-    createLevelConfig_PRI(&[_][]const u8{}),
-    // CAV_BASE_LEVELCONFIG,
-    // CAV_BASE_LEVELCONFIG,
-    CAV_BASE_LEVELCONFIG,
-    createLevelConfig_PRI(&[_][]const u8{}),
-    // createLevelConfig_WRK(&[_][]const u8{}),
-    // createLevelConfig_WRK(&[_][]const u8{}),
-    createLevelConfig_SIN(4),
-    createLevelConfig_WRK(&[_][]const u8{"WRK_s_SIN_stair_1"}),
-    createLevelConfig_PRI(&[_][]const u8{"PRI_s_NC"}),
     createLevelConfig_PRI(&[_][]const u8{"PRI_start"}),
-
-    // TUT_BASE_LEVELCONFIG,
+    createLevelConfig_PRI(&[_][]const u8{}),
+    createLevelConfig_PRI(&[_][]const u8{}),
+    createLevelConfig_PRI(&[_][]const u8{}),
+    createLevelConfig_PRI(&[_][]const u8{}),
+    createLevelConfig_PRI(&[_][]const u8{"PRI_main_exit"}),
 };

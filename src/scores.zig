@@ -89,16 +89,6 @@ pub const Info = struct {
                         } else {
                             break :b "Paid for their treachery";
                         }
-                    } else if (by.faction == .Night) {
-                        if (state.dungeon.terrainAt(state.player.coord) == &surfaces.SladeTerrain) {
-                            break :b "Died in darkness";
-                        } else {
-                            break :b "Fell into darkness";
-                        }
-                        // } else if (by.faction == .Revgenunkim) {
-                        //     break :b "Overcome by an ancient Power";
-                        // } else if (by.faction == .Holy) {
-                        //     break :b "Overcome by Hellfire";
                     } else {
                         break :b "Died on the journey";
                     }
@@ -164,7 +154,7 @@ pub const Info = struct {
                     } else if (state.player.coord.eq(coord)) {
                         s.surroundings[dy][dx] = '@';
                     } else {
-                        s.surroundings[dy][dx] = @intCast(u21, Tile.displayAs(coord, false, false).ch);
+                        s.surroundings[dy][dx] = @intCast(u21, Tile.displayAs(coord, false).ch);
                     }
                 }
             }
@@ -189,7 +179,7 @@ pub const Info = struct {
             const can_see = state.createMobList(false, true, state.player.coord.z, state.GPA.allocator());
             defer can_see.deinit();
             for (can_see.items) |mob| {
-                s.in_view_ids.append(mob.id) catch err.wat();
+                s.in_view_ids.append(mob.id) catch break;
                 s.in_view_names.append(BStr(32).init(mob.displayName())) catch err.wat();
             }
         }
@@ -467,7 +457,6 @@ fn exportTextMorgue(info: Info, alloc: mem.Allocator) !std.ArrayList(u8) {
                 .Prm => try w.print("<Prm> {s}", .{sname}),
                 .Equ => try w.print("<Equ> {s}", .{sname}),
                 .Tmp => try w.print("<Tmp> {s} ({})", .{ sname, statusinfo.duration.Tmp }),
-                .Ctx => try w.print("<Ctx> {s}", .{sname}),
             }
             try w.print("\n", .{});
         }

@@ -12,10 +12,8 @@ const combat = @import("combat.zig");
 const rng = @import("rng.zig");
 const literature = @import("literature.zig");
 const explosions = @import("explosions.zig");
-const tasks = @import("tasks.zig");
 const items = @import("items.zig");
 const utils = @import("utils.zig");
-const gas = @import("gas.zig");
 const mapgen = @import("mapgen.zig");
 const surfaces = @import("surfaces.zig");
 const spells = @import("spells.zig");
@@ -49,8 +47,6 @@ const HEIGHT = state.HEIGHT;
 const WIDTH = state.WIDTH;
 
 pub var wiz_lidless_eye: bool = false;
-
-pub var auto_wait_enabled: bool = false;
 
 pub const ConjAugment = enum(usize) {
     // Survival,
@@ -296,29 +292,6 @@ pub fn triggerStair(cur_stair: Coord, dest_floor: usize) bool {
     return true;
 }
 
-// Called on each player's turn.
-//
-// Checks if there's garbage/useless stuff where the player is standing, and
-// discards it if that's the case.
-//
-// Won't act if the player is currently spotted.
-pub fn checkForGarbage() void {
-    if (isPlayerSpotted()) {
-        return;
-    }
-
-    if (state.dungeon.itemsAt(state.player.coord).last()) |item| {
-        // Don't use item.isUseful() here because that would toss Boulders
-        // and Vials
-        //
-        if (item == .Prop) {
-            ui.Animation.apply(.{ .PopChar = .{ .coord = state.player.coord, .char = '/' } });
-            state.message(.Unimportant, "You toss the useless $g{s}$..", .{item.Prop.name});
-            _ = state.dungeon.itemsAt(state.player.coord).pop() catch err.wat();
-        }
-    }
-}
-
 // Iterate through each tile in FOV:
 // - Add them to memory.
 // - If they haven't existed in memory before as an .Immediate tile, check for
@@ -374,20 +347,12 @@ pub fn moveOrFight(direction: Direction) bool {
             if (!ui.drawYesNoPrompt("{s}", .{msg}))
                 return false;
         },
-        .Container => |c| if (c.items.len > 0) return rummageContainer(dest),
         else => {},
     };
 
     if (direction.is_diagonal() and state.player.isUnderStatus(.Disorient) != null) {
         ui.drawAlertThenLog("You cannot move or attack diagonally whilst disoriented!", .{});
         return false;
-    }
-
-    // Should we auto-rest?
-    if (shouldAutoWait()) {
-        state.player.rest();
-        state.message(.Info, "Auto-waited.", .{});
-        return true;
     }
 
     // Does the player want to stab or fight?
@@ -495,176 +460,10 @@ pub fn movementTriggersB(direction: Direction) void {
             } else |_| {};
         state.player.makeNoise(.Combat, .Loud);
     }
-    if (state.player.hasStatus(.RingExcision)) {
-        state.player.squad.?.trimMembers();
-        assert(state.player.squad.?.members.len > 0);
-        for (state.player.squad.?.members.constSlice()) |mob|
-            if (mem.eql(u8, mob.id, "spec_sword")) {
-                const target = utils.getFarthestWalkableCoord(direction, mob.coord, .{ .only_if_breaks_lof = true, .ignore_mobs = true });
-                const weapon = state.player.inventory.equipmentConst(.Weapon).*;
-                const damage = if (weapon) |w| combat.damageOfWeapon(state.player, w.Weapon, null).total * 3 else 1;
-                spells.BOLT_SPINNING_SWORD.use(mob, mob.coord, target, .{ .MP_cost = 0, .free = true, .power = damage });
-            };
-    }
     if (state.player.hasStatus(.RingConjuration)) {
         const target = utils.getFarthestWalkableCoord(direction, state.player.coord, .{ .only_if_breaks_lof = true });
         spells.BOLT_CONJURE.use(state.player, state.player.coord, target, .{ .MP_cost = 0, .free = true });
     }
-}
-
-pub fn rummageContainer(coord: Coord) bool {
-    const container = state.dungeon.at(coord).surface.?.Container;
-
-    assert(container.items.len > 0);
-
-    ui.Animation.apply(.{
-        .PopChar = .{ .coord = state.player.coord, .char = '?', .fg = colors.GOLD, .delay = 125 },
-    });
-
-    var found_goodies = false;
-    while (container.items.pop()) |item| {
-        if (item.isUseful())
-            found_goodies = true;
-
-        if (state.nextAvailableSpaceForItem(coord, state.GPA.allocator())) |spot| {
-            state.dungeon.itemsAt(spot).append(item) catch err.wat();
-        } else {
-            // FIXME: an item gets swallowed up here!
-            break;
-        }
-    } else |_| {}
-
-    if (container.items.len == 0) {
-        state.message(.Info, "You rummage through the {s}...", .{container.name});
-    } else {
-        state.message(.Info, "You rummage through part of the {s}...", .{container.name});
-    }
-
-    if (found_goodies) {
-        state.message(.Info, "You found some goodies!", .{});
-    } else {
-        state.message(.Unimportant, "You found some junk.", .{});
-    }
-
-    state.player.declareAction(.Interact);
-    return true;
-}
-
-pub fn equipItem(item: Item) bool {
-    switch (item) {
-        .Weapon, .Armor, .Cloak, .Aux => {
-            const slot = Mob.Inventory.EquSlot.slotFor(item);
-            if (state.player.inventory.equipment(slot).*) |old_item| {
-                state.player.dequipItem(slot, state.player.coord);
-                state.message(.Inventory, "You drop the {s}.", .{
-                    (old_item.longName() catch err.wat()).constSlice(),
-                });
-                state.player.declareAction(.Drop);
-            }
-
-            state.player.equipItem(slot, item);
-            state.message(.Inventory, "Equipped a {s}.", .{
-                (item.longName() catch err.wat()).constSlice(),
-            });
-            state.player.declareAction(.Use);
-        },
-        .Ring => |r| {
-            var empty_slot: ?Inventory.EquSlot = for (Inventory.RING_SLOTS) |slot| {
-                if (state.player.inventory.equipment(slot).* == null)
-                    break slot;
-            } else null;
-
-            if (empty_slot == null) {
-                const index = ui.drawChoicePrompt(
-                    "Replace what ring with the $b{s}$.?",
-                    .{r.name},
-                    &[Inventory.RING_SLOTS.len][]const u8{
-                        state.player.inventory.equipment(.Ring1).*.?.Ring.name,
-                        state.player.inventory.equipment(.Ring2).*.?.Ring.name,
-                        state.player.inventory.equipment(.Ring3).*.?.Ring.name,
-                        state.player.inventory.equipment(.Ring4).*.?.Ring.name,
-                        state.player.inventory.equipment(.Ring5).*.?.Ring.name,
-                    },
-                ) orelse return false;
-                empty_slot = Inventory.RING_SLOTS[index];
-            }
-
-            state.player.equipItem(empty_slot.?, item);
-            state.player.declareAction(.Use);
-            state.message(.Inventory, "Equipped the {s}.", .{
-                (item.longName() catch err.wat()).constSlice(),
-            });
-        },
-        else => unreachable,
-    }
-    return true;
-}
-
-pub fn grabItem() bool {
-    // if (state.dungeon.at(state.player.coord).surface) |surface| {
-    //     switch (surface) {
-    //         .Container => |_| return rummageContainer(state.player.coord),
-    //         else => {},
-    //     }
-    // }
-
-    const item = state.dungeon.itemsAt(state.player.coord).last() orelse {
-        ui.drawAlertThenLog("There's nothing here.", .{});
-        return false;
-    };
-
-    switch (item) {
-        .Ring, .Armor, .Cloak, .Aux, .Weapon => {
-            // Delete item on the ground
-            _ = state.dungeon.itemsAt(state.player.coord).pop() catch err.wat();
-
-            return equipItem(item);
-        },
-        else => {
-            if (state.player.inventory.pack.isFull()) {
-                ui.drawAlertThenLog("Your pack is full!", .{});
-                return false;
-            }
-
-            state.player.inventory.pack.append(item) catch err.wat();
-            state.player.declareAction(.Grab);
-            state.message(.Inventory, "Acquired: {s}", .{
-                (state.player.inventory.pack.last().?.longName() catch err.wat()).constSlice(),
-            });
-
-            // Delete item on the ground
-            _ = state.dungeon.itemsAt(state.player.coord).pop() catch err.wat();
-        },
-    }
-
-    ui.Animation.apply(.{ .PopChar = .{ .coord = state.player.coord, .char = '/' } });
-
-    return true;
-}
-
-pub fn throwItem(index: usize) bool {
-    assert(state.player.inventory.pack.len > index);
-
-    const item = state.player.inventory.pack.slice()[index];
-
-    if (item != .Projectile and !(item == .Consumable and item.Consumable.throwable)) {
-        ui.drawAlertThenLog("You can't throw that.", .{});
-        return false;
-    }
-
-    if (item == .Consumable and item.Consumable.hated_by_nc and hasAlignedNC()) {
-        ui.drawAlertThenLog("Using that would anger the Night!", .{});
-        return false;
-    }
-
-    const dest = ui.chooseCell(.{
-        .require_seen = true,
-        .targeter = .Trajectory,
-    }) orelse return false;
-
-    state.player.throwItem(&item, dest, state.GPA.allocator());
-    _ = state.player.removeItem(index) catch err.wat();
-    return true;
 }
 
 pub fn activateSurfaceItem(coord: Coord) bool {
@@ -717,105 +516,9 @@ pub fn activateSurfaceItem(coord: Coord) bool {
     return true;
 }
 
-pub fn useItem(index: usize) bool {
-    assert(state.player.inventory.pack.len > index);
-
-    const item = state.player.inventory.pack.slice()[index];
-    switch (item) {
-        .Ring, .Armor, .Cloak, .Aux, .Weapon => return equipItem(item),
-        .Consumable => |p| {
-            if (p.hated_by_nc and hasAlignedNC()) {
-                ui.drawAlertThenLog("You can't use that item (hated by the Night)!", .{});
-                return false;
-            }
-
-            if (p.is_potion and state.player.isUnderStatus(.Nausea) != null) {
-                ui.drawAlertThenLog("You can't drink potions while nauseated!", .{});
-                return false;
-            }
-
-            state.player.useConsumable(p, true) catch |e| switch (e) {
-                error.BadPosition => {
-                    ui.drawAlertThenLog("You can't use this kit here.", .{});
-                    return false;
-                },
-            };
-
-            scores.recordTaggedUsize(.ItemsUsed, .{ .I = item }, 1);
-        },
-        .Vial => |_| err.todo(),
-        .Projectile, .Boulder => {
-            ui.drawAlertThenLog("You want to *eat* that?", .{});
-            return false;
-        },
-        .Prop => |p| {
-            state.message(.Info, "You admire the {s}.", .{p.name});
-            return false;
-        },
-        .Evocable => |v| {
-            v.evoke(state.player) catch |e| {
-                switch (e) {
-                    error.NoCharges => ui.drawAlertThenLog("You can't use the {s} anymore!", .{v.name}),
-                    error.HatedByNight => ui.drawAlertThenLog("Using that would anger the Night!", .{}),
-                    else => {},
-                }
-                return false;
-            };
-
-            scores.recordTaggedUsize(.ItemsUsed, .{ .I = item }, 1);
-        },
-    }
-
-    switch (state.player.inventory.pack.slice()[index]) {
-        .Evocable => |e| if (e.delete_when_inert and e.charges == 0) {
-            _ = state.player.removeItem(index) catch err.wat();
-        },
-        else => _ = state.player.removeItem(index) catch err.wat(),
-    }
-
-    state.player.declareAction(.Use);
-
-    return true;
-}
-
-pub fn dropItem(index: usize) bool {
-    assert(state.player.inventory.pack.len > index);
-
-    if (state.nextAvailableSpaceForItem(state.player.coord, state.GPA.allocator())) |coord| {
-        const item = state.player.removeItem(index) catch err.wat();
-
-        const dropped = state.player.dropItem(item, coord);
-        assert(dropped);
-
-        state.message(.Inventory, "Dropped: {s}.", .{
-            (item.shortName() catch err.wat()).constSlice(),
-        });
-        return true;
-    } else {
-        ui.drawAlertThenLog("There's no nearby space to drop items.", .{});
-        return false;
-    }
-}
-
 pub fn memorizeTile(fc: Coord, mtype: state.MemoryTile.Type) void {
-    const memt = state.MemoryTile{ .tile = Tile.displayAs(fc, true, false), .type = mtype };
+    const memt = state.MemoryTile{ .tile = Tile.displayAs(fc, false), .type = mtype };
     state.memory.put(fc, memt) catch err.wat();
-}
-
-pub fn shouldAutoWait() bool {
-    if (!auto_wait_enabled)
-        return false;
-
-    if (state.player.hasStatus(.Pain))
-        return false;
-
-    if (state.player.turnsSpentMoving() < @intCast(usize, state.player.stat(.Sneak)))
-        return false;
-
-    if (isPlayerSpotted())
-        return false;
-
-    return true;
 }
 
 pub fn enemiesCanSee(coord: Coord) bool {
