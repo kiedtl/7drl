@@ -1212,7 +1212,7 @@ pub fn flee(mob: *Mob, alloc: mem.Allocator) void {
     if (mob.hasStatus(.Fear)) {
         mob.makeNoise(.Scream, .Loud);
     } else {
-        if (mob.faction == .Necromancer) { // Only shout if dungeon full of frens
+        if (mob.faction == .CaveGoblins) { // Only shout if dungeon full of frens
             mob.makeNoise(.Shout, .Loud);
         }
     }

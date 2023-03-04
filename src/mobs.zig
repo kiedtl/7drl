@@ -157,7 +157,7 @@ pub const PlayerTemplate = MobTemplate{
         .id = "player",
         .species = &HumanSpecies,
         .tile = '@',
-        .prisoner_status = .{ .of = .Necromancer },
+        .prisoner_status = .{ .of = .CaveGoblins },
         .ai = AI{
             .profession_name = "[this is a bug]",
             .profession_description = "[this is a bug]",
@@ -176,11 +176,6 @@ pub const PlayerTemplate = MobTemplate{
 
         .stats = .{ .Willpower = 4, .Missile = 60, .Evade = 10, .Vision = PLAYER_VISION },
     },
-    .weapon = &items.DaggerWeapon,
-    // .backup_weapon = &items.ShadowMaulWeapon,
-    // .armor = &items.FumingVestArmor,
-    //.evocables = &[_]Evocable{items.EldritchLanternEvoc},
-    //.cloak = &items.ThornsCloak,
 };
 
 pub const GoblinTemplate = MobTemplate{

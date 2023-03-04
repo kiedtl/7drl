@@ -383,11 +383,10 @@ fn readInput() !bool {
             },
             .F3 => blk: {
                 state.player.faction = switch (state.player.faction) {
-                    .Player => .Necromancer,
-                    .Necromancer => .CaveGoblins,
+                    .Player => .CaveGoblins,
                     .CaveGoblins => .Night,
                     .Night => .Player,
-                    .Revgenunkim => unreachable,
+                    .Necromancer, .Revgenunkim => unreachable,
                 };
                 state.message(.Info, "[wizard] new faction: {}", .{state.player.faction});
                 break :blk false;

@@ -198,7 +198,7 @@ pub const LockedDoor = Machine{
     .unpowered_sbg = colors.BG,
 
     .power_drain = 90,
-    .restricted_to = .Necromancer,
+    .restricted_to = .CaveGoblins,
     .powered_walkable = true,
     .unpowered_walkable = false,
     .flammability = 30, // also wooden door
@@ -320,7 +320,7 @@ pub const HeavyLockedDoor = Machine{
     .unpowered_sbg = colors.BG,
 
     .power_drain = 90,
-    .restricted_to = .Necromancer,
+    .restricted_to = .CaveGoblins,
     .powered_walkable = true,
     .unpowered_walkable = false,
     .powered_opacity = 0,

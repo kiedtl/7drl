@@ -1644,7 +1644,7 @@ pub const Mob = struct { // {{{
     species: *const Species,
     prefix: []const u8 = "",
     tile: u21,
-    faction: Faction = .Necromancer,
+    faction: Faction = .CaveGoblins,
 
     squad: ?*Squad = null,
     prisoner_status: ?Prisoner = null,
@@ -1706,9 +1706,9 @@ pub const Mob = struct { // {{{
     //                     an enemy.
     // deaf:               Whether it can hear sounds.
     //
-    base_night_vision: bool = false,
-    deg360_vision: bool = false,
-    no_show_fov: bool = false,
+    base_night_vision: bool = true,
+    deg360_vision: bool = true,
+    no_show_fov: bool = true,
     memory_duration: usize = 4,
     deaf: bool = false,
     max_HP: usize,

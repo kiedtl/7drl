@@ -69,7 +69,7 @@ pub const Alert = struct {
 };
 
 fn isMobNotable(mob: *Mob) bool {
-    return mob.faction == .Necromancer and mob.life_type == .Living;
+    return mob.faction == .CaveGoblins and mob.life_type == .Living;
 }
 
 pub fn tickCheckLevelHealth(level: usize) void {

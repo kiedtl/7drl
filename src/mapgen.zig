@@ -481,8 +481,6 @@ pub fn placePlayer(coord: Coord, alloc: mem.Allocator) void {
     // state.player.inventory.equipment(.Ring4).* = Item{ .Ring = items.createItem(Ring, items.LightningRing) };
     // state.player.inventory.equipment(.Ring5).* = Item{ .Ring = items.createItem(Ring, items.TeleportationRing) };
 
-    state.player.prisoner_status = Prisoner{ .of = .Necromancer };
-
     state.player.squad = Squad.allocNew();
     state.player.squad.?.leader = state.player;
 
@@ -790,7 +788,7 @@ pub fn excavatePrefab(
                         // and then move it here.
                     } else {
                         const prisoner = mobs.placeMob(allocator, &mobs.GoblinTemplate, rc, .{});
-                        prisoner.prisoner_status = Prisoner{ .of = .Necromancer };
+                        prisoner.prisoner_status = Prisoner{ .of = .CaveGoblins };
                         prisoner.deinit();
                     }
                 },
@@ -2488,7 +2486,7 @@ fn levelFeaturePrisonersMaybe(c: usize, coord: Coord, room: *const Room, prefab:
 fn levelFeaturePrisoners(_: usize, coord: Coord, _: *const Room, _: *const Prefab, alloc: mem.Allocator) void {
     const prisoner_t = rng.chooseUnweighted(mobs.MobTemplate, &mobs.PRISONERS);
     const prisoner = mobs.placeMob(alloc, &prisoner_t, coord, .{});
-    prisoner.prisoner_status = Prisoner{ .of = .Necromancer };
+    prisoner.prisoner_status = Prisoner{ .of = .CaveGoblins };
 
     for (&CARDINAL_DIRECTIONS) |direction|
         if (coord.move(direction, state.mapgeometry)) |neighbor| {
