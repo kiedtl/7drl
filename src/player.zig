@@ -290,13 +290,13 @@ pub fn tickRage() void {
     }
 
     if (state.player_rage == 0) {
-        if (enemies >= 4) {
+        if (enemies >= 4 and !state.player.hasStatus(.Exhausted)) {
             state.player_rage = 5;
             state.message(.Info, "You enter a martial trance.", .{});
         }
     } else {
         if (enemies == 0) {
-            state.player_rage = 0;
+            decreaseRage(true);
             state.message(.Info, "Your mind seems clear again.", .{});
         }
     }
@@ -313,6 +313,34 @@ pub fn tickRage() void {
         state.rage_command = rng.chooseUnweighted(Direction, direcs.constSlice());
         state.message(.Info, "$GThe Presence seems to speak.$. $o\"{s}!\"$.", .{state.rage_command.?.name2()});
     }
+}
+
+pub fn tickRageEnd() void {
+    if (state.player_rage == 0) return;
+    assert(state.rage_command != null);
+
+    const last_action = state.player.activities.current().?;
+    const d = if (last_action == .Move) last_action.Move else if (last_action == .Attack) last_action.Attack.direction else null;
+
+    if (d != null and d.? == state.rage_command.?) {
+        increaseRage();
+    } else {
+        decreaseRage(false);
+    }
+}
+
+pub fn increaseRage() void {
+    state.player_rage = math.min(30, state.player_rage + 1);
+}
+
+pub fn decreaseRage(exit_rage: bool) void {
+    if (exit_rage)
+        state.player_rage = 0
+    else
+        state.player_rage -= 1;
+
+    if (state.player_rage == 0)
+        state.player.addStatus(.Exhausted, 0, .{ .Tmp = 5 });
 }
 
 // Iterate through each tile in FOV:

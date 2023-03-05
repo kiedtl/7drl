@@ -560,6 +560,7 @@ fn tickGame() !void {
 
             if (mob == state.player) {
                 player.bookkeepingFOV();
+                player.tickRageEnd();
             }
 
             err.ensure(prev_energy > mob.energy, "{c} (phase: {}) did nothing during turn!", .{ mob, mob.ai.phase }) catch {
