@@ -212,6 +212,16 @@ pub const Direction = enum { // {{{
         };
     }
 
+    pub fn name2(self: Self) []const u8 {
+        return switch (self) {
+            .North => "Up",
+            .South => "Down",
+            .East => "Right",
+            .West => "Left",
+            else => unreachable,
+        };
+    }
+
     pub fn name(self: Self) []const u8 {
         return switch (self) {
             .North => "north",

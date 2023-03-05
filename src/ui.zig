@@ -997,31 +997,6 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
     y = _drawStrf(endx - lvlstr.len, y, endx, "$c{s}$.", .{lvlstr}, .{});
     y += 1;
 
-    // zig fmt: off
-    const stats = [_]struct { b: []const u8, a: []const u8, v: isize }{
-        .{ .b = "martial: ", .a = "",  .v = state.player.stat(.Martial) },
-        .{ .b = "vision:  ", .a = "",  .v = state.player.stat(.Vision) },
-        .{ .b = "rFire:  ",  .a = "%", .v = state.player.resistance(.rFire) },
-        .{ .b = "rElec:  ",  .a = "%", .v = state.player.resistance(.rElec) },
-    };
-    // zig fmt: on
-
-    for (stats) |stat, i| {
-        const v = utils.SignedFormatter{ .v = stat.v };
-        const x = switch (i % 2) {
-            0 => startx,
-            1 => endx - std.fmt.count("{s} {: >3}{s}", .{ stat.b, v, stat.a }),
-            //2 => startx + (@divTrunc(endx - startx, 3) * 2) + 1,
-            else => unreachable,
-        };
-        const c: u21 = if (stat.v < 0) 'p' else '.';
-        _ = _drawStrf(x, y, endx, "$c{s}$. ${u}{: >3}{s}$.", .{ stat.b, c, v, stat.a }, .{});
-        if (i % 2 == 1 or i == stats.len - 1)
-            y += 1;
-    }
-
-    y += 1;
-
     const conjuration = @intCast(usize, state.player.stat(.Conjuration));
     if (conjuration > 0) {
         y = _drawStrf(startx, y, endx, "$cConjuration:$. $b{}$.", .{conjuration}, .{});
@@ -1117,11 +1092,10 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
                 ring_active = ring_i;
         };
 
-    if (ring_active) |active_i| {
-        const ring = player.getRingByIndex(active_i).?;
-        y = _drawStrf(startx, y, endx, "Active pattern: $o{s}$.", .{ring.name}, .{});
+    if (state.rage_command) |command| {
+        y = _drawStrf(startx, y, endx, "Current command: $o{s}$.", .{command.name2()}, .{});
     } else {
-        y = _drawStr(startx, y, endx, "$bNo active pattern.$.", .{});
+        y = _drawStr(startx, y, endx, "$bNo command.$.", .{});
     }
     y += 1;
 

@@ -41,6 +41,7 @@ const Direction = types.Direction;
 const Inventory = types.Mob.Inventory;
 
 const DIRECTIONS = types.DIRECTIONS;
+const CARDINAL_DIRECTIONS = types.CARDINAL_DIRECTIONS;
 const DIAGONAL_DIRECTIONS = types.DIAGONAL_DIRECTIONS;
 const LEVELS = state.LEVELS;
 const HEIGHT = state.HEIGHT;
@@ -280,7 +281,7 @@ pub fn triggerStair(cur_stair: Coord, dest_floor: usize) bool {
     return true;
 }
 
-pub fn checkRage() void {
+pub fn tickRage() void {
     var enemies: usize = 0;
     for (&DIRECTIONS) |d| {
         if (utils.getHostileInDirection(state.player, d)) |_| {
@@ -291,11 +292,26 @@ pub fn checkRage() void {
     if (state.player_rage == 0) {
         if (enemies >= 4) {
             state.player_rage = 5;
+            state.message(.Info, "You enter a martial trance.", .{});
         }
     } else {
-        if (enemies < 4) {
+        if (enemies == 0) {
             state.player_rage = 0;
+            state.message(.Info, "Your mind seems clear again.", .{});
         }
+    }
+
+    if (state.player_rage == 0) {
+        state.rage_command = null;
+    } else {
+        var direcs = StackBuffer(Direction, 4).init(null);
+        for (&CARDINAL_DIRECTIONS) |d| if (state.player.coord.move(d, state.mapgeometry)) |n| {
+            const hostile = if (utils.getHostileInDirection(state.player, d)) true else |_| false;
+            if (hostile or state.is_walkable(n, .{ .mob = state.player }))
+                direcs.append(d) catch err.wat();
+        };
+        state.rage_command = rng.chooseUnweighted(Direction, direcs.constSlice());
+        state.message(.Info, "$GThe Presence seems to speak.$. $o\"{s}!\"$.", .{state.rage_command.?.name2()});
     }
 }
 

@@ -84,6 +84,7 @@ pub var state: GameState = .Game;
 pub var player: *Mob = undefined;
 pub var player_inited = false;
 pub var player_rage: usize = 0;
+pub var rage_command: ?Direction = null;
 
 pub const MAX_RAGE = 30;
 
