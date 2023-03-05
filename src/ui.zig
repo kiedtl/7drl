@@ -2978,7 +2978,7 @@ pub const Animation = union(enum) {
         coord: Coord,
         char: u32,
         fg: u32 = colors.LIGHT_CONCRETE,
-        delay: usize = 50,
+        delay: usize = 80,
     },
     BlinkChar: struct {
         coords: []const Coord,
@@ -3030,7 +3030,7 @@ pub const Animation = union(enum) {
 
     pub fn blinkMob(list: []const *Mob, char: u32, fg: ?u32, opts: struct {
         repeat: usize = 1,
-        delay: usize = 170,
+        delay: usize = 80,
     }) void {
         var coords = StackBuffer(Coord, 128).init(null);
         for (list) |mob| {

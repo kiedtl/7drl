@@ -87,6 +87,10 @@ pub var player_rage: usize = 0;
 pub var rage_command: ?Direction = null;
 
 pub const MAX_RAGE = 30;
+pub const RAGE_P_HEAL = 5;
+pub const RAGE_P_RAMPAGE = 10;
+pub const RAGE_P_ABIL = 20;
+pub const RAGE_P_ANGEL = 30;
 
 // zig fmt: off
 pub var night_rep = [types.Faction.TOTAL]isize{

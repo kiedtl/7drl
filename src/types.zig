@@ -2580,6 +2580,13 @@ pub const Mob = struct { // {{{
             ai.updateEnemyKnowledge(self, attacker, null);
         }
 
+        if (d.by_mob != null and d.by_mob.? == state.player and
+            state.player_rage >= state.RAGE_P_HEAL and amount > 0 and
+            self.life_type == .Living)
+        {
+            state.player.takeHealing(amount);
+        }
+
         // Record stats
         if (d.by_mob != null and d.by_mob == state.player) {
             scores.recordTaggedUsize(.DamageInflicted, .{ .M = self }, 1);
