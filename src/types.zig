@@ -927,6 +927,9 @@ pub const Faction = enum(usize) {
 pub const Status = enum {
     // Status list {{{
 
+    // Abilities
+    A_Bomb,
+
     // Ring status effects
     RingTeleportation, // No power field
     RingDamnation, // Power field == initial damage
@@ -1131,6 +1134,8 @@ pub const Status = enum {
 
     pub fn string(self: Status, mob: *const Mob) []const u8 { // {{{
         return switch (self) {
+            .A_Bomb => "ability: burnt offering",
+
             .RingTeleportation => "ring: teleportation",
             .RingDamnation => "ring: damnation",
             .RingElectrocution => "ring: electrocution",
@@ -1186,7 +1191,7 @@ pub const Status = enum {
 
     pub fn miniString(self: Status) ?[]const u8 { // {{{
         return switch (self) {
-            .RingTeleportation, .RingDamnation, .RingElectrocution, .RingExcision, .RingConjuration => null,
+            .A_Bomb, .RingTeleportation, .RingDamnation, .RingElectrocution, .RingExcision, .RingConjuration => null,
 
             .DetectHeat, .DetectElec, .CopperWeapon, .Riposte, .EtherealShield, .FumesVest, .Echolocation, .DayBlindness, .NightBlindness, .Explosive, .ExplosiveElec, .Lifespan => null,
 
@@ -2413,7 +2418,7 @@ pub const Mob = struct { // {{{
         recipient: *Mob,
         attacker_weapon: *const Weapon,
         opts: FightOptions,
-        remaining_bonus_attacks: usize,
+        _: usize,
     ) void {
         assert(!attacker.is_dead);
         assert(!recipient.is_dead);
@@ -2428,8 +2433,8 @@ pub const Mob = struct { // {{{
 
         const missed = !rng.percent(combat.chanceOfMeleeLanding(attacker, recipient));
         const evaded = rng.percent(combat.chanceOfAttackEvaded(recipient, attacker));
-        const acoord = attacker.coordMT(recipient.coord);
-        const rcoord = recipient.coordMT(acoord);
+        // const acoord = attacker.coordMT(recipient.coord);
+        // const rcoord = recipient.coordMT(acoord);
 
         const hit = opts.auto_hit or (!missed and !evaded);
 
@@ -2498,43 +2503,11 @@ pub const Mob = struct { // {{{
             else => {},
         }
 
-        // Daze stabbed mobs.
-        if (is_stab) {
-            recipient.addStatus(.Daze, 0, .{ .Tmp = rng.range(usize, 3, 5) });
-        }
-
-        // Knockback
-        if (attacker_weapon.knockback > 0) {
-            const d = acoord.closestDirectionTo(rcoord, state.mapgeometry);
-            combat.throwMob(attacker, recipient, d, attacker_weapon.knockback);
-        }
-
-        // Retaliation/spikes damage?
-        if (recipient.stat(.Spikes) > 0 and
-            attacker.coord.distance(recipient.coord) == 1)
-        {
-            ui.Animation.blinkMob(&.{recipient}, 'S', colors.LIGHT_STEEL_BLUE, .{});
-
-            attacker.takeDamage(.{
-                .amount = @intCast(usize, recipient.stat(.Spikes)),
-                .source = .Passive,
-                .by_mob = recipient,
-            }, .{
-                .strs = &[_]DamageStr{items._dmgstr(0, "spike", "spikes", "")},
-                .is_spikes = true,
-            });
-        }
-
-        // Bonus attacks?
-        if (!is_stab and remaining_bonus_attacks > 0 and !recipient.should_be_dead()) {
-            var newopts = opts;
-            newopts.auto_hit = false;
-            newopts.damage_bonus = 100;
-            newopts.is_bonus = true;
-
-            ui.Animation.blinkMob(&.{attacker}, 'M', colors.LIGHT_STEEL_BLUE, .{});
-
-            _fightWithWeapon(attacker, recipient, attacker_weapon, newopts, remaining_bonus_attacks - 1);
+        if (attacker.hasStatus(.A_Bomb)) {
+            recipient.addStatus(.Insane, 0, .Prm);
+            recipient.addStatus(.Lifespan, 0, .{ .Tmp = 5 });
+            recipient.addStatus(.Explosive, 200, .Prm);
+            recipient.immobile = true;
         }
     }
 

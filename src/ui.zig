@@ -56,7 +56,7 @@ pub const FRAMERATE = 1000 / 30;
 pub const LEFT_INFO_WIDTH: usize = 30;
 //pub const RIGHT_INFO_WIDTH: usize = 24;
 pub const LOG_HEIGHT = 6;
-pub const ZAP_HEIGHT = 15 + 4;
+pub const ZAP_HEIGHT = player.Ability.TOTAL + 4;
 pub const MAP_HEIGHT_R = 12;
 pub const MAP_WIDTH_R = 12;
 
@@ -997,36 +997,6 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
     y = _drawStrf(endx - lvlstr.len, y, endx, "$c{s}$.", .{lvlstr}, .{});
     y += 1;
 
-    const conjuration = @intCast(usize, state.player.stat(.Conjuration));
-    if (conjuration > 0) {
-        y = _drawStrf(startx, y, endx, "$cConjuration:$. $b{}$.", .{conjuration}, .{});
-
-        var augment_cnt: usize = 0;
-        var augment_buf = StackBuffer(player.ConjAugment, 64).init(null);
-        for (state.player_conj_augments) |aug| if (aug.received) {
-            augment_cnt += 1;
-            augment_buf.append(aug.a) catch err.wat();
-        };
-
-        std.sort.sort(player.ConjAugment, augment_buf.slice(), {}, struct {
-            pub fn f(_: void, a: player.ConjAugment, b: player.ConjAugment) bool {
-                return @enumToInt(a) < @enumToInt(b);
-            }
-        }.f);
-
-        var augment_str = StackBuffer(u8, 64).init(null);
-        for (augment_buf.constSlice()) |aug|
-            augment_str.appendSlice(aug.char()) catch err.wat();
-
-        if (augment_cnt == 0) {
-            y = _drawStrf(startx, y, endx, "$cNo augments$.", .{}, .{});
-        } else {
-            y = _drawStrf(startx, y, endx, "$cAugments($b{}$c)$.: {s}", .{ augment_cnt, augment_str.constSlice() }, .{});
-        }
-
-        y += 1;
-    }
-
     const bar_endx = endx - 9;
 
     // Use red if below 40% health
@@ -1931,75 +1901,75 @@ pub fn drawMessagesScreen() void {
     clearScreen();
 }
 
-// pub fn drawZapScreen() void {
-//     var selected: usize = 0;
-//     var r_error: ?player.RingError = null;
+pub fn drawZapScreen() void {
+    var selected: usize = 0;
+    // var r_error: ?player.RingError = null;
 
-//     while (true) {
-//         r_error = player.checkRing(selected);
+    while (true) {
+        // r_error = player.checkRing(selected);
 
-//         zap_win.container.clearLineTo(0, zap_win.container.width - 1, 0, .{ .ch = '▀', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
-//         zap_win.container.clearLineTo(0, zap_win.container.width - 1, zap_win.container.height - 1, .{ .ch = '▄', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
+        zap_win.container.clearLineTo(0, zap_win.container.width - 1, 0, .{ .ch = '▀', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
+        zap_win.container.clearLineTo(0, zap_win.container.width - 1, zap_win.container.height - 1, .{ .ch = '▄', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
 
-//         var ring_count: usize = 0;
-//         var y: usize = 0;
-//         var ring_i: usize = 0;
-//         while (ring_i <= 9) : (ring_i += 1) {
-//             if (player.getRingByIndex(ring_i)) |ring| {
-//                 ring_count = ring_i;
-//                 const arrow = if (selected == ring_i) "$c>" else "$.·";
-//                 y += zap_win.left.drawTextAtf(0, y, "{s} {s}$.", .{ arrow, ring.name }, .{});
+        var count: usize = 0;
+        var y: usize = 0;
+        for (state.player_abilities) |ability, i| {
+            if (ability.received) {
+                count = i;
+                const arrow = if (selected == i) "$c>" else "$.·";
+                y += zap_win.left.drawTextAtf(0, y, "{s} {s}$.", .{ arrow, ability.a.name() }, .{});
 
-//                 if (selected == ring_i) {
-//                     var ry: usize = 0;
-//                     const itemdesc = state.descriptions.get((Item{ .Ring = ring }).id().?).?;
-//                     zap_win.right.clear();
-//                     if (r_error) |r_err| {
-//                         ry += zap_win.right.drawTextAtf(0, ry, "$cCannot use$.: $b{s}$.\n\n", .{r_err.text1()}, .{});
-//                     } else {
-//                         const active: []const u8 = if (ring.activated) "$b(active)$.\n\n" else "Press $b<Enter>$. to use.\n\n";
-//                         ry += zap_win.right.drawTextAt(0, ry, active, .{});
-//                     }
-//                     ry += zap_win.right.drawTextAt(0, ry, itemdesc, .{});
-//                 }
-//             } else {
-//                 y += zap_win.left.drawTextAt(0, y, "$g· <none>$.", .{});
-//             }
-//         }
+                if (selected == i) {
+                    var ry: usize = 0;
+                    zap_win.right.clear();
+                    // if (r_error) |r_err| {
+                    //     ry += zap_win.right.drawTextAtf(0, ry, "$cCannot use$.: $b{s}$.\n\n", .{r_err.text1()}, .{});
+                    // } else {
+                    const is_active = state.player.hasStatus(ability.a.statusInfo().s);
+                    const active: []const u8 = if (is_active) "$b(active)$.\n\n" else "Press $b<Enter>$. to use.\n\n";
+                    ry += zap_win.right.drawTextAt(0, ry, active, .{});
+                    // }
+                    ry += zap_win.right.drawTextAt(0, ry, ability.a.description(), .{});
+                }
+            } else {
+                y += zap_win.left.drawTextAt(0, y, "$g· <none>$.", .{});
+            }
+        }
 
-//         zap_win.container.renderFullyW(.Zap);
+        zap_win.container.renderFullyW(.Zap);
 
-//         display.present();
+        display.present();
 
-//         switch (display.waitForEvent(null) catch err.wat()) {
-//             .Quit => {
-//                 state.state = .Quit;
-//                 break;
-//             },
-//             .Key => |k| switch (k) {
-//                 .CtrlC, .CtrlG, .Esc => break,
-//                 .ArrowUp => selected -|= 1,
-//                 .ArrowDown => selected = math.min(ring_count, selected + 1),
-//                 .Enter => if (r_error == null) {
-//                     clearScreen();
-//                     player.beginUsingRing(selected);
-//                     break;
-//                 },
-//                 else => {},
-//             },
-//             .Char => |c| switch (c) {
-//                 'w', 'k' => selected -|= 1,
-//                 'x', 'j' => selected = math.min(ring_count, selected + 1),
-//                 else => {},
-//             },
-//             else => {},
-//         }
-//     }
+        switch (display.waitForEvent(null) catch err.wat()) {
+            .Quit => {
+                state.state = .Quit;
+                break;
+            },
+            .Key => |k| switch (k) {
+                .CtrlC, .CtrlG, .Esc => break,
+                .ArrowUp => selected -|= 1,
+                .ArrowDown => selected = math.min(count, selected + 1),
+                .Enter => if (true) { //r_error == null) {
+                    clearScreen();
+                    const s = state.player_abilities[selected].a.statusInfo();
+                    state.player.addStatus(s.s, 0, .{ .Tmp = s.d });
+                    break;
+                },
+                else => {},
+            },
+            .Char => |c| switch (c) {
+                'w', 'k' => selected -|= 1,
+                'x', 'j' => selected = math.min(count, selected + 1),
+                else => {},
+            },
+            else => {},
+        }
+    }
 
-//     // FIXME: remove once all of ui.* is converted to subconsole system and
-//     // artifacts are auto-cleared
-//     clearScreen();
-// }
+    // FIXME: remove once all of ui.* is converted to subconsole system and
+    // artifacts are auto-cleared
+    clearScreen();
+}
 
 // Examine mode {{{
 pub const ExamineTileFocus = enum { Surface, Mob };

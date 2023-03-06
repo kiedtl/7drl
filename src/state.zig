@@ -55,8 +55,8 @@ const GeneratorCtx = @import("generators.zig").GeneratorCtx;
 pub const GameState = union(enum) { Game, Win, Lose, Quit };
 pub const Layout = union(enum) { Unknown, Room: usize };
 
-pub const HEIGHT = 120;
-pub const WIDTH = 120;
+pub const HEIGHT = 100;
+pub const WIDTH = 100;
 pub const LEVELS = 6;
 pub const PLAYER_STARTING_LEVEL = 0;
 
@@ -81,16 +81,6 @@ pub const mapgeometry = Coord.new2(LEVELS, WIDTH, HEIGHT);
 pub var dungeon: *Dungeon = undefined;
 pub var layout: [LEVELS][HEIGHT][WIDTH]Layout = [1][HEIGHT][WIDTH]Layout{[1][WIDTH]Layout{[1]Layout{.Unknown} ** WIDTH} ** HEIGHT} ** LEVELS;
 pub var state: GameState = .Game;
-pub var player: *Mob = undefined;
-pub var player_inited = false;
-pub var player_rage: usize = 0;
-pub var rage_command: ?Direction = null;
-
-pub const MAX_RAGE = 30;
-pub const RAGE_P_HEAL = 5;
-pub const RAGE_P_RAMPAGE = 10;
-pub const RAGE_P_ABIL = 20;
-pub const RAGE_P_ANGEL = 30;
 
 // zig fmt: off
 pub var night_rep = [types.Faction.TOTAL]isize{
@@ -122,7 +112,18 @@ pub const LevelInfo = struct {
 pub var levelinfo: [LEVELS]LevelInfo = undefined;
 
 pub var player_upgrades: [3]player_m.PlayerUpgradeInfo = undefined;
-pub var player_conj_augments: [player_m.ConjAugment.TOTAL]player_m.ConjAugmentInfo = undefined;
+pub var player_abilities: [player_m.Ability.TOTAL]player_m.AbilityInfo = undefined;
+pub var player: *Mob = undefined;
+pub var player_inited = false;
+pub var player_rage: usize = 0;
+pub var rage_command: ?Direction = null;
+pub var next_ability_at: usize = 10;
+
+pub const MAX_RAGE = 30;
+pub const RAGE_P_HEAL = 5;
+pub const RAGE_P_RAMPAGE = 10;
+pub const RAGE_P_ABIL = 20;
+pub const RAGE_P_ANGEL = 30;
 
 // Cached return value of player.isPlayerSpotted()
 pub var player_is_spotted: struct {

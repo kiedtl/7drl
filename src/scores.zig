@@ -45,10 +45,8 @@ pub const Info = struct {
     inventory_ids: StackBuffer([]const u8, Mob.Inventory.PACK_SIZE),
     inventory_names: StackBuffer(BStr(128), Mob.Inventory.PACK_SIZE),
     equipment: StackBuffer(Equipment, Mob.Inventory.EQU_SLOT_SIZE),
-    aptitudes_names: StackBuffer([]const u8, player.PlayerUpgrade.TOTAL),
-    aptitudes_descs: StackBuffer([]const u8, player.PlayerUpgrade.TOTAL),
-    augments_names: StackBuffer([]const u8, player.ConjAugment.TOTAL),
-    augments_descs: StackBuffer([]const u8, player.ConjAugment.TOTAL),
+    ability_names: StackBuffer([]const u8, player.Ability.TOTAL),
+    ability_descs: StackBuffer([]const u8, player.Ability.TOTAL),
 
     pub const MESSAGE_COUNT = 30;
     pub const SURROUND_RADIUS = 20;
@@ -203,18 +201,11 @@ pub const Info = struct {
             }) catch err.wat();
         }
 
-        s.aptitudes_names.reinit(null);
-        s.aptitudes_descs.reinit(null);
-        for (state.player_upgrades) |upgr| if (upgr.recieved) {
-            s.aptitudes_names.append(upgr.upgrade.name()) catch err.wat();
-            s.aptitudes_descs.append(upgr.upgrade.description()) catch err.wat();
-        };
-
-        s.augments_names.reinit(null);
-        s.augments_descs.reinit(null);
-        for (state.player_conj_augments) |aug| if (aug.received) {
-            s.augments_names.append(aug.a.name()) catch err.wat();
-            s.augments_descs.append(aug.a.description()) catch err.wat();
+        s.ability_names.reinit(null);
+        s.ability_descs.reinit(null);
+        for (state.player_abilities) |aug| if (aug.received) {
+            s.ability_names.append(aug.a.name()) catch err.wat();
+            s.ability_descs.append(aug.a.description()) catch err.wat();
         };
 
         return s;
@@ -424,19 +415,10 @@ fn exportTextMorgue(info: Info, alloc: mem.Allocator) !std.ArrayList(u8) {
     }
     try w.print("\n", .{});
 
-    if (info.aptitudes_names.len > 0) {
-        try w.print("Aptitudes:\n", .{});
-        for (info.aptitudes_names.constSlice()) |apt, i|
-            try w.print("- [{s}] {s}\n", .{ apt, info.aptitudes_descs.data[i] });
-    } else {
-        try w.print("Your memory was still clouded.\n", .{});
-    }
-    try w.print("\n", .{});
-
-    if (info.augments_names.len > 0) {
-        try w.print("Conjuration Augments:\n", .{});
-        for (info.augments_names.constSlice()) |apt, i|
-            try w.print("- [{s}] {s}\n", .{ apt, info.augments_descs.data[i] });
+    if (info.ability_names.len > 0) {
+        try w.print("Abilities:\n", .{});
+        for (info.ability_names.constSlice()) |apt, i|
+            try w.print("- [{s}] {s}\n", .{ apt, info.ability_descs.data[i] });
         try w.print("\n", .{});
     }
 

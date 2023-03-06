@@ -49,162 +49,55 @@ const WIDTH = state.WIDTH;
 
 pub var wiz_lidless_eye: bool = false;
 
-pub const ConjAugment = enum(usize) {
-    // Survival,
-    Melee = 0,
-    Evade = 1,
-    WallDisintegrate1 = 2,
-    WallDisintegrate2 = 3,
-    UndeadBloodthirst = 4,
-    rElec_25 = 5,
-    rElec_50 = 6,
-    rFire_25 = 7,
-    rFire_50 = 8,
+pub const Ability = enum(usize) {
+    Bomb = 0,
 
     pub const TOTAL = std.meta.fields(@This()).len;
 
-    pub fn name(self: ConjAugment) []const u8 {
+    pub fn statusInfo(self: Ability) struct { s: Status, d: usize } {
         return switch (self) {
-            .WallDisintegrate1 => "Wall Disintegration [1]",
-            .WallDisintegrate2 => "Wall Disintegration [2]",
-            .rFire_25 => "rFire+25",
-            .rFire_50 => "rFire+50",
-            .rElec_25 => "rElec+25",
-            .rElec_50 => "rElec+50",
-            .UndeadBloodthirst => "Undead Bloodthirst",
-            .Melee => "+Melee",
-            .Evade => "+Evasion",
+            .Bomb => .{ .s = .A_Bomb, .d = 4 },
         };
     }
 
-    pub fn char(self: ConjAugment) []const u8 {
+    pub fn name(self: Ability) []const u8 {
         return switch (self) {
-            // .Survival => "Opposing spectral sabres will not always destroy your own. (TODO: update)",
-            .WallDisintegrate1 => "$aw$.",
-            .WallDisintegrate2 => "$aw+$.",
-            .rFire_25 => "$rF$.",
-            .rFire_50 => "$rF+$.",
-            .rElec_25 => "$bE$.",
-            .rElec_50 => "$bE+$.",
-            .UndeadBloodthirst => "u",
-            .Melee => "m",
-            .Evade => "v",
+            .Bomb => "Burnt Offering",
         };
     }
 
-    pub fn description(self: ConjAugment) []const u8 {
+    pub fn char(self: Ability) []const u8 {
         return switch (self) {
-            // .Survival => "Opposing spectral sabres will not always destroy your own. (TODO: update)",
-            .WallDisintegrate1 => "A single nearby wall disintegrates into a new sabre when there are other sabres in your vision.",
-            .WallDisintegrate2 => "Two nearby walls disintegrate into new sabres when there are other sabres in your vision.",
-            .rFire_25 => "Your sabres possess +25% rFire.",
-            .rFire_50 => "Your sabres possess +50% rFire.",
-            .rElec_25 => "Your sabres possess +25% rElec.",
-            .rElec_50 => "Your sabres possess +50% rElec.",
-            .UndeadBloodthirst => "A new volley of sabres spawn when you see a hostile undead die.",
-            .Melee => "Your sabres possess +25% Melee.",
-            .Evade => "Your sabres possess +25% Evade.",
+            .Bomb => "b",
+        };
+    }
+
+    pub fn description(self: Ability) []const u8 {
+        return switch (self) {
+            .Bomb => "Attacked enemies become insane, stationary, and explosive.",
         };
     }
 };
 
-pub const ConjAugmentInfo = struct { received: bool, a: ConjAugment };
-pub const ConjAugmentEntry = struct { w: usize, a: ConjAugment };
+pub const AbilityInfo = struct { received: bool, a: Ability };
+pub const AbilityEntry = struct { w: usize, a: Ability };
 
-pub const CONJ_AUGMENT_DROPS = [_]ConjAugmentEntry{
-    // .{ .w = 99, .a = .Survival },
-    .{ .w = 99, .a = .WallDisintegrate1 },
-    .{ .w = 25, .a = .WallDisintegrate2 },
-    .{ .w = 50, .a = .rFire_25 },
-    .{ .w = 50, .a = .rFire_50 },
-    .{ .w = 99, .a = .rElec_25 },
-    .{ .w = 99, .a = .rElec_50 },
-    .{ .w = 50, .a = .UndeadBloodthirst },
-    .{ .w = 99, .a = .Melee },
-    .{ .w = 50, .a = .Evade },
-};
-
-pub const PlayerUpgradeInfo = struct {
-    recieved: bool = false,
-    upgrade: PlayerUpgrade,
-};
-
-pub const PlayerUpgrade = enum {
-    Agile,
-    OI_Enraged,
-    Healthy,
-    Will,
-    Echolocating,
-
-    pub const TOTAL = std.meta.fields(@This()).len;
-    pub const UPGRADES = [_]PlayerUpgrade{ .Agile, .OI_Enraged, .Healthy, .Will, .Echolocating };
-
-    pub fn name(self: PlayerUpgrade) []const u8 {
-        return switch (self) {
-            .Agile => "Agility",
-            .OI_Enraged => "Inner Rage",
-            .Healthy => "Robust",
-            .Will => "Hardened Will",
-            .Echolocating => "Echolocation",
-        };
-    }
-
-    pub fn announce(self: PlayerUpgrade) []const u8 {
-        return switch (self) {
-            .Agile => "You are good at evading blows.",
-            .OI_Enraged => "You feel hatred building up inside.",
-            .Healthy => "You are unusually robust.",
-            .Will => "Your will hardens.",
-            .Echolocating => "Your sense of hearing becomes acute.",
-        };
-    }
-
-    pub fn description(self: PlayerUpgrade) []const u8 {
-        return switch (self) {
-            .Agile => "You have a +20% dodging bonus.",
-            .OI_Enraged => "You become enraged when badly hurt.",
-            .Healthy => "You have 50% more health than usual.",
-            .Will => "You have 3 extra pips of willpower.",
-            .Echolocating => "You passively echolocate areas around sound.",
-        };
-    }
-
-    pub fn implement(self: PlayerUpgrade) void {
-        switch (self) {
-            .Agile => state.player.stats.Evade += 10,
-            .OI_Enraged => state.player.ai.flee_effect = .{
-                .status = .Enraged,
-                .duration = .{ .Tmp = 10 },
-                .exhausting = true,
-            },
-            .Healthy => state.player.max_HP = state.player.max_HP * 150 / 100,
-            .Will => state.player.stats.Willpower += 3,
-            .Echolocating => state.player.addStatus(.Echolocation, 7, .Prm),
-        }
-    }
+pub const CONJ_AUGMENT_DROPS = [_]AbilityEntry{
+    .{ .w = 99, .a = .Bomb },
 };
 
 pub fn choosePlayerUpgrades() void {
-    var upgrades = PlayerUpgrade.UPGRADES;
-    rng.shuffle(PlayerUpgrade, &upgrades);
-
-    var i: usize = 0;
-    for (state.levelinfo) |level| if (level.upgr) {
-        state.player_upgrades[i] = .{ .recieved = false, .upgrade = upgrades[i] };
-        i += 1;
-    };
-
-    var augments = StackBuffer(ConjAugmentEntry, ConjAugment.TOTAL).init(&CONJ_AUGMENT_DROPS);
-    for (state.player_conj_augments) |*entry| {
+    var augments = StackBuffer(AbilityEntry, Ability.TOTAL).init(&CONJ_AUGMENT_DROPS);
+    for (state.player_abilities) |*entry| {
         // Choose an augment...
         //
-        const augment = rng.choose2(ConjAugmentEntry, augments.constSlice(), "w") catch err.wat();
+        const augment = rng.choose2(AbilityEntry, augments.constSlice(), "w") catch err.wat();
         entry.* = .{ .received = false, .a = augment.a };
 
         // ...and then delete that entry to avoid it being given again
         //
         const index = augments.linearSearch(augment, struct {
-            pub fn f(a: ConjAugmentEntry, b: ConjAugmentEntry) bool {
+            pub fn f(a: AbilityEntry, b: AbilityEntry) bool {
                 return a.a == b.a;
             }
         }.f).?;
@@ -212,8 +105,8 @@ pub fn choosePlayerUpgrades() void {
     }
 }
 
-pub fn hasAugment(augment: ConjAugment) bool {
-    return for (state.player_conj_augments) |augment_info| {
+pub fn hasAbility(augment: Ability) bool {
+    return for (state.player_abilities) |augment_info| {
         if (augment_info.received and augment_info.a == augment)
             break true;
     } else false;
@@ -235,7 +128,7 @@ pub fn triggerPoster(coord: Coord) bool {
 
 pub fn triggerStair(cur_stair: Coord, dest_floor: usize) bool {
     // state.message(.Move, "You ascend...", .{});
-    _ = ui.drawTextModal("You ascend...", .{});
+    _ = ui.drawTextModal("You descend...", .{});
 
     mapgen.initLevel(dest_floor);
 
@@ -249,21 +142,6 @@ pub fn triggerStair(cur_stair: Coord, dest_floor: usize) bool {
 
     if (!state.player.teleportTo(dest, null, false, false)) {
         err.bug("Unable to ascend stairs! (something's in the way, maybe?)", .{});
-    }
-
-    if (state.levelinfo[state.player.coord.z].upgr) {
-        state.player.max_HP += 1;
-
-        const upgrade = for (state.player_upgrades) |*u| {
-            if (!u.recieved)
-                break u;
-        } else err.bug("Cannot find upgrade to grant! (upgrades: {} {} {})", .{
-            state.player_upgrades[0], state.player_upgrades[1], state.player_upgrades[2],
-        });
-
-        upgrade.recieved = true;
-        state.message(.Info, "You feel different... {s}", .{upgrade.upgrade.announce()});
-        upgrade.upgrade.implement();
     }
 
     const rep = &state.night_rep[@enumToInt(state.player.faction)];
@@ -282,6 +160,17 @@ pub fn triggerStair(cur_stair: Coord, dest_floor: usize) bool {
 }
 
 pub fn tickRage() void {
+    const slain = scores.get(.KillRecord).BatchUsize.total;
+    if (slain >= state.next_ability_at) {
+        state.next_ability_at += rng.range(usize, 10, 20);
+        if (for (state.player_abilities) |a, i| {
+            if (!a.received) break i;
+        } else null) |n| {
+            state.player_abilities[n].received = true;
+            state.message(.Info, "$gThe Presence seems pleased.$. $oNew ability: {s}$.", .{state.player_abilities[n].a.name()});
+        }
+    }
+
     var enemies: usize = 0;
     for (&DIRECTIONS) |d| {
         if (utils.getHostileInDirection(state.player, d)) |_| {
@@ -303,6 +192,9 @@ pub fn tickRage() void {
 
     if (state.player_rage == 0) {
         state.rage_command = null;
+    } else if (state.player_rage == state.RAGE_P_ABIL) {
+        increaseRage();
+        ui.drawZapScreen();
     } else {
         var direcs = StackBuffer(Direction, 4).init(null);
         for (&CARDINAL_DIRECTIONS) |d| if (state.player.coord.move(d, state.mapgeometry)) |n| {
@@ -311,7 +203,7 @@ pub fn tickRage() void {
                 direcs.append(d) catch err.wat();
         };
         state.rage_command = rng.chooseUnweighted(Direction, direcs.constSlice());
-        state.message(.Info, "$GThe Presence seems to speak.$. $o\"{s}!\"$.", .{state.rage_command.?.name2()});
+        state.message(.Info, "$gThe Presence speaks.$. $o\"{s}!\"$.", .{state.rage_command.?.name2()});
     }
 }
 
@@ -337,10 +229,10 @@ pub fn decreaseRage(exit_rage: bool) void {
     if (exit_rage)
         state.player_rage = 0
     else
-        state.player_rage -= 1;
+        state.player_rage -|= 2;
 
     if (state.player_rage == 0)
-        state.player.addStatus(.Exhausted, 0, .{ .Tmp = 5 });
+        state.player.addStatus(.Exhausted, 0, .{ .Tmp = 15 });
 }
 
 // Iterate through each tile in FOV:
