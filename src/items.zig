@@ -1939,7 +1939,7 @@ pub const SHOCK_STRS = [_]DamageStr{
 pub const FistWeapon = Weapon{
     .id = "none",
     .name = "none",
-    .damage = 2,
+    .damage = 1,
     .strs = &FIST_STRS,
 };
 
