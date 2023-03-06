@@ -2141,9 +2141,10 @@ pub const Mob = struct { // {{{
             return true;
         }
 
+        const swap_ignore_hostility = self == state.player and state.player_rage == 0;
         var succeeded = false;
         if (coord.move(direction, state.mapgeometry)) |dest| {
-            succeeded = self.teleportTo(dest, direction, false, false);
+            succeeded = self.teleportTo(dest, direction, false, swap_ignore_hostility);
         } else {
             succeeded = false;
         }

@@ -209,45 +209,8 @@ pub fn throwMob(thrower: ?*Mob, throwee: *Mob, direction: Direction, distance: u
     }
 }
 
-// Check if an attack is a stab attack.
-//
-// Return true if:
-// - Mob was in .Work AI phase
-// - Is in Investigate/Hunt phase and:
-//   - is incapitated by a status effect (e.g. Paralysis)
-//
-// Return false if:
-// - Attacker isn't right next to defender
-//
-// Player is always aware of attacks. Stabs are there in the first place to
-// "reward" the player for catching a hostile off guard, but allowing enemies
-// to stab a paralyzed player is too harsh of a punishment.
-//
-pub fn isAttackStab(attacker: *const Mob, defender: *const Mob) bool {
-    if (defender.coord.eq(state.player.coord))
-        return false;
-    if (defender.life_type != .Living)
-        return false;
-
-    return switch (defender.ai.phase) {
-        .Flee, .Hunt, .Investigate => b: {
-            if (defender.isUnderStatus(.Paralysis)) |_| break :b true;
-            // if (defender.isUnderStatus(.Daze)) |_| break :b true;
-
-            if (defender.ai.phase == .Flee and !defender.cansee(attacker.coord)) {
-                break :b true;
-            }
-
-            break :b false;
-        },
-        .Work => b: {
-            if (defender.hasStatus(.Amnesia) and ai.isEnemyKnown(defender, attacker)) {
-                break :b false;
-            } else {
-                break :b true;
-            }
-        },
-    };
+pub fn isAttackStab(_: *const Mob, _: *const Mob) bool {
+    return false;
 }
 
 // Algorithm to shave damage due to resistance

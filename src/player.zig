@@ -408,7 +408,7 @@ pub fn moveOrFight(direction: Direction) bool {
 
     // Does the player want to stab or fight?
     if (state.dungeon.at(dest).mob) |mob| {
-        if (state.player.isHostileTo(mob)) {
+        if (state.player_rage > 0 and state.player.isHostileTo(mob)) {
             state.player.fight(mob, .{});
             return true;
         }
