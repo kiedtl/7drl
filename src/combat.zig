@@ -116,26 +116,8 @@ pub fn chanceOfMeleeLanding(attacker: *const Mob, defender: ?*const Mob) usize {
     return @intCast(usize, math.clamp(chance, 0, 100));
 }
 
-pub fn chanceOfAttackEvaded(defender: *const Mob, attacker: ?*const Mob) usize {
-    if (attacker) |a| if (isAttackStab(a, defender)) return 0;
-    if (defender.immobile) return 0;
-
-    var nearby_walls: isize = 0;
-    for (&CARDINAL_DIRECTIONS) |d| if (defender.coord.move(d, state.mapgeometry)) |neighbor| {
-        if (!state.is_walkable(neighbor, .{ .ignore_mobs = true, .right_now = true }))
-            nearby_walls += 1;
-    };
-
-    var chance: isize = defender.stat(.Evade);
-
-    chance += if (defender.isUnderStatus(.Invigorate)) |_| DEFENDER_INVIGORATED_BONUS else 0;
-    chance += if (nearby_walls == 0) DEFENDER_OPEN_SPACE_BONUS else 0;
-
-    chance -= if (defender.isUnderStatus(.Held)) |_| DEFENDER_HELD_NBONUS else 0;
-    chance -= if (defender.isUnderStatus(.Debil)) |_| DEFENDER_STUN_NBONUS else 0;
-    chance -= if (defender.isUnderStatus(.Enraged) != null) DEFENDER_ENRAGED_NBONUS else 0;
-
-    return @intCast(usize, math.clamp(chance, 0, 100));
+pub fn chanceOfAttackEvaded(_: *const Mob, _: ?*const Mob) usize {
+    return 0;
 }
 
 pub fn throwMob(thrower: ?*Mob, throwee: *Mob, direction: Direction, distance: usize) void {
