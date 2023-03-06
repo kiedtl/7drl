@@ -2091,7 +2091,7 @@ pub fn placeStair(level: usize, dest_floor: usize, alloc: mem.Allocator) void {
             return map[a.y][a.x].? < map[b.y][b.x].?;
         }
     };
-    std.sort.sort(Coord, locations.items, &stair_dijkmap, _sortFunc.f);
+    std.sort.insertionSort(Coord, locations.items, &stair_dijkmap, _sortFunc.f);
 
     // Create some stairs!
     const up_staircase = locations.items[locations.items.len - 1];
@@ -3322,7 +3322,7 @@ pub fn createLevelConfig_PRI(comptime prefabs: []const []const u8) LevelConfig {
             null,
         },
 
-        .machines = &[_]*const Machine{ &surfaces.Fountain, &surfaces.Drain },
+        .machines = &[_]*const Machine{},
         .single_props = &[_][]const u8{ "wood_table", "wood_chair" },
     };
 }
@@ -3367,7 +3367,7 @@ pub fn createLevelConfig_LAB(comptime prefabs: []const []const u8) LevelConfig {
         .subroom_chance = 70,
         .allow_statues = false,
 
-        .machines = &[_]*const Machine{&surfaces.Fountain},
+        .machines = &[_]*const Machine{},
     };
 }
 
@@ -3442,7 +3442,7 @@ pub fn createLevelConfig_WRK(comptime prefabs: []const []const u8) LevelConfig {
 
         .allow_statues = false,
 
-        .machines = &[_]*const Machine{&surfaces.Fountain},
+        .machines = &[_]*const Machine{},
     };
 }
 

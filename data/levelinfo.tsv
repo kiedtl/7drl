@@ -5,9 +5,9 @@
 
 #
 # id     depth   short name                 level name   upgrade?       optional?              stairs[0]                 stairs[1]
-"PRI" 	     1 	      "Pri" 	            "1/Prison" 	 nay    	    nay 	               - 	                 -
-"PRI" 	     2 	      "Pri" 	            "2/Prison" 	 nay    	    nay 	      "1/Prison" 	                 -
-"PRI" 	     3 	      "Pri" 	            "3/Prison" 	 nay    	    nay 	      "2/Prison" 	                 -
-"PRI" 	     4 	      "Pri" 	            "4/Prison" 	 nay    	    nay 	      "3/Prison" 	                 -
-"PRI" 	     5 	      "Pri" 	            "5/Prison" 	 nay    	    nay 	      "4/Prison" 	                 -
-"PRI" 	     6 	      "Pri" 	            "6/Prison" 	 nay    	    nay 	      "5/Prison" 	                 -
+"PRI" 	     1 	      "Pri" 	            "1/Prison" 	 nay    	    nay 	      "2/Prison" 	        "2/Prison"
+"PRI" 	     2 	      "Pri" 	            "2/Prison" 	 nay    	    nay 	      "3/Prison" 	        "3/Prison"
+"PRI" 	     3 	      "Pri" 	            "3/Prison" 	 nay    	    nay 	      "4/Prison" 	        "4/Prison"
+"PRI" 	     4 	      "Pri" 	            "4/Prison" 	 nay    	    nay 	      "5/Prison" 	        "5/Prison"
+"PRI" 	     5 	      "Pri" 	            "5/Prison" 	 nay    	    nay 	      "6/Prison" 	        "6/Prison"
+"PRI" 	     6 	      "Pri" 	            "6/Prison" 	 nay    	    nay 	               - 	                 -
