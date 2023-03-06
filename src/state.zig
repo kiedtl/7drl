@@ -336,7 +336,7 @@ pub fn tickSpatter(cur_lev: usize) void {
             const coord = Coord.new2(cur_lev, x, y);
             const blood = dungeon.at(coord).spatter.getPtr(.Blood);
             if (blood.* > 10)
-                blood.* -|= 3;
+                blood.* -|= 5;
         }
     }
 }
