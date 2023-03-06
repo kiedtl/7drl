@@ -78,7 +78,7 @@ pub fn basePenaltyFunc(coord: Coord, opts: state.IsWalkableOptions) usize {
 
     if (opts.mob) |mob| {
         if (mob.cansee(coord) and state.dungeon.at(coord).mob != null) {
-            c += 14;
+            c += 21;
         }
 
         if (mob.ai.flag(.AvoidsEnemies)) {
