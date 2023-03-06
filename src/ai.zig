@@ -667,26 +667,30 @@ pub fn coronerWork(mob: *Mob, _: mem.Allocator) void {
     }
 }
 
-pub fn patrolWork(mob: *Mob, _: mem.Allocator) void {
+pub fn patrolWork(mob: *Mob, alloc: mem.Allocator) void {
     assert(state.dungeon.at(mob.coord).mob != null);
     assert(mob.ai.phase == .Work);
 
     var to = mob.ai.work_area.items[0];
 
     if (mob.cansee(to)) {
-        // OK, reached our destination. Time to choose another one!
-        var tries: usize = 30;
-        while (tries > 0) : (tries -= 1) {
-            const room = rng.chooseUnweighted(mapgen.Room, state.rooms[mob.coord.z].items);
-            const point = room.rect.randomCoord();
+        if (rng.onein(10)) {
+            // OK, reached our destination. Time to choose another one!
+            var tries: usize = 30;
+            while (tries > 0) : (tries -= 1) {
+                const room = rng.chooseUnweighted(mapgen.Room, state.rooms[mob.coord.z].items);
+                const point = room.rect.randomCoord();
 
-            if (state.dungeon.at(point).prison)
-                continue;
+                if (state.dungeon.at(point).prison)
+                    continue;
 
-            if (mob.nextDirectionTo(point)) |_| {
-                mob.ai.work_area.items[0] = point;
-                break;
+                if (mob.nextDirectionTo(point)) |_| {
+                    mob.ai.work_area.items[0] = point;
+                    break;
+                }
             }
+        } else {
+            wanderWork(mob, alloc);
         }
 
         tryRest(mob);
