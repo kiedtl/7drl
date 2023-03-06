@@ -1740,7 +1740,7 @@ pub const Mob = struct { // {{{
     // Don't use EnumFieldStruct here because we want to provide per-field
     // defaults.
     pub const MobStat = struct {
-        Melee: isize = 60,
+        Melee: isize = 100,
         Missile: isize = 40,
         Martial: isize = 0,
         Evade: isize = 0,
@@ -4351,8 +4351,8 @@ pub const Dungeon = struct {
     }
 
     pub fn spatter(self: *Dungeon, c: Coord, what: Spatter) void {
-        for (&CARDINAL_DIRECTIONS) |d| {
-            if (!rng.onein(4)) continue;
+        for (&DIRECTIONS) |d| {
+            if (!rng.onein(2)) continue;
 
             if (c.move(d, state.mapgeometry)) |neighbor| {
                 const prev = self.at(neighbor).spatter.get(what);
@@ -4361,7 +4361,7 @@ pub const Dungeon = struct {
             }
         }
 
-        if (rng.tenin(13)) {
+        if (rng.tenin(20)) {
             const prev = self.at(c).spatter.get(what);
             const new = math.min(prev + 10, 49);
             self.at(c).spatter.set(what, new);
