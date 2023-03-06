@@ -493,6 +493,10 @@ fn tickGame() !void {
             continue;
         }
 
+        if (mob.coord.distance(state.player.coord) > mobs.PLAYER_VISION * 2) {
+            continue;
+        }
+
         mob.energy += 100;
 
         if (mob.energy < 0) {
@@ -529,7 +533,7 @@ fn tickGame() !void {
                     player.getRingHints(r);
             }
 
-            if (mob.isUnderStatus(.Paralysis)) |_| {
+            if (mob.hasStatus(.Paralysis)) {
                 if (mob.coord.eq(state.player.coord)) {
                     var frames: usize = 5;
                     while (frames > 0) : (frames -= 1) {
@@ -579,7 +583,7 @@ fn tickGame() !void {
     }
 }
 
-fn viewerTickGame(cur_level: usize) void {
+fn viewerTickGame(cur_level: usize, all: bool) void {
     state.ticks += 1;
     surfaces.tickMachines(cur_level);
     fire.tickFire(cur_level);
@@ -599,6 +603,10 @@ fn viewerTickGame(cur_level: usize) void {
             continue;
         } else if (mob.should_be_dead()) {
             mob.kill();
+            continue;
+        }
+
+        if (!all and mob.coord.distance(state.player.coord) > mobs.PLAYER_VISION * 2) {
             continue;
         }
 
@@ -651,7 +659,7 @@ fn viewerDisplay(tty_height: usize, level: usize, sy: usize) void {
     }) {
         var x: usize = 0;
         while (x < WIDTH) : (x += 1) {
-            const t = Tile.displayAs(Coord.new2(level, x, dy), false, false);
+            const t = Tile.displayAs(Coord.new2(level, x, dy), false);
             display.setCell(x, y, t);
         }
     }
@@ -679,6 +687,7 @@ fn viewerMain() void {
         var level: usize = state.PLAYER_STARTING_LEVEL;
         var y: usize = 0;
         var running: bool = false;
+        var all: bool = false;
 
         const tty_height = @intCast(usize, termbox.tb_height());
 
@@ -691,7 +700,7 @@ fn viewerMain() void {
             if (running) {
                 t = termbox.tb_peek_event(&ev, 150);
                 if (t == 0) {
-                    viewerTickGame(level);
+                    viewerTickGame(level, all);
                     continue;
                 }
             } else {
@@ -707,7 +716,8 @@ fn viewerMain() void {
                     }
                 } else if (ev.ch != 0) {
                     switch (ev.ch) {
-                        '.' => viewerTickGame(level),
+                        '.' => viewerTickGame(level, all),
+                        'u' => all = !all,
                         'a' => running = !running,
                         'j' => if (y < HEIGHT) {
                             y = math.min(y + (tty_height / 2), HEIGHT - 1);
