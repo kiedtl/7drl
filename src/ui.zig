@@ -1042,7 +1042,7 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
     const ev = utils.SignedFormatter{ .v = state.player.stat(.Evade) };
     const is_raging = state.player_rage > 0;
     const rage_str = if (is_raging) "raging" else "sane";
-    _drawBar(y, startx, bar_endx, state.player_rage, state.MAX_RAGE, rage_str, 0xff0000, 0xffffff, .{});
+    _drawBar(y, startx, bar_endx, state.player_rage, state.MAX_RAGE, rage_str, colors.GOLD, 0xffffff, .{});
     _ = _drawStrf(bar_endx + 1, y, endx, "$pev  {: >3}%$.", .{ev}, .{});
     y += 1;
 
