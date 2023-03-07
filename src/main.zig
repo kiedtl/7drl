@@ -417,7 +417,11 @@ fn readInput() !bool {
                 // state.player.addStatus(.RingElectrocution, 0, .{ .Tmp = 5 });
                 // state.player.addStatus(.RingConjuration, 0, .{ .Tmp = 2 });
                 // state.night_rep[@enumToInt(state.player.faction)] += 10;
-                state.player.HP = 0;
+                // state.player.HP = 0;
+                const target = ui.chooseCell(.{}) orelse break :blk false;
+                state.dungeon.at(target).mob.?.addStatus(.RingTeleportation, 0, .{ .Tmp = 5 });
+                state.dungeon.at(target).mob.?.addStatus(.RingElectrocution, 0, .{ .Tmp = 5 });
+                state.dungeon.at(target).mob.?.addStatus(.RingConjuration, 0, .{ .Tmp = 2 });
                 break :blk true;
             },
             .F8 => b: {

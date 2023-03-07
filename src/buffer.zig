@@ -97,6 +97,12 @@ pub fn StackBuffer(comptime T: type, comptime capacity: usize) type {
             for (items) |item| try self.append(item);
         }
 
+        pub fn appendFmt(self: *Self, comptime format: []const u8, args: anytype) void {
+            var fbs = std.io.fixedBufferStream(self.data[self.len..]);
+            std.fmt.format(fbs.writer(), format, args) catch unreachable;
+            self.resizeTo(fbs.getWritten().len + self.len);
+        }
+
         pub usingnamespace if (@typeInfo(T) == .Int or @typeInfo(T) == .Enum) struct {
             pub fn linearSearch(self: *const Self, value: T) ?usize {
                 return for (self.constSlice()) |item, i| {

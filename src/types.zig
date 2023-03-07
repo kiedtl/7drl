@@ -1135,7 +1135,7 @@ pub const Status = enum {
 
     pub fn string(self: Status, mob: *const Mob) []const u8 { // {{{
         return switch (self) {
-            .A_Bomb => "ability: burnt offering",
+            .A_Bomb => "A: burnt offering",
 
             .RingTeleportation => "ring: teleportation",
             .RingDamnation => "ring: damnation",

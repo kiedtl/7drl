@@ -1096,22 +1096,30 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
         //y += 1;
 
         {
-            var status_drawn = false;
+            var buf = StackBuffer(u8, 256).init(null);
             var statuses = mob.statuses.iterator();
             while (statuses.next()) |entry| {
-                if (mob.isUnderStatus(entry.key) == null or entry.value.duration != .Tmp)
+                if (mob.isUnderStatus(entry.key) == null)
                     continue;
 
                 const statusinfo = mob.isUnderStatus(entry.key).?;
-                const duration = statusinfo.duration.Tmp;
                 const sname = statusinfo.status.string(state.player);
 
-                _drawBar(y, startx, endx, duration, Status.MAX_DURATION, sname, 0x30055c, 0xd069fc, .{});
+                // const duration = statusinfo.duration.Tmp;
+                // _drawBar(y, startx, endx, duration, Status.MAX_DURATION, sname, 0x30055c, 0xd069fc, .{});
                 //y = _drawStrf(startx, y, endx, "{s}", .{_formatStatusInfo(entry.value)}, .{ .bg = null });
-                y += 1;
-                status_drawn = true;
+                // y += 1;
+
+                switch (entry.value.duration) {
+                    .Prm => buf.appendFmt("{s}(prm) ", .{sname}),
+                    .Equ => buf.appendFmt("{s}(equ) ", .{sname}),
+                    .Tmp => buf.appendFmt("{s}({}) ", .{ sname, statusinfo.duration.Tmp }),
+                }
             }
-            if (status_drawn) y += 1;
+            if (buf.len > 0) {
+                y = _drawStrf(startx, y, endx, "$b{s}$.", .{buf.constSlice()}, .{ .bg = null });
+                y += 1;
+            }
         }
 
         //const activity = if (mob.prisoner_status != null) if (mob.prisoner_status.?.held_by != null) "(chained)" else "(prisoner)" else mob.activity_description();
