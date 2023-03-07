@@ -56,7 +56,7 @@ pub const FRAMERATE = 1000 / 30;
 pub const LEFT_INFO_WIDTH: usize = 30;
 //pub const RIGHT_INFO_WIDTH: usize = 24;
 pub const LOG_HEIGHT = 6;
-pub const ZAP_HEIGHT = player.Ability.TOTAL + 4;
+pub const ZAP_HEIGHT = player.Ability.TOTAL + 6;
 pub const MAP_HEIGHT_R = 12;
 pub const MAP_WIDTH_R = 12;
 
@@ -107,8 +107,8 @@ pub var zap_win: struct {
         self.left = Console.init(state.GPA.allocator(), LEFT_WIDTH, d.height() - 2);
         self.right = Console.init(state.GPA.allocator(), d.width() - LEFT_WIDTH - 3, d.height() - 2);
 
-        self.container.addSubconsole(self.left, 1, 1);
-        self.container.addSubconsole(self.right, LEFT_WIDTH + 2, 1);
+        self.container.addSubconsole(self.left, 1, 3);
+        self.container.addSubconsole(self.right, LEFT_WIDTH + 2, 3);
     }
 
     pub fn deinit(self: *@This()) void {
@@ -1911,8 +1911,10 @@ pub fn drawZapScreen() void {
         zap_win.container.clearLineTo(0, zap_win.container.width - 1, 0, .{ .ch = '▀', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
         zap_win.container.clearLineTo(0, zap_win.container.width - 1, zap_win.container.height - 1, .{ .ch = '▄', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
 
-        var count: usize = 0;
+        _ = zap_win.container.drawTextAt(0, 2, "You must choose an ability to activate.", .{});
+
         var y: usize = 0;
+        var count: usize = 0;
         for (state.player_abilities) |ability, i| {
             if (ability.received) {
                 count = i;
@@ -1922,13 +1924,13 @@ pub fn drawZapScreen() void {
                 if (selected == i) {
                     var ry: usize = 0;
                     zap_win.right.clear();
-                    // if (r_error) |r_err| {
-                    //     ry += zap_win.right.drawTextAtf(0, ry, "$cCannot use$.: $b{s}$.\n\n", .{r_err.text1()}, .{});
-                    // } else {
-                    const is_active = state.player.hasStatus(ability.a.statusInfo().s);
-                    const active: []const u8 = if (is_active) "$b(active)$.\n\n" else "Press $b<Enter>$. to use.\n\n";
-                    ry += zap_win.right.drawTextAt(0, ry, active, .{});
-                    // }
+                    if (ability.isActive()) {
+                        ry += zap_win.right.drawTextAt(0, ry, "$cCannot use$.: $bactive$.\n\n", .{});
+                    } else if (ability.isCooldown()) |cooldown| {
+                        ry += zap_win.right.drawTextAtf(0, ry, "$cCannot use$.: $bcooldown ({})$.\n\n", .{cooldown}, .{});
+                    } else {
+                        ry += zap_win.right.drawTextAt(0, ry, "Press $b<Enter>$. to use.", .{});
+                    }
                     ry += zap_win.right.drawTextAt(0, ry, ability.a.description(), .{});
                 }
             } else {
@@ -1940,19 +1942,20 @@ pub fn drawZapScreen() void {
 
         display.present();
 
+        const ability = &state.player_abilities[selected];
+
         switch (display.waitForEvent(null) catch err.wat()) {
             .Quit => {
                 state.state = .Quit;
                 break;
             },
             .Key => |k| switch (k) {
-                .CtrlC, .CtrlG, .Esc => break,
+                // .CtrlC, .CtrlG, .Esc => break,
                 .ArrowUp => selected -|= 1,
                 .ArrowDown => selected = math.min(count, selected + 1),
-                .Enter => if (true) { //r_error == null) {
+                .Enter => if (ability.isUsable()) {
                     clearScreen();
-                    const s = state.player_abilities[selected].a.statusInfo();
-                    state.player.addStatus(s.s, 0, .{ .Tmp = s.d });
+                    ability.activate();
                     break;
                 },
                 else => {},

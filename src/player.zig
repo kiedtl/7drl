@@ -79,7 +79,31 @@ pub const Ability = enum(usize) {
     }
 };
 
-pub const AbilityInfo = struct { received: bool, a: Ability };
+pub const AbilityInfo = struct {
+    received: bool,
+    last_used: usize = 0,
+    a: Ability,
+
+    pub fn isActive(self: AbilityInfo) bool {
+        return state.player.hasStatus(self.a.statusInfo().s);
+    }
+
+    pub fn isCooldown(self: AbilityInfo) ?usize {
+        const t = state.player_turns - self.last_used;
+        return if (t > 10) null else t;
+    }
+
+    pub fn isUsable(self: AbilityInfo) bool {
+        return !self.isActive() and self.isCooldown() == null;
+    }
+
+    pub fn activate(self: *AbilityInfo) void {
+        assert(self.isUsable());
+        state.message(.Info, "Activated ability: {s}", .{self.a.name()});
+        state.player.addStatus(self.a.statusInfo().s, 0, .{ .Tmp = self.a.statusInfo().d });
+        self.last_used = state.player_turns;
+    }
+};
 pub const AbilityEntry = struct { w: usize, a: Ability };
 
 pub const CONJ_AUGMENT_DROPS = [_]AbilityEntry{

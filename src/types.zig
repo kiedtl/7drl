@@ -3227,6 +3227,13 @@ pub const Mob = struct { // {{{
             }
         }
 
+        if (state.player_rage > 0 and
+            (self.faction == .Revgenunkim and othermob == state.player) or
+            (othermob.faction == .Revgenunkim and self == state.player))
+        {
+            hostile = false;
+        }
+
         return hostile;
     }
 
@@ -3345,9 +3352,9 @@ pub const Mob = struct { // {{{
         if (self == state.player and resist == .Armor) {
             r += @as(isize, switch (state.dungeon.at(self.coord).spatter.get(.Blood)) {
                 0...10 => 0,
-                11...20 => 20,
-                21...30 => 40,
-                31...49 => 60,
+                11...20 => 10,
+                21...30 => 30,
+                31...49 => 50,
                 else => unreachable,
             });
         }
