@@ -119,11 +119,11 @@ pub var player_rage: usize = 0;
 pub var rage_command: ?Direction = null;
 pub var next_ability_at: usize = 10;
 
-pub const MAX_RAGE = 30;
+pub const MAX_RAGE = 20;
 pub const RAGE_P_HEAL = 5;
 pub const RAGE_P_RAMPAGE = 10;
-pub const RAGE_P_ABIL = 20;
-pub const RAGE_P_ANGEL = 30;
+pub const RAGE_P_ABIL = 15;
+pub const RAGE_P_ANGEL = 20;
 
 // Cached return value of player.isPlayerSpotted()
 pub var player_is_spotted: struct {

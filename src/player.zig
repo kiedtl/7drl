@@ -11,6 +11,7 @@ const colors = @import("colors.zig");
 const combat = @import("combat.zig");
 const rng = @import("rng.zig");
 const literature = @import("literature.zig");
+const dijkstra = @import("dijkstra.zig");
 const explosions = @import("explosions.zig");
 const items = @import("items.zig");
 const utils = @import("utils.zig");
@@ -21,6 +22,7 @@ const ui = @import("ui.zig");
 const state = @import("state.zig");
 const types = @import("types.zig");
 const scores = @import("scores.zig");
+const mobs = @import("mobs.zig");
 const err = @import("err.zig");
 
 const Activity = types.Activity;
@@ -183,6 +185,34 @@ pub fn triggerStair(cur_stair: Coord, dest_floor: usize) bool {
     return true;
 }
 
+pub fn usableAbilities() usize {
+    var ctr: usize = 0;
+    for (state.player_abilities) |abil| if (abil.isUsable()) {
+        ctr += 1;
+    };
+    return ctr;
+}
+
+pub fn summonAngel() void {
+    state.message(.Info, "$gThe Presence summons a servant.$.", .{});
+
+    // Leave my indented fn calls alone, zig fmt
+    // zig fmt: off
+    var dijk = dijkstra.Dijkstra.init(state.player.coord, state.mapgeometry, mobs.PLAYER_VISION,
+        state.is_walkable, .{ .right_now = true }, state.GPA.allocator());
+    // zig fmt: on
+    defer dijk.deinit();
+
+    const spawn_c = while (dijk.next()) |child| {
+        if (state.dungeon.at(child).mob == null and state.is_walkable(child, .{ .right_now = true }))
+            break child;
+    } else return;
+
+    const mob_t = rng.chooseUnweighted(mobs.MobTemplate, &mobs.ANGELS);
+    const mob = mobs.placeMob(state.GPA.allocator(), &mob_t, spawn_c, .{});
+    mob.addStatus(.Lifespan, 0, .{ .Tmp = 5 });
+}
+
 pub fn tickRage() void {
     const slain = scores.get(.KillRecord).BatchUsize.total;
     if (slain >= state.next_ability_at) {
@@ -209,16 +239,19 @@ pub fn tickRage() void {
         }
     } else {
         if (enemies == 0) {
-            decreaseRage(true);
+            decreaseRage(0);
             state.message(.Info, "Your mind seems clear again.", .{});
         }
     }
 
     if (state.player_rage == 0) {
         state.rage_command = null;
-    } else if (state.player_rage == state.RAGE_P_ABIL) {
+    } else if (state.player_rage == state.RAGE_P_ABIL and usableAbilities() > 0) {
         increaseRage();
         ui.drawZapScreen();
+    } else if (state.player_rage == state.RAGE_P_ANGEL) {
+        decreaseRage(4);
+        summonAngel();
     } else {
         var direcs = StackBuffer(Direction, 4).init(null);
         for (&CARDINAL_DIRECTIONS) |d| if (state.player.coord.move(d, state.mapgeometry)) |n| {
@@ -241,17 +274,17 @@ pub fn tickRageEnd() void {
     if (d != null and d.? == state.rage_command.?) {
         increaseRage();
     } else {
-        decreaseRage(false);
+        decreaseRage(null);
     }
 }
 
 pub fn increaseRage() void {
-    state.player_rage = math.min(30, state.player_rage + 1);
+    state.player_rage = math.min(state.MAX_RAGE, state.player_rage + 1);
 }
 
-pub fn decreaseRage(exit_rage: bool) void {
-    if (exit_rage)
-        state.player_rage = 0
+pub fn decreaseRage(to: ?usize) void {
+    if (to) |u|
+        state.player_rage = u
     else
         state.player_rage -|= 2;
 

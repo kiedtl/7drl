@@ -104,8 +104,13 @@ pub fn tickFire(level: usize) void {
             // Set mob on fire
             if (oldfire > 3) {
                 if (state.dungeon.at(coord).mob) |mob| {
-                    if (!mob.hasStatus(.Fire))
-                        mob.addStatus(.Fire, 0, .{ .Tmp = MOB_BURN_DURATION });
+                    if (!mob.hasStatus(.Fire)) {
+                        if (mob == state.player and state.player_rage > 0) {
+                            state.message(.Info, "The flames do not seem to be harming you.", .{});
+                        } else {
+                            mob.addStatus(.Fire, 0, .{ .Tmp = MOB_BURN_DURATION });
+                        }
+                    }
                 }
             }
 

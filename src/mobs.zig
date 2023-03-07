@@ -145,7 +145,7 @@ pub const GoblinTemplate = MobTemplate{
             .flags = &[_]AI.Flag{.AvoidsEnemies},
         },
         .faction = .CaveGoblins,
-        .max_HP = 6,
+        .max_HP = 4,
         .memory_duration = 20,
         .stats = .{ .Willpower = 4, .Vision = 8, .Melee = 100 },
     },
@@ -164,7 +164,7 @@ pub const PlayerTemplate = MobTemplate{
             .default_attack = &Weapon{
                 .id = "none",
                 .name = "none",
-                .damage = 2,
+                .damage = 1,
                 .strs = &items.FIST_STRS,
             },
         },
@@ -204,7 +204,7 @@ pub const WarriorTemplate = MobTemplate{
             .flee_effect = .{ .status = .Enraged, .duration = .{ .Tmp = 10 }, .exhausting = true },
         },
 
-        .max_HP = 8,
+        .max_HP = 6,
         .memory_duration = 10,
         .stats = .{ .Willpower = 2, .Melee = 100, .Vision = 10 },
     },
@@ -235,7 +235,7 @@ pub const EmberMageTemplate = MobTemplate{
         },
         .max_MP = 15,
 
-        .max_HP = 5,
+        .max_HP = 7,
         .memory_duration = 10,
         .stats = .{ .Willpower = 4, .Vision = 11 },
     },
@@ -313,7 +313,7 @@ pub const EmberlingTemplate = MobTemplate{
         .blood = null,
         .corpse = .None,
 
-        .max_HP = 2,
+        .max_HP = 3,
         .memory_duration = 5,
         .innate_resists = .{ .rFume = 100, .rFire = RESIST_IMMUNE },
         .stats = .{ .Willpower = 1, .Vision = 7, .Melee = 100 },
@@ -332,6 +332,47 @@ pub const EmberlingTemplate = MobTemplate{
     },
 };
 
+pub const CinderBruteTemplate = MobTemplate{
+    .mob = .{
+        .id = "cinder_brute",
+        .species = &Species{
+            .name = "cinder brute",
+            .default_attack = &Weapon{
+                .damage = 1,
+                .strs = &items.BITING_STRS,
+            },
+        },
+        .tile = 'C',
+        .alt_name = "burning saviour",
+        .ai = AI{
+            .profession_description = "wandering",
+            .work_fn = ai.standStillAndGuardWork,
+            .fight_fn = ai.mageFight,
+            .flags = &[_]AI.Flag{.DetectWithHeat},
+        },
+        .max_HP = 8,
+
+        .spells = &[_]SpellOptions{
+            // Have cooldown period that matches time needed for flames to
+            // die out, so that the brute isn't constantly vomiting fire when
+            // its surroundings are already in flames
+            //
+            // TODO: check this in spells.zig
+            .{ .MP_cost = 10, .spell = &spells.CAST_FIREBLAST, .power = 4 },
+        },
+        .max_MP = 10,
+
+        .memory_duration = 999,
+        .blood = .Ash,
+        .corpse = .None,
+        .faction = .Revgenunkim,
+        .innate_resists = .{ .rFire = RESIST_IMMUNE, .rElec = -25, .rFume = 100 },
+
+        .stats = .{ .Willpower = 6, .Vision = 4 },
+    },
+    .statuses = &[_]StatusDataInfo{.{ .status = .Fire, .duration = .Prm }},
+};
+
 pub const MOBS = [_]MobTemplate{
     CoronerTemplate,
     GuardTemplate,
@@ -341,11 +382,14 @@ pub const MOBS = [_]MobTemplate{
     EmberMageTemplate,
     // BrimstoneMageTemplate,
     EmberlingTemplate,
+    CinderBruteTemplate,
 };
 
-pub const PRISONERS = [_]MobTemplate{
-    GoblinTemplate,
+pub const ANGELS = [_]MobTemplate{
+    CinderBruteTemplate,
 };
+
+pub const PRISONERS = [_]MobTemplate{};
 
 pub fn findMobById(raw_id: anytype) ?*const MobTemplate {
     const id = utils.used(raw_id);

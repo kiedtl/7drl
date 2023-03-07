@@ -866,6 +866,7 @@ pub const Damage = struct {
         Stab,
         Explosion,
         Passive,
+        LifespanEnd,
     };
 };
 pub const Activity = union(enum) {
@@ -2558,13 +2559,6 @@ pub const Mob = struct { // {{{
             ai.updateEnemyKnowledge(self, attacker, null);
         }
 
-        if (d.by_mob != null and d.by_mob.? == state.player and
-            state.player_rage >= state.RAGE_P_HEAL and amount > 0 and
-            self.life_type == .Living)
-        {
-            state.player.takeHealing(amount);
-        }
-
         // Record stats
         if (d.by_mob != null and d.by_mob == state.player) {
             scores.recordTaggedUsize(.DamageInflicted, .{ .M = self }, 1);
@@ -2579,10 +2573,13 @@ pub const Mob = struct { // {{{
         // Make animations
         const clamped_dmg = math.clamp(@intCast(u21, amount), 0, 9);
         const damage_char = if (self.should_be_dead()) '∞' else '0' + clamped_dmg;
-        ui.Animation.blinkMob(&.{self}, damage_char, colors.PALE_VIOLET_RED, .{});
+        if ((d.by_mob != null and d.by_mob.? == state.player) or damage_char != '0')
+            ui.Animation.blinkMob(&.{self}, damage_char, colors.PALE_VIOLET_RED, .{});
 
         // Print message
-        if (state.player.cansee(self.coord) or (d.by_mob != null and state.player.cansee(d.by_mob.?.coord))) {
+        if (d.source != .LifespanEnd and
+            state.player.cansee(self.coord) or (d.by_mob != null and state.player.cansee(d.by_mob.?.coord)))
+        {
             var punctuation: []const u8 = ".";
             if (dmg_percent >= 20) punctuation = "!";
             if (dmg_percent >= 40) punctuation = "!!";
@@ -2658,6 +2655,13 @@ pub const Mob = struct { // {{{
                 if (self.blood) |s|
                     state.dungeon.spatter(self.coord, s);
             }
+        }
+
+        if (d.by_mob != null and d.by_mob.? == state.player and
+            state.player_rage >= state.RAGE_P_HEAL and amount > 0 and
+            self.life_type == .Living)
+        {
+            state.player.takeHealing(amount);
         }
 
         self.last_damage = d;
@@ -2868,11 +2872,15 @@ pub const Mob = struct { // {{{
                 if (by_mob == state.player) {
                     state.message(.Damage, "You slew {c}.", .{self});
                 } else if (state.player.cansee(by_mob.coord)) {
-                    state.message(.Damage, "{c} killed the {c}.", .{ by_mob, self });
+                    state.message(.Damage, "{c} killed {}.", .{ by_mob, self });
                 }
             } else {
                 if (state.player.cansee(self.coord)) {
-                    state.message(.Damage, "{c} dies.", .{self});
+                    if (self.last_damage != null and self.last_damage.?.source == .LifespanEnd) {
+                        state.message(.Damage, "{c} vanishes.", .{self});
+                    } else {
+                        state.message(.Damage, "{c} dies.", .{self});
+                    }
                 }
             }
         }
@@ -3132,7 +3140,7 @@ pub const Mob = struct { // {{{
                 self.addStatus(.Exhausted, 0, .{ .Tmp = Status.MAX_DURATION });
 
             switch (p_se.status) {
-                .Lifespan => self.HP = 0,
+                .Lifespan => self.takeDamage(.{ .amount = 999, .kind = .Irresistible, .source = .LifespanEnd }, .{}),
                 .RingExcision => {
                     assert(self == state.player);
                     state.player.squad.?.trimMembers();
@@ -3150,7 +3158,8 @@ pub const Mob = struct { // {{{
             }
         }
 
-        if (p_se.duration == .Tmp and got != null and
+        if (s.status != .Lifespan and
+            p_se.duration == .Tmp and got != null and
             (self == state.player or state.player.cansee(self.coord)))
         {
             const verb = if (got.?) @as([]const u8, "gained") else "lost";

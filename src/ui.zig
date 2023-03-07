@@ -1902,6 +1902,8 @@ pub fn drawMessagesScreen() void {
 }
 
 pub fn drawZapScreen() void {
+    assert(player.usableAbilities() > 0);
+
     var selected: usize = 0;
     // var r_error: ?player.RingError = null;
 
@@ -1911,7 +1913,7 @@ pub fn drawZapScreen() void {
         zap_win.container.clearLineTo(0, zap_win.container.width - 1, 0, .{ .ch = '▀', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
         zap_win.container.clearLineTo(0, zap_win.container.width - 1, zap_win.container.height - 1, .{ .ch = '▄', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
 
-        _ = zap_win.container.drawTextAt(0, 1, "You must choose an ability to activate.", .{});
+        _ = zap_win.container.drawTextAt(1, 1, "You must choose an ability to activate.", .{});
 
         var y: usize = 0;
         var count: usize = 0;
