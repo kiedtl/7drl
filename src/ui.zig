@@ -104,8 +104,8 @@ pub var zap_win: struct {
         const d = dimensions(.Zap);
 
         self.container = Console.init(state.GPA.allocator(), d.width(), d.height());
-        self.left = Console.init(state.GPA.allocator(), LEFT_WIDTH, d.height() - 2);
-        self.right = Console.init(state.GPA.allocator(), d.width() - LEFT_WIDTH - 3, d.height() - 2);
+        self.left = Console.init(state.GPA.allocator(), LEFT_WIDTH, d.height() - 4);
+        self.right = Console.init(state.GPA.allocator(), d.width() - LEFT_WIDTH - 3, d.height() - 4);
 
         self.container.addSubconsole(self.left, 1, 3);
         self.container.addSubconsole(self.right, LEFT_WIDTH + 2, 3);
@@ -1911,7 +1911,7 @@ pub fn drawZapScreen() void {
         zap_win.container.clearLineTo(0, zap_win.container.width - 1, 0, .{ .ch = '▀', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
         zap_win.container.clearLineTo(0, zap_win.container.width - 1, zap_win.container.height - 1, .{ .ch = '▄', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
 
-        _ = zap_win.container.drawTextAt(0, 2, "You must choose an ability to activate.", .{});
+        _ = zap_win.container.drawTextAt(0, 1, "You must choose an ability to activate.", .{});
 
         var y: usize = 0;
         var count: usize = 0;

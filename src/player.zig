@@ -94,7 +94,7 @@ pub const AbilityInfo = struct {
     }
 
     pub fn isUsable(self: AbilityInfo) bool {
-        return !self.isActive() and self.isCooldown() == null;
+        return self.received and !self.isActive() and self.isCooldown() == null;
     }
 
     pub fn activate(self: *AbilityInfo) void {

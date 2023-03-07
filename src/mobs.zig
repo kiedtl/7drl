@@ -115,6 +115,7 @@ pub const GuardTemplate = MobTemplate{
         .id = "guard",
         .species = &GoblinSpecies,
         .tile = 'ה',
+        .alt_name = "filthy meatbag",
         .ai = AI{
             .profession_name = "guard",
             .profession_description = "guarding",
@@ -130,32 +131,12 @@ pub const GuardTemplate = MobTemplate{
     .weapon = &items.BludgeonWeapon,
 };
 
-pub const ArmoredGuardTemplate = MobTemplate{
-    .mob = .{
-        .id = "armored_guard",
-        .species = &GoblinSpecies,
-        .tile = 'ת',
-        .ai = AI{
-            .profession_name = "armored guard",
-            .profession_description = "guarding",
-            .work_fn = ai.guardWork,
-            .fight_fn = ai.meleeFight,
-        },
-
-        .max_HP = 7,
-        .memory_duration = 15,
-
-        .stats = .{ .Willpower = 2, .Melee = 100 },
-    },
-    .weapon = &items.MaceWeapon,
-    .armor = &items.GambesonArmor,
-};
-
 pub const GoblinTemplate = MobTemplate{
     .mob = .{
         .id = "goblin",
         .species = &GoblinSpecies,
         .tile = 'g',
+        .alt_name = "meatbag",
         .ai = AI{
             .profession_name = "goblin",
             .profession_description = "wandering",
@@ -214,6 +195,7 @@ pub const WarriorTemplate = MobTemplate{
         .id = "warrior",
         .species = &GoblinSpecies,
         .tile = 'W',
+        .alt_name = "meat beast",
         .ai = AI{
             .profession_name = "warrior",
             .profession_description = "resting",
@@ -235,6 +217,7 @@ pub const EmberMageTemplate = MobTemplate{
         .id = "ember_mage",
         .species = &GoblinSpecies,
         .tile = 'Ë',
+        .alt_name = "meat sage",
         .ai = AI{
             .profession_name = "ember mage",
             .profession_description = "watching",
@@ -266,43 +249,43 @@ pub const EmberMageTemplate = MobTemplate{
     },
 };
 
-pub const BrimstoneMageTemplate = MobTemplate{
-    .mob = .{
-        .id = "brimstone_mage",
-        .species = &GoblinSpecies,
-        .tile = 'R',
-        .ai = AI{
-            .profession_name = "brimstone mage",
-            .profession_description = "watching",
-            // Stand still and don't be curious; don't want emberling followers
-            // to burn the world down
-            .work_fn = ai.standStillAndGuardWork,
-            .fight_fn = ai.mageFight,
-            .spellcaster_backup_action = .KeepDistance,
-            .flags = &[_]AI.Flag{.DetectWithHeat},
-        },
+// pub const BrimstoneMageTemplate = MobTemplate{
+//     .mob = .{
+//         .id = "brimstone_mage",
+//         .species = &GoblinSpecies,
+//         .tile = 'R',
+//         .ai = AI{
+//             .profession_name = "brimstone mage",
+//             .profession_description = "watching",
+//             // Stand still and don't be curious; don't want emberling followers
+//             // to burn the world down
+//             .work_fn = ai.standStillAndGuardWork,
+//             .fight_fn = ai.mageFight,
+//             .spellcaster_backup_action = .KeepDistance,
+//             .flags = &[_]AI.Flag{.DetectWithHeat},
+//         },
 
-        .spells = &[_]SpellOptions{
-            .{ .MP_cost = 15, .spell = &spells.CAST_CREATE_EMBERLING },
-            .{ .MP_cost = 1, .spell = &spells.CAST_FLAMMABLE, .power = 20 },
-            .{ .MP_cost = 7, .spell = &spells.BOLT_FIREBALL, .power = 3, .duration = 3 },
-        },
-        .max_MP = 15,
+//         .spells = &[_]SpellOptions{
+//             .{ .MP_cost = 15, .spell = &spells.CAST_CREATE_EMBERLING },
+//             .{ .MP_cost = 1, .spell = &spells.CAST_FLAMMABLE, .power = 20 },
+//             .{ .MP_cost = 7, .spell = &spells.BOLT_FIREBALL, .power = 3, .duration = 3 },
+//         },
+//         .max_MP = 15,
 
-        .max_HP = 7,
-        .memory_duration = 10,
-        .stats = .{ .Willpower = 6 },
-    },
-    .weapon = &items.MaceWeapon,
-    .armor = &items.HauberkArmor,
-    .cloak = &items.SilCloak,
+//         .max_HP = 7,
+//         .memory_duration = 10,
+//         .stats = .{ .Willpower = 6 },
+//     },
+//     .weapon = &items.MaceWeapon,
+//     .armor = &items.HauberkArmor,
+//     .cloak = &items.SilCloak,
 
-    .squad = &[_][]const MobTemplate.SquadMember{
-        &[_]MobTemplate.SquadMember{
-            .{ .mob = "emberling", .weight = 1, .count = minmax(usize, 2, 4) },
-        },
-    },
-};
+//     .squad = &[_][]const MobTemplate.SquadMember{
+//         &[_]MobTemplate.SquadMember{
+//             .{ .mob = "emberling", .weight = 1, .count = minmax(usize, 2, 4) },
+//         },
+//     },
+// };
 
 pub const EmberlingTemplate = MobTemplate{
     .mob = .{
@@ -316,6 +299,7 @@ pub const EmberlingTemplate = MobTemplate{
             },
         },
         .tile = 'ë',
+        .alt_name = "meat slave",
         .ai = AI{
             .profession_description = "watching",
             .work_fn = ai.standStillAndGuardWork,
@@ -351,12 +335,11 @@ pub const EmberlingTemplate = MobTemplate{
 pub const MOBS = [_]MobTemplate{
     CoronerTemplate,
     GuardTemplate,
-    ArmoredGuardTemplate,
     PlayerTemplate,
     GoblinTemplate,
     WarriorTemplate,
     EmberMageTemplate,
-    BrimstoneMageTemplate,
+    // BrimstoneMageTemplate,
     EmberlingTemplate,
 };
 

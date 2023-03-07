@@ -1658,6 +1658,7 @@ pub const Mob = struct { // {{{
     id: []const u8,
     species: *const Species,
     prefix: []const u8 = "",
+    alt_name: []const u8 = "",
     tile: u21,
     faction: Faction = .CaveGoblins,
 
@@ -1818,7 +1819,10 @@ pub const Mob = struct { // {{{
             var buf: [32]u8 = undefined;
         };
 
-        const base_name = self.ai.profession_name orelse self.species.name;
+        const base_name = if (state.player_rage > 0 and self.alt_name.len > 0)
+            self.alt_name
+        else
+            self.ai.profession_name orelse self.species.name;
 
         var fbs = std.io.fixedBufferStream(&Static.buf);
         std.fmt.format(fbs.writer(), "{s}{s}", .{ self.prefix, base_name }) catch err.wat();
