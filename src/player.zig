@@ -58,7 +58,7 @@ pub const Ability = enum(usize) {
 
     pub fn statusInfo(self: Ability) struct { s: Status, d: usize } {
         return switch (self) {
-            .Bomb => .{ .s = .A_Bomb, .d = 4 },
+            .Bomb => .{ .s = .A_Bomb, .d = 2 },
         };
     }
 
@@ -216,7 +216,7 @@ pub fn summonAngel() void {
 pub fn tickRage() void {
     const slain = scores.get(.KillRecord).BatchUsize.total;
     if (slain >= state.next_ability_at) {
-        state.next_ability_at += rng.range(usize, 10, 20);
+        state.next_ability_at += rng.range(usize, 15, 20);
         if (for (state.player_abilities) |a, i| {
             if (!a.received) break i;
         } else null) |n| {

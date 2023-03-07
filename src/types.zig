@@ -2888,7 +2888,11 @@ pub const Mob = struct { // {{{
         self.deinit();
 
         if (self.isUnderStatus(.Explosive)) |s| {
-            explosions.kaboom(self.coord, .{ .strength = s.power });
+            explosions.kaboom(self.coord, .{
+                .strength = s.power,
+                .culprit = if (state.player_rage > 0) state.player else null,
+                .spare_player = state.player_rage > 0,
+            });
         }
 
         if (self.isUnderStatus(.ExplosiveElec)) |s| {
