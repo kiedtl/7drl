@@ -3310,7 +3310,7 @@ pub const LevelConfig = struct {
 
 // -----------------------------------------------------------------------------
 
-pub fn createLevelConfig_PRI(comptime prefabs: []const []const u8) LevelConfig {
+pub fn createLevelConfig_DIN(comptime prefabs: []const []const u8) LevelConfig {
     return LevelConfig{
         .prefabs = prefabs,
         .prefab_chance = 33,
@@ -3322,6 +3322,7 @@ pub fn createLevelConfig_PRI(comptime prefabs: []const []const u8) LevelConfig {
             null,
         },
 
+        .material = &materials.Ornate,
         .machines = &[_]*const Machine{},
         .single_props = &[_][]const u8{ "wood_table", "wood_chair" },
     };
@@ -3521,10 +3522,10 @@ pub const CAV_BASE_LEVELCONFIG = LevelConfig{
 };
 
 pub var Configs = [LEVELS]LevelConfig{
-    createLevelConfig_PRI(&[_][]const u8{"PRI_start"}),
-    createLevelConfig_PRI(&[_][]const u8{}),
-    createLevelConfig_PRI(&[_][]const u8{}),
-    createLevelConfig_PRI(&[_][]const u8{}),
-    createLevelConfig_PRI(&[_][]const u8{}),
-    createLevelConfig_PRI(&[_][]const u8{"PRI_main_exit"}),
+    createLevelConfig_DIN(&[_][]const u8{"PRI_start"}),
+    createLevelConfig_DIN(&[_][]const u8{}),
+    createLevelConfig_DIN(&[_][]const u8{}),
+    createLevelConfig_DIN(&[_][]const u8{}),
+    createLevelConfig_DIN(&[_][]const u8{}),
+    createLevelConfig_DIN(&[_][]const u8{"PRI_main_exit"}),
 };

@@ -722,6 +722,7 @@ pub const Material = struct {
     color_floor: u32,
     tileset: usize,
     floor_tile: u21 = '·',
+    floor_sprite: ?font.Sprite = null,
 
     smelt_result: ?*const Material = null,
 
@@ -4073,10 +4074,11 @@ pub const Tile = struct {
                 .sbg = self.material.color_sbg orelse self.material.color_bg orelse colors.BG,
             },
             .Floor => {
-                cell.ch = '·';
-                cell.sch = null;
-                cell.fg = colors.DOBALENE_BLUE;
+                cell.ch = self.material.floor_tile;
+                cell.fg = self.material.color_floor;
                 cell.bg = colors.BG;
+                cell.sch = self.material.floor_sprite;
+                cell.sfg = self.material.color_floor;
             },
         }
 
@@ -4202,13 +4204,14 @@ pub const Tile = struct {
             const sp_color = spatter.color();
             const q = 1 - @as(f64, switch (entry.value.*) {
                 0 => 0.0,
-                1...10 => 0.10,
-                11...20 => 0.18,
-                21...30 => 0.26,
-                31...49 => 0.34,
+                1...10 => 0.15,
+                11...20 => 0.25,
+                21...30 => 0.30,
+                31...49 => 0.35,
                 else => unreachable,
             });
-            cell.bg = colors.mix(sp_color, cell.bg, q);
+            cell.fg = colors.mix(sp_color, cell.fg, q);
+            cell.sfg = colors.mix(sp_color, cell.sfg, q);
         }
 
         return cell;

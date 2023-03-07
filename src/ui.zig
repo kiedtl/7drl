@@ -1297,10 +1297,10 @@ pub fn drawMap(moblist: []const *Mob, refpoint: Coord) void {
 
                     const old_sbg = tile.sbg;
 
-                    tile.bg = colors.filterBluescale(tile.bg);
-                    tile.fg = colors.filterBluescale(tile.fg);
-                    tile.sbg = colors.filterBluescale(tile.sbg);
-                    tile.sfg = colors.filterBluescale(tile.sfg);
+                    tile.bg = colors.percentageOf(colors.filterGrayscale(tile.bg), 70);
+                    tile.fg = colors.percentageOf(colors.filterGrayscale(tile.fg), 70);
+                    tile.sbg = colors.percentageOf(colors.filterGrayscale(tile.sbg), 70);
+                    tile.sfg = colors.percentageOf(colors.filterGrayscale(tile.sfg), 70);
 
                     if (tile.bg < colors.BG) tile.bg = colors.BG;
 

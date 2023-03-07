@@ -14,6 +14,20 @@ pub const MATERIALS = [_]*const Material{
     &Slade,
 };
 
+pub const Ornate = Material{
+    .name = "ornate",
+    .color_fg = 0xe0ffff,
+    .color_bg = null,
+    .sprite = .S_G_Wall_Ornate,
+    .color_sfg = 0xe0ffff,
+    .color_sbg = null,
+    .color_floor = 0x203f3f,
+    .floor_sprite = .S_G_T_Ornate,
+    .tileset = 0,
+    .luminescence = 0,
+    .opacity = 1.0,
+};
+
 pub const PaintedConcrete = Material{
     .id = "painted_concrete",
     .name = "painted concrete",
@@ -90,7 +104,7 @@ pub const LabGlass = Material{
     .sprite = .S_G_Wall_Window2,
     .tileset = 3,
     .luminescence = 0,
-    .opacity = 0.3,
+    .opacity = 0.0,
 };
 
 pub const Glass = Material{
@@ -101,7 +115,7 @@ pub const Glass = Material{
     .sprite = .S_G_Wall_Window,
     .tileset = 0,
     .luminescence = 0,
-    .opacity = 0.1,
+    .opacity = 0.0,
 };
 
 pub const Hematite = Material{

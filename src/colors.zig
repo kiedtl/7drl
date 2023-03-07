@@ -20,7 +20,8 @@ pub const GOLD: u32 = 0xddb733;
 pub const LIGHT_GOLD: u32 = 0xfdd753;
 pub const COPPER_RED: u32 = 0x985744;
 
-pub const BG: u32 = percentageOf(CONCRETE, 10);
+pub const BG: u32 = 0x001000;
+// pub const BG: u32 = percentageOf(CONCRETE, 10);
 pub const ABG: u32 = percentageOf(LIGHT_STEEL_BLUE, 20);
 
 // Interpolate linearly between two vals.
