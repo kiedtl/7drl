@@ -533,8 +533,6 @@ fn tickGame() !void {
                 scores.recordUsize(.TurnsSpent, 1);
                 player.bookkeepingFOV();
                 player.tickRage();
-                if (player.getActiveRing()) |r|
-                    player.getRingHints(r);
             }
 
             if (mob.hasStatus(.Paralysis)) {

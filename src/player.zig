@@ -570,49 +570,6 @@ pub fn checkRing(index: usize) ?RingError {
     return null;
 }
 
-pub fn beginUsingRing(index: usize) void {
-    const ring = getRingByIndex(index).?;
-
-    if (checkRing(index)) |e| {
-        state.message(.Info, "[$o{s}$.] You cannot use this ring ({s}).", .{ ring.name, e.text1() });
-        return;
-    }
-
-    if (getActiveRing()) |otherring| {
-        otherring.activated = false;
-        otherring.pattern_checker.reset();
-    }
-
-    if (ui.chooseDirection()) |dir| {
-        state.message(.Info, "Activated ring $o{s}$....", .{ring.name});
-
-        if (ring.pattern_checker.init.?(state.player, dir, &ring.pattern_checker.state)) |hint| {
-            ring.activated = true;
-
-            var strbuf = std.ArrayList(u8).init(state.GPA.allocator());
-            defer strbuf.deinit();
-            const writer = strbuf.writer();
-            writer.print("[$o{s}$.] ", .{ring.name}) catch err.wat();
-            formatActivityList(&.{hint}, writer);
-            state.message(.Info, "{s}", .{strbuf.items});
-        } else |derr| {
-            ring.activated = false;
-            switch (derr) {
-                error.NeedCardinalDirection => state.message(.Info, "[$o{s}$.] error: need a cardinal direction", .{ring.name}),
-                error.NeedOppositeWalkableTile => state.message(.Info, "[$o{s}$.] error: needs to have walkable space in the opposite direction", .{ring.name}),
-                error.NeedWalkableTile => state.message(.Info, "[$o{s}$.] error: need a walkable space in that direction", .{ring.name}),
-
-                error.NeedOppositeTileNearWalls => state.message(.Info, "[$o{s}$.] error: needs to have walkable space near walls in the opposite direction", .{ring.name}),
-                error.NeedTileNearWalls => state.message(.Info, "[$o{s}$.] error: need a walkable space near walls in that direction", .{ring.name}),
-                error.NeedHostileOnTile => state.message(.Info, "[$o{s}$.] error: there needs to be a hostile in that direction", .{ring.name}),
-                error.NeedOpenSpace => state.message(.Info, "[$o{s}$.] error: need to be in open space (no walls in cardinal directions)", .{ring.name}),
-                error.NeedOppositeWalkableTileInFrontOfWall => state.message(.Info, "[$o{s}$.] error: needs to have walkable space in front of wall in opposite direction", .{ring.name}),
-                error.NeedLivingEnemy => state.message(.Info, "[$o{s}$.] error: enemy cannot be a construct or undead", .{ring.name}),
-            }
-        }
-    }
-}
-
 pub fn getRingIndexBySlot(slot: Mob.Inventory.EquSlot) usize {
     return for (Mob.Inventory.RING_SLOTS) |item, i| {
         if (item == slot) break i + state.default_patterns.len;
@@ -639,47 +596,6 @@ pub fn getActiveRing() ?*Ring {
                 break ring;
         }
     } else null;
-}
-
-pub fn getRingHints(ring: *Ring) void {
-    var buf = StackBuffer(Activity, 16).init(null);
-
-    const chk_func = ring.pattern_checker.funcs[ring.pattern_checker.turns_taken];
-
-    for (&DIRECTIONS) |d| if (state.player.coord.move(d, state.mapgeometry)) |neighbor_tile| {
-        const move_activity = Activity{ .Move = d };
-        if (state.is_walkable(neighbor_tile, .{ .mob = state.player })) {
-            if ((chk_func)(state.player, &ring.pattern_checker.state, move_activity, true))
-                buf.append(move_activity) catch err.wat();
-        }
-
-        if (state.dungeon.at(neighbor_tile).mob) |neighbor_mob| {
-            if (neighbor_mob.isHostileTo(state.player) and neighbor_mob.ai.is_combative) {
-                const attack_activity = Activity{ .Attack = .{
-                    .who = neighbor_mob,
-                    .direction = d,
-                    .coord = neighbor_tile,
-                } };
-                if ((chk_func)(state.player, &ring.pattern_checker.state, attack_activity, true))
-                    buf.append(attack_activity) catch err.wat();
-            }
-        }
-    };
-
-    const wait_activity: Activity = .Rest;
-    if ((chk_func)(state.player, &ring.pattern_checker.state, wait_activity, true))
-        buf.append(wait_activity) catch err.wat();
-
-    if (buf.len == 0) {
-        state.message(.Info, "[$o{s}$.] No valid moves!", .{ring.name});
-    }
-
-    var strbuf = std.ArrayList(u8).init(state.GPA.allocator());
-    defer strbuf.deinit();
-    const writer = strbuf.writer();
-    writer.print("[$o{s}$.] ", .{ring.name}) catch err.wat();
-    formatActivityList(buf.constSlice(), writer);
-    state.message(.Info, "{s}", .{strbuf.items});
 }
 
 pub fn formatActivityList(activities: []const Activity, writer: anytype) void {

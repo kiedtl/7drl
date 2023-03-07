@@ -2206,7 +2206,7 @@ pub const Mob = struct { // {{{
                         if (s) |floor| {
                             return player.triggerStair(dest, floor);
                         } else {
-                            ui.drawAlertThenLog("It's suicide to go back!", .{});
+                            ui.drawContinuePrompt("As you attempt to turn back, Something paralyses your mind, compelling obedience...", .{});
                         }
                     },
                     else => {},
@@ -4105,10 +4105,6 @@ pub const Tile = struct {
             if (hp_loss_percent > 0) {
                 //const red = @floatToInt(u32, (255 * (hp_loss_percent / 2)) / 100) + 0x22;
                 //cell.bg = math.clamp(red, 0x66, 0xff) << 16;
-            }
-
-            if (!mob.ai.is_combative) {
-                cell.fg = colors.AQUAMARINE;
             }
 
             if (mob.prisoner_status) |ps| {
