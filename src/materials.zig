@@ -28,6 +28,20 @@ pub const Ornate = Material{
     .opacity = 1.0,
 };
 
+pub const Polished = Material{
+    .name = "ornate",
+    .color_fg = 0xe0ffff,
+    .color_bg = null,
+    .sprite = .S_G_Wall_Finished,
+    .color_sfg = 0xe0ffff,
+    .color_sbg = null,
+    .color_floor = 0x203f3f,
+    .floor_sprite = .S_G_T_Ornate,
+    .tileset = 0,
+    .luminescence = 0,
+    .opacity = 1.0,
+};
+
 pub const PaintedConcrete = Material{
     .id = "painted_concrete",
     .name = "painted concrete",

@@ -4089,8 +4089,8 @@ pub const Tile = struct {
 
             cell.fg = switch (mob.ai.phase) {
                 .Work, .Flee => 0xffffff,
-                .Investigate => 0xffd700,
-                .Hunt => 0xff9999,
+                .Investigate => colors.CONCRETE,
+                .Hunt => colors.RED,
             };
             if (mob == state.player or
                 mob.isUnderStatus(.Paralysis) != null or
@@ -4098,6 +4098,8 @@ pub const Tile = struct {
                 cell.fg = 0xffffff;
             if (mob.isUnderStatus(.Sleeping) != null)
                 cell.fg = 0xffcfff;
+            if (!mob.isHostileTo(state.player))
+                cell.fg = 0xb0c4de;
 
             const hp_loss_percent = 100 - (mob.HP * 100 / mob.max_HP);
             if (hp_loss_percent > 0) {
@@ -4187,12 +4189,12 @@ pub const Tile = struct {
                         cell.bg = 0x0000ff;
                     } else {
                         cell.ch = if (state.levelinfo[s.?].optional) '≤' else '<';
-                        cell.bg = 0x997700;
-                        cell.fg = 0xffd700;
+                        cell.bg = colors.percentageOf(colors.AQUAMARINE, 40); //0x997700;
+                        cell.fg = colors.AQUAMARINE; //0xffd700;
 
                         cell.sch = if (state.levelinfo[s.?].optional) .S_G_M_DoorShut else .S_G_StairsUp;
                         cell.sbg = colors.BG;
-                        cell.sfg = 0xffd700;
+                        cell.sfg = colors.AQUAMARINE; //0xffd700;
                     }
                 },
             }

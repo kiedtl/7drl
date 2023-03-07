@@ -3310,6 +3310,20 @@ pub const LevelConfig = struct {
 
 // -----------------------------------------------------------------------------
 
+pub fn createLevelConfig_CEL(comptime prefabs: []const []const u8) LevelConfig {
+    return LevelConfig{
+        .prefabs = prefabs,
+        .prefab_chance = 33,
+        .mapgen_func = placeRandomRooms,
+        .mapgen_iters = 256,
+        .level_features = [_]?LevelConfig.LevelFeatureFunc{ null, null, null, null },
+
+        .material = &materials.Polished,
+        .machines = &[_]*const Machine{},
+        .single_props = &[_][]const u8{ "wood_table", "wood_chair" },
+    };
+}
+
 pub fn createLevelConfig_DIN(comptime prefabs: []const []const u8) LevelConfig {
     return LevelConfig{
         .prefabs = prefabs,
@@ -3328,51 +3342,25 @@ pub fn createLevelConfig_DIN(comptime prefabs: []const []const u8) LevelConfig {
     };
 }
 
-pub fn createLevelConfig_LAB(comptime prefabs: []const []const u8) LevelConfig {
+pub fn createLevelConfig_QUA(comptime prefabs: []const []const u8) LevelConfig {
     return LevelConfig{
         .prefabs = prefabs,
-        .tunneler_opts = .{
-            // .turn_chance = 1,
-            // .initial_tunnelers = &[_]tunneler.TunnelerOptions.InitialTunneler{
-            //     .{ .start = Coord.new(WIDTH / 2, HEIGHT - 1), .width = 3, .height = 0, .direction = .North },
-            //     // .{ .start = Coord.new(1, HEIGHT - 1), .width = 3, .height = 0, .direction = .North },
-            //     // .{ .start = Coord.new(WIDTH - 4, 1), .width = 3, .height = 0, .direction = .South },
-            // },
-            .initial_tunnelers = &[_]tunneler.TunnelerOptions.InitialTunneler{
-                .{ .start = Coord.new(1, 1), .width = 0, .height = 3, .direction = .East },
-                .{ .start = Coord.new(WIDTH - 4, 1), .width = 3, .height = 0, .direction = .South },
-                .{ .start = Coord.new(WIDTH - 1, HEIGHT - 4), .width = 0, .height = 3, .direction = .West },
-                .{ .start = Coord.new(1, HEIGHT - 1), .width = 3, .height = 0, .direction = .North },
-            },
-        },
-        .prefab_chance = 60,
-        .mapgen_func = tunneler.placeTunneledRooms,
-
+        .prefab_chance = 33,
+        .mapgen_iters = 2048,
         .level_features = [_]?LevelConfig.LevelFeatureFunc{
-            null,
             levelFeaturePrisoners,
-            levelFeatureDormantConstruct,
+            levelFeaturePrisonersMaybe,
+            null,
             null,
         },
 
-        .material = &materials.Dobalene,
-        .window_material = &materials.LabGlass,
-        .bars = "titanium_bars",
-        .door = &surfaces.LabDoor,
-        //.containers = &[_]Container{ surfaces.Chest, surfaces.LabCabinet },
-        .containers = &[_]Container{surfaces.LabCabinet},
-        .utility_items = &surfaces.laboratory_item_props.items,
-        .props = &surfaces.laboratory_props.items,
-        .single_props = &[_][]const u8{ "table", "centrifuge", "compact_turbine", "water_purifier", "distiller" },
-
-        .subroom_chance = 70,
-        .allow_statues = false,
-
+        .material = &materials.Ornate,
         .machines = &[_]*const Machine{},
+        .single_props = &[_][]const u8{ "wood_table", "wood_chair" },
     };
 }
 
-pub fn createLevelConfig_CRY() LevelConfig {
+pub fn createLevelConfig_ARM() LevelConfig {
     return LevelConfig{
         .tunneler_opts = .{
             .turn_chance = 10,
@@ -3447,85 +3435,11 @@ pub fn createLevelConfig_WRK(comptime prefabs: []const []const u8) LevelConfig {
     };
 }
 
-pub const CAV_BASE_LEVELCONFIG = LevelConfig{
-    .prefabs = &[_][]const u8{},
-    .distances = [2][10]usize{
-        .{ 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 },
-        .{ 1, 1, 2, 3, 4, 5, 6, 7, 8, 9 },
-    },
-    .shrink_corridors_to_fit = true,
-    .prefab_chance = 33,
-    .mapgen_func = placeDrunkenWalkerCave,
-    .mapgen_iters = 64,
-
-    .min_room_width = 4,
-    .min_room_height = 4,
-    .max_room_width = 7,
-    .max_room_height = 7,
-
-    .required_mobs = &[_]LevelConfig.RequiredMob{
-        .{ .count = 3, .template = &mobs.MellaentTemplate },
-
-        // TODO: remove these entries when the mob placer is fixed
-        // and stops dumping treacherously low numbers of enemies
-        .{ .count = 3, .template = &mobs.ConvultTemplate },
-        .{ .count = 3, .template = &mobs.VapourMageTemplate },
-    },
-    .room_crowd_max = 4,
-    .level_crowd_max = 40,
-
-    .require_dry_rooms = true,
-
-    .level_features = [_]?LevelConfig.LevelFeatureFunc{
-        null, null, null, null,
-    },
-
-    .no_windows = true,
-    .material = &materials.Basalt,
-    //.tiletype = .Floor,
-
-    .allow_statues = false,
-    .room_trapped_chance = 0,
-    .allow_extra_corridors = false,
-    .door = &surfaces.VaultDoor,
-
-    .blobs = &[_]BlobConfig{
-        .{
-            .number = MinMax(usize){ .min = 10, .max = 15 },
-            .type = null,
-            .min_blob_width = minmax(usize, 2, 8),
-            .min_blob_height = minmax(usize, 2, 8),
-            .max_blob_width = minmax(usize, 9, 20),
-            .max_blob_height = minmax(usize, 9, 20),
-            .ca_rounds = 10,
-            .ca_percent_seeded = 55,
-            .ca_birth_params = "ffffffftt",
-            .ca_survival_params = "ffftttttt",
-        },
-        .{
-            .number = MinMax(usize){ .min = 2, .max = 3 },
-            .type = .Lava,
-            .min_blob_width = minmax(usize, 10, 12),
-            .min_blob_height = minmax(usize, 8, 9),
-            .max_blob_width = minmax(usize, 18, 19),
-            .max_blob_height = minmax(usize, 14, 15),
-            .ca_rounds = 5,
-            .ca_percent_seeded = 55,
-            .ca_birth_params = "ffffffttt",
-            .ca_survival_params = "ffffttttt",
-        },
-    },
-
-    .machines = &[_]*const Machine{
-        // All machines are provided as subrooms
-    },
-};
-
 pub var Configs = [LEVELS]LevelConfig{
-    createLevelConfig_DIN(&[_][]const u8{"PRI_start"}),
-    createLevelConfig_DIN(&[_][]const u8{}),
-    createLevelConfig_DIN(&[_][]const u8{}),
-    createLevelConfig_DIN(&[_][]const u8{}),
-    createLevelConfig_DIN(&[_][]const u8{}),
-    createLevelConfig_DIN(&[_][]const u8{"PRI_main_exit"}),
+    createLevelConfig_CEL(&[_][]const u8{"PRI_start"}), // CEL
+    createLevelConfig_DIN(&[_][]const u8{}), // DIN
+    createLevelConfig_QUA(&[_][]const u8{}), // QUA
+    createLevelConfig_WRK(&[_][]const u8{}), // WRK
+    createLevelConfig_ARM(), // ARM
+    createLevelConfig_DIN(&[_][]const u8{"PRI_main_exit"}), // CAV
 };

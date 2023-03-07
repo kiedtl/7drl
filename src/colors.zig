@@ -4,25 +4,31 @@ const assert = std.debug.assert;
 
 pub const GREY: u32 = 0xafafaf;
 pub const DARK_GREY: u32 = 0x8a8a8a;
-pub const OFF_WHITE: u32 = 0xe6e6e6;
-pub const WHITE: u32 = 0xffffff;
+pub const OFF_WHITE: u32 = 0xc0dfdf;
+pub const WHITE: u32 = 0xe0ffff;
 pub const BG_GREY: u32 = 0x1e1e1e;
 pub const BLACK: u32 = 0x000000;
-pub const CONCRETE: u32 = 0x9f8f74;
-pub const LIGHT_CONCRETE: u32 = 0xefdfc4;
 pub const PINK: u32 = 0xffc0cb;
-pub const DOBALENE_BLUE: u32 = 0xb5d0ff;
-pub const LIGHT_STEEL_BLUE: u32 = 0xb0c4de;
+pub const DOBALENE_BLUE: u32 = 0xa6afca; // darkened steel blue
 pub const PALE_VIOLET_RED: u32 = 0xdb7093;
+pub const COPPER_RED: u32 = 0x985744;
 pub const LIGHT_PALE_VIOLET_RED: u32 = 0xfb90b3;
-pub const AQUAMARINE: u32 = 0x7fffd4;
+
 pub const GOLD: u32 = 0xddb733;
 pub const LIGHT_GOLD: u32 = 0xfdd753;
-pub const COPPER_RED: u32 = 0x985744;
+
+pub const RED: u32 = 0xebb4b4;
+pub const AQUAMARINE: u32 = 0x9fdfca; //0x7fffd4;
+pub const DARK_AQUAMARINE: u32 = 0x53c695;
+pub const VIOLET: u32 = 0xdfc0d5;
+pub const LIGHT_STEEL_BLUE: u32 = 0xd7dfc0; // rotated c0dfdf (45deg) & darkened by 0.03
+
+pub const CONCRETE: u32 = 0xb7bf90;
+pub const LIGHT_CONCRETE: u32 = 0xd7dfc0;
 
 pub const BG: u32 = 0x001000;
 // pub const BG: u32 = percentageOf(CONCRETE, 10);
-pub const ABG: u32 = percentageOf(LIGHT_STEEL_BLUE, 20);
+pub const ABG: u32 = percentageOf(CONCRETE, 20);
 
 // Interpolate linearly between two vals.
 fn interpolate(a: u32, b: u32, f: f64) u32 {

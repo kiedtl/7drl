@@ -993,17 +993,17 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
     //const lvlstrx = startx + @divTrunc(endx - startx - 1, 2) - @intCast(isize, (lvlstr.len + 4) / 2);
     //y = _drawStrf(lvlstrx, y, endx, "$G┤$. $c{s}$. $G├$.", .{lvlstr}, .{});
     //y += 1;
-    _ = _drawStrf(startx, y, endx, "$cturns:$. {}", .{state.player_turns}, .{});
-    y = _drawStrf(endx - lvlstr.len, y, endx, "$c{s}$.", .{lvlstr}, .{});
+    _ = _drawStrf(startx, y, endx, "$bturns:$. {}", .{state.player_turns}, .{});
+    y = _drawStrf(endx - lvlstr.len, y, endx, "$b{s}$.", .{lvlstr}, .{});
     y += 1;
 
     const bar_endx = endx - 9;
 
     // Use red if below 40% health
     const color: [2]u32 = if (state.player.HP < (state.player.max_HP / 5) * 2)
-        [_]u32{ colors.percentageOf(colors.PALE_VIOLET_RED, 25), colors.LIGHT_PALE_VIOLET_RED }
+        [_]u32{ colors.percentageOf(colors.VIOLET, 25), colors.VIOLET }
     else
-        [_]u32{ colors.percentageOf(colors.DOBALENE_BLUE, 25), colors.DOBALENE_BLUE };
+        [_]u32{ colors.percentageOf(colors.AQUAMARINE, 25), colors.AQUAMARINE };
     _drawBar(y, startx, bar_endx, state.player.HP, state.player.max_HP, "health", color[0], color[1], .{});
     const hit = combat.chanceOfMeleeLanding(state.player, null);
     _ = _drawStrf(bar_endx + 1, y, endx, "$.hit {: >3}%$.", .{hit}, .{});
@@ -1012,14 +1012,14 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
     const ev = utils.SignedFormatter{ .v = state.player.stat(.Evade) };
     const is_raging = state.player_rage > 0;
     const rage_str = if (is_raging) "raging" else "sane";
-    _drawBar(y, startx, bar_endx, state.player_rage, state.MAX_RAGE, rage_str, colors.GOLD, 0xffffff, .{});
-    _ = _drawStrf(bar_endx + 1, y, endx, "$pev  {: >3}%$.", .{ev}, .{});
+    _drawBar(y, startx, bar_endx, state.player_rage, state.MAX_RAGE, rage_str, colors.percentageOf(colors.LIGHT_CONCRETE, 40), colors.LIGHT_CONCRETE, .{});
+    _ = _drawStrf(bar_endx + 1, y, endx, "ev  {: >3}%", .{ev}, .{ .fg = colors.LIGHT_CONCRETE });
     y += 1;
 
     const blood = state.dungeon.at(state.player.coord).spatter.get(.Blood);
-    _drawBar(y, startx, bar_endx, blood / 10, 4, "blood", 0x880808, 0xffffff, .{});
+    _drawBar(y, startx, bar_endx, blood / 10, 4, "blood", colors.percentageOf(colors.RED, 40), colors.RED, .{});
     const arm = utils.SignedFormatter{ .v = state.player.resistance(.Armor) };
-    _ = _drawStrf(bar_endx + 1, y, endx, "$barm {: >3}%$.", .{arm}, .{});
+    _ = _drawStrf(bar_endx + 1, y, endx, "arm {: >3}%", .{arm}, .{ .fg = colors.RED });
     y += 2;
 
     {
@@ -1063,7 +1063,7 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
         };
 
     if (state.rage_command) |command| {
-        y = _drawStrf(startx, y, endx, "Current command: $o{s}$.", .{command.name2()}, .{});
+        y = _drawStrf(startx, y, endx, "Current command: $a{s}$.", .{command.name2()}, .{});
     } else {
         y = _drawStr(startx, y, endx, "$bNo command.$.", .{});
     }
@@ -1693,11 +1693,11 @@ pub fn drawLoadingScreenFinish(loading_win: *LoadingScreen) bool {
 
     const text = switch (rng.range(usize, 0, 99)) {
         0...97 => "-- Press any key to begin --",
-        98...99 => "-- Press any key to inevitably die --",
+        98...99 => "-- Press any key to die --",
         else => err.wat(),
     };
 
-    _ = loading_win.text_con.drawTextAtf(0, 0, "$b{s}$.", .{text}, .{});
+    _ = loading_win.text_con.drawTextAtf(0, 0, "$c{s}$.", .{text}, .{});
 
     loading_win.main_con.renderFully(@intCast(usize, win.startx), @intCast(usize, win.starty));
 
@@ -2638,10 +2638,10 @@ pub const Console = struct {
     }
 
     pub fn setBorder(self: *const Self) void {
-        _ = self.clearLineTo(0, self.width - 1, 0, .{ .ch = '▄', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
-        _ = self.clearLineTo(0, self.width - 1, self.height - 1, .{ .ch = '▀', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
-        _ = self.clearColumnTo(1, self.height - 2, 0, .{ .ch = '█', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
-        _ = self.clearColumnTo(1, self.height - 2, self.width - 1, .{ .ch = '█', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
+        _ = self.clearLineTo(0, self.width - 1, 0, .{ .ch = '▄', .fg = colors.DARK_AQUAMARINE, .bg = colors.BG });
+        _ = self.clearLineTo(0, self.width - 1, self.height - 1, .{ .ch = '▀', .fg = colors.DARK_AQUAMARINE, .bg = colors.BG });
+        _ = self.clearColumnTo(1, self.height - 2, 0, .{ .ch = '█', .fg = colors.DARK_AQUAMARINE, .bg = colors.BG });
+        _ = self.clearColumnTo(1, self.height - 2, self.width - 1, .{ .ch = '█', .fg = colors.DARK_AQUAMARINE, .bg = colors.BG });
 
         // _ = self.setCell(0, 0, .{ .ch = '▗', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
         // _ = self.setCell(0, self.height - 1, .{ .ch = '▙', .bg = colors.LIGHT_STEEL_BLUE, .fg = colors.BG });
@@ -2899,7 +2899,7 @@ pub const Console = struct {
                             'c' => fg = colors.LIGHT_CONCRETE,
                             'p' => fg = colors.PINK,
                             'b' => fg = colors.LIGHT_STEEL_BLUE,
-                            'r' => fg = colors.PALE_VIOLET_RED,
+                            'r' => fg = colors.RED,
                             'a' => fg = colors.AQUAMARINE,
                             'o' => fg = colors.GOLD,
                             else => err.bug("[Console] Found unknown escape sequence '${u}' (line: '{s}')", .{ next_codepoint, line }),

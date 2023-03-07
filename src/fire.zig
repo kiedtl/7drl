@@ -2,6 +2,7 @@ const std = @import("std");
 const math = std.math;
 const mem = std.mem;
 
+const colors = @import("colors.zig");
 const state = @import("state.zig");
 const explosions = @import("explosions.zig");
 const utils = @import("utils.zig");
@@ -63,9 +64,9 @@ pub inline fn fireLight(amount: usize) usize {
 }
 
 pub inline fn fireColor(amount: usize) u32 {
-    if (amount <= 3) return 0xff3030;
-    if (amount <= 7) return 0xff4040;
-    return 0xff5040;
+    if (amount <= 3) return colors.percentageOf(colors.RED, 75);
+    if (amount <= 7) return colors.percentageOf(colors.RED, 90);
+    return colors.RED;
 }
 
 pub inline fn fireGlyph(amount: usize) u21 {

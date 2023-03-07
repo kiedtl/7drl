@@ -148,7 +148,7 @@ pub fn repPtr() *isize {
 
 pub fn triggerPoster(coord: Coord) bool {
     const poster = state.dungeon.at(coord).surface.?.Poster;
-    ui.drawTextScreen("$oYou read:$.\n\n{s}", .{poster.text});
+    ui.drawTextScreen("$aYou read:$.\n\n{s}", .{poster.text});
     return false;
 }
 
@@ -221,7 +221,7 @@ pub fn tickRage() void {
             if (!a.received) break i;
         } else null) |n| {
             state.player_abilities[n].received = true;
-            state.message(.Info, "$gThe Presence seems pleased.$. $oNew ability: {s}$.", .{state.player_abilities[n].a.name()});
+            state.message(.Info, "$gThe Presence seems pleased.$. $aNew ability: {s}$.", .{state.player_abilities[n].a.name()});
         }
     }
 
@@ -260,7 +260,7 @@ pub fn tickRage() void {
                 direcs.append(d) catch err.wat();
         };
         state.rage_command = rng.chooseUnweighted(Direction, direcs.constSlice());
-        state.message(.Info, "$gThe Presence speaks.$. $o\"{s}!\"$.", .{state.rage_command.?.name2()});
+        state.message(.Info, "$gThe Presence speaks.$. $a\"{s}!\"$.", .{state.rage_command.?.name2()});
     }
 }
 
