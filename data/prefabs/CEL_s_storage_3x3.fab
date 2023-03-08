@@ -1,0 +1,57 @@
+:subroom
+:restriction 999
+
+@a p cabinet_a
+@b p cabinet_b
+@c p cabinet_c
+@d p cabinet_d
+
+bcd
+bda
+bcd
+
+\
+
+@a p crate_a
+@b p crate_b
+@c p crate_c
+@d p crate_d
+
+aaa
+abd
+bcd
+
+\
+
+@p p pot
+
+ppp
+ppp
+ppp
+
+\
+
+:subroom_area 0,0 2 2 CEL_s_storage_2x2
+
+@p p pot
+
+..p
+..p
+ppp
+
+\
+
+:subroom_area 1,1 3 3 CEL_s_storage_3x3
+:subroom_area 5,1 3 3 CEL_s_storage_3x3
+:subroom_area 1,5 3 3 CEL_s_storage_3x3
+:subroom_area 5,5 3 3 CEL_s_storage_3x3
+
+.........
+.........
+.........
+.........
+.........
+.........
+.........
+.........
+.........

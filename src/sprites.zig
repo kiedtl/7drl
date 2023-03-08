@@ -6,6 +6,16 @@
 //
 
 pub const Sprite = enum(u21) {
+    S_O_StorageA = 0x2780,
+    S_O_StorageB = 0x2781,
+    S_O_StorageC = 0x2782,
+    S_O_StorageD = 0x2783,
+    S_O_CrateA = 0x2784,
+    S_O_CrateB = 0x2785,
+    S_O_CrateC = 0x2786,
+    S_O_CrateD = 0x2787,
+    S_O_Pot = 0x2788,
+
     S_G_Wall_Finished = 0x2790,
     S_G_Wall_Rough = 0x2791,
     S_G_Wall_Grate = 0x2792,
@@ -14,6 +24,7 @@ pub const Sprite = enum(u21) {
     S_G_Wall_Window2 = 0x2795,
     S_G_Wall_Polished = 0x2796,
     S_G_Wall_Ornate = 0x2797,
+    S_G_Wall_Grate_Broken = 0x2798,
     S_G_StairsDown = 0x279E,
     S_G_StairsUp = 0x279F,
 

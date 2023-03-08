@@ -1,0 +1,45 @@
+:subroom
+:restriction 999
+
+@a p cabinet_a
+@b p cabinet_b
+@c p cabinet_c
+@d p cabinet_d
+
+abcd
+bdaa
+bcda
+bdbd
+
+\
+
+@a p crate_a
+@b p crate_b
+@c p crate_c
+@d p crate_d
+
+abcd
+bdaa
+bcda
+bdbd
+
+\
+
+@p p pot
+
+pppp
+pppp
+pppp
+pppp
+
+\
+
+:subroom_area 0,0 2 2 PRI_s_storage_2x2
+:subroom_area 2,0 2 2 PRI_s_storage_2x2
+:subroom_area 0,2 2 2 PRI_s_storage_2x2
+:subroom_area 2,2 2 2 PRI_s_storage_2x2
+
+....
+....
+....
+....

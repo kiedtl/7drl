@@ -856,6 +856,7 @@ pub fn excavatePrefab(
     for (fab.subroom_areas.constSlice()) |subroom_area| {
         _ = placeSubroom(room, &subroom_area.rect, allocator, .{
             .specific_id = if (subroom_area.specific_id) |id| id.constSlice() else null,
+            .no_padding = true,
         });
     }
 }
@@ -1175,6 +1176,7 @@ pub const SubroomPlacementOptions = struct {
     specific_id: ?[]const u8 = null,
     specific_fab: ?*Prefab = null,
     for_lair: bool = false,
+    no_padding: bool = false,
 };
 
 pub fn placeSubroom(parent: *Room, area: *const Rect, alloc: mem.Allocator, opts: SubroomPlacementOptions) bool {
@@ -1204,8 +1206,8 @@ pub fn placeSubroom(parent: *Room, area: *const Rect, alloc: mem.Allocator, opts
             }
         }
 
-        const minheight = subroom.height + if (subroom.nopadding) @as(usize, 0) else 2;
-        const minwidth = subroom.width + if (subroom.nopadding) @as(usize, 0) else 2;
+        const minheight = subroom.height + if (opts.no_padding or subroom.nopadding) @as(usize, 0) else 2;
+        const minwidth = subroom.width + if (opts.no_padding or subroom.nopadding) @as(usize, 0) else 2;
 
         if (minheight <= area.height and minwidth <= area.width) {
             const rx = (area.width / 2) - (subroom.width / 2);
@@ -1229,6 +1231,7 @@ pub fn placeSubroom(parent: *Room, area: *const Rect, alloc: mem.Allocator, opts
                     };
                     _ = placeSubroom(&parent_adj, &actual_subroom_area, alloc, .{
                         .specific_id = if (subroom_area.specific_id) |id| id.constSlice() else null,
+                        .no_padding = true,
                     });
                 }
             }
@@ -3316,11 +3319,16 @@ pub fn createLevelConfig_CEL(comptime prefabs: []const []const u8) LevelConfig {
         .prefab_chance = 33,
         .mapgen_func = placeRandomRooms,
         .mapgen_iters = 256,
+        .min_room_width = 6,
+        .min_room_height = 6,
+        .max_room_width = 11,
+        .max_room_height = 11,
         .level_features = [_]?LevelConfig.LevelFeatureFunc{ null, null, null, null },
 
         .material = &materials.Polished,
         .machines = &[_]*const Machine{},
-        .single_props = &[_][]const u8{ "wood_table", "wood_chair" },
+        .single_props = &[_][]const u8{ "crate_a", "pot", "cabinet_a" },
+        .subroom_chance = 100,
     };
 }
 
@@ -3436,7 +3444,7 @@ pub fn createLevelConfig_WRK(comptime prefabs: []const []const u8) LevelConfig {
 }
 
 pub var Configs = [LEVELS]LevelConfig{
-    createLevelConfig_CEL(&[_][]const u8{"PRI_start"}), // CEL
+    createLevelConfig_CEL(&[_][]const u8{"CEL_start"}), // CEL
     createLevelConfig_DIN(&[_][]const u8{}), // DIN
     createLevelConfig_QUA(&[_][]const u8{}), // QUA
     createLevelConfig_WRK(&[_][]const u8{}), // WRK

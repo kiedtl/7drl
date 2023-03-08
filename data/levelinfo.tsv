@@ -4,10 +4,10 @@
 #
 
 #
-# id     depth   short name                 level name   upgrade?       optional?              stairs[0]                 stairs[1]
-"PRI" 	     1 	      "Pri" 	            "1/Prison" 	 nay    	    nay 	      "2/Prison" 	        "2/Prison"
-"PRI" 	     2 	      "Pri" 	            "2/Prison" 	 nay    	    nay 	      "3/Prison" 	        "3/Prison"
-"PRI" 	     3 	      "Pri" 	            "3/Prison" 	 nay    	    nay 	      "4/Prison" 	        "4/Prison"
-"PRI" 	     4 	      "Pri" 	            "4/Prison" 	 nay    	    nay 	      "5/Prison" 	        "5/Prison"
-"PRI" 	     5 	      "Pri" 	            "5/Prison" 	 nay    	    nay 	      "6/Prison" 	        "6/Prison"
-"PRI" 	     6 	      "Pri" 	            "6/Prison" 	 nay    	    nay 	               - 	                 -
+# id     depth   short name                 level name   upgrade?       optional?                 stairs[0]              stairs[1]
+"CEL" 	     1 	     "Cllr" 	            "1/Cellar" 	 nay    	    nay 	         "2/Dining" 	        "2/Dining"
+"PRI" 	     2 	      "Pri" 	            "2/Dining" 	 nay    	    nay 	       "3/Quarters" 	      "3/Quarters"
+"PRI" 	     3 	      "Pri" 	          "3/Quarters" 	 nay    	    nay 	       "4/Workshop" 	      "4/Workshop"
+"PRI" 	     4 	      "Pri" 	          "4/Workshop" 	 nay    	    nay 	         "5/Armory" 	        "5/Armory"
+"PRI" 	     5 	      "Pri" 	            "5/Armory" 	 nay    	    nay 	 "6/Outer Darkness" 	"6/Outer Darkness"
+"PRI" 	     6 	      "Pri" 	    "6/Outer Darkness" 	 nay    	    nay 	                  - 	                 -

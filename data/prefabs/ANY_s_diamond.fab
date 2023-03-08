@@ -1,6 +1,7 @@
 :subroom
 :center_align
 :priority 10
+:g_whitelist 2/Dining 3/Quarters 4/Workshop 5/Armory
 
 ..#..
 .###.

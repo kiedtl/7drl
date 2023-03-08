@@ -329,3 +329,19 @@
 "titanium_bars"        	 "titanium bars"        	 '*' 	                        -  	 0xeaecef 	 -        	 nay
 
 "undead_ash"           	 "pile of ash"          	 '%' 	                        -  	 0x8888aa 	 -        	 -  
+
+# new stuff
+
+"iron_bars_broken"     	 "broken grate"         	 '#' 	   .S_G_Wall_Grate_Broken  	 0xeeeeee 	 -        	 yea
+
+"cabinet_a"            	 "cabinet"              	 'π' 	            .S_O_StorageA  	 0xb7bf90 	 -        	 nay 	 - 	10
+"cabinet_b"            	 "cabinet"              	 'π' 	            .S_O_StorageB  	 0xb7bf90 	 -        	 nay 	 - 	10
+"cabinet_c"            	 "cabinet"              	 'π' 	            .S_O_StorageC  	 0xb7bf90 	 -        	 nay 	 - 	10
+"cabinet_d"            	 "cabinet"              	 'π' 	            .S_O_StorageD  	 0xb7bf90 	 -        	 nay 	 - 	10
+
+"crate_a"              	 "crate"                	 'æ' 	              .S_O_CrateA  	 0xb7bf90 	 -        	 nay 	 - 	10
+"crate_b"              	 "crate"                	 'æ' 	              .S_O_CrateB  	 0xb7bf90 	 -        	 nay 	 - 	10
+"crate_c"              	 "crate"                	 'æ' 	              .S_O_CrateC  	 0xb7bf90 	 -        	 nay 	 - 	10
+"crate_d"              	 "crate"                	 'æ' 	              .S_O_CrateD  	 0xb7bf90 	 -        	 nay 	 - 	10
+
+"pot"                  	 "pot"                  	 'æ' 	                 .S_O_Pot  	 0xb0c4de 	 -        	 nay 	 -
