@@ -1214,7 +1214,7 @@ fn modifyTile(moblist: []const *Mob, coord: Coord, p_tile: display.Cell) display
     switch (state.dungeon.at(coord).type) {
         .Floor => {
             if (state.player.coord.eq(coord)) {
-                tile.fg = colors.LIGHT_CONCRETE;
+                tile.fg = colors.AQUAMARINE;
             }
 
             if (_mobs_can_see(moblist, coord)) {
@@ -2638,10 +2638,10 @@ pub const Console = struct {
     }
 
     pub fn setBorder(self: *const Self) void {
-        _ = self.clearLineTo(0, self.width - 1, 0, .{ .ch = '▄', .fg = colors.DARK_AQUAMARINE, .bg = colors.BG });
-        _ = self.clearLineTo(0, self.width - 1, self.height - 1, .{ .ch = '▀', .fg = colors.DARK_AQUAMARINE, .bg = colors.BG });
-        _ = self.clearColumnTo(1, self.height - 2, 0, .{ .ch = '█', .fg = colors.DARK_AQUAMARINE, .bg = colors.BG });
-        _ = self.clearColumnTo(1, self.height - 2, self.width - 1, .{ .ch = '█', .fg = colors.DARK_AQUAMARINE, .bg = colors.BG });
+        _ = self.clearLineTo(0, self.width - 1, 0, .{ .ch = '▄', .fg = colors.CONCRETE, .bg = colors.BG });
+        _ = self.clearLineTo(0, self.width - 1, self.height - 1, .{ .ch = '▀', .fg = colors.CONCRETE, .bg = colors.BG });
+        _ = self.clearColumnTo(1, self.height - 2, 0, .{ .ch = '█', .fg = colors.CONCRETE, .bg = colors.BG });
+        _ = self.clearColumnTo(1, self.height - 2, self.width - 1, .{ .ch = '█', .fg = colors.CONCRETE, .bg = colors.BG });
 
         // _ = self.setCell(0, 0, .{ .ch = '▗', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
         // _ = self.setCell(0, self.height - 1, .{ .ch = '▙', .bg = colors.LIGHT_STEEL_BLUE, .fg = colors.BG });
