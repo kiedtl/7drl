@@ -422,7 +422,8 @@ fn readInput() !bool {
                 // state.dungeon.at(target).mob.?.addStatus(.RingTeleportation, 0, .{ .Tmp = 5 });
                 // state.dungeon.at(target).mob.?.addStatus(.RingElectrocution, 0, .{ .Tmp = 5 });
                 // state.dungeon.at(target).mob.?.addStatus(.RingConjuration, 0, .{ .Tmp = 2 });
-                state.player_abilities[0].received = true;
+                // state.player_abilities[0].received = true;
+                state.player_rage = 20;
                 break :blk true;
             },
             .F8 => b: {

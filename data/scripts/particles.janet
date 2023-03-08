@@ -804,14 +804,14 @@
     :lifetime 0
     :get-spawn-speed (Emitter :SSPD-min-sin-ticks)
    })]
-  "zap-fire-trails" @[(new-emitter @{
+  "zap-acid-messy-trails" @[(new-emitter @{
     :particle (new-particle @{
       :tile (new-tile @{ :ch " " })
       :speed 1
       :triggers @[
         [[:COND-true] [:TRIG-create-emitter (new-emitter @{
           :particle (new-particle @{
-            :tile (new-tile @{ :ch "0" :fg 0xff9900 :bg 0xff9900 :bg-mix 1 })
+            :tile (new-tile @{ :ch "0" :fg 0x0f670f :bg 0x0f670f :bg-mix 1 })
             :speed 0
             :lifetime 10
             :triggers @[
@@ -822,6 +822,24 @@
           })
           :lifetime 0
         })]]
+        [[:COND-percent? 60] [:TRIG-create-emitter (new-emitter @{
+          :particle (new-particle @{
+            :tile (new-tile @{ :ch " " :fg 0 :bg 0x0f670f :bg-mix 0.4 })
+            :speed 0.7
+            :triggers @[
+              [[:COND-reached-target? true] [:TRIG-set-speed 0]]
+              [[:COND-true] [:TRIG-reset-lifetime-once (fn [&] (random-choose [2 5])) 0]]
+              [[:COND-true] [:TRIG-modify-color :bg "a" [:completed-lifetime 0.95]]]
+            ]
+          })
+          :lifetime 1
+          :birth-delay 1
+          :get-spawn-params (fn [self ticks ctx coord target]
+                              (let [nangle (+ (:angle target coord) (random-choose [(rad 90) (rad -90)]))
+                                    ntarg  (:move-angle coord 1 nangle)]
+                                [coord ntarg]))
+
+       })]]
       ]
     })
     :lifetime 0

@@ -2659,9 +2659,10 @@ pub const Mob = struct { // {{{
             }
         }
 
-        if (d.by_mob != null and d.by_mob.? == state.player and
+        if (self.life_type == .Living and
             state.player_rage >= state.RAGE_P_HEAL and amount > 0 and
-            self.life_type == .Living)
+            (d.by_mob != null and d.by_mob.? == state.player) or
+            (d.by_mob != null and d.by_mob.?.faction == .Revgenunkim))
         {
             state.player.takeHealing(amount);
         }
@@ -4209,8 +4210,13 @@ pub const Tile = struct {
                 31...49 => 0.35,
                 else => unreachable,
             });
-            cell.fg = colors.mix(sp_color, cell.fg, q);
-            cell.sfg = colors.mix(sp_color, cell.sfg, q);
+            if (state.dungeon.at(coord).mob == null) {
+                cell.fg = colors.mix(sp_color, cell.fg, q);
+                cell.sfg = colors.mix(sp_color, cell.sfg, q);
+            } else {
+                cell.bg = colors.mix(sp_color, cell.bg, q);
+                cell.sbg = colors.mix(sp_color, cell.sbg, q);
+            }
         }
 
         return cell;

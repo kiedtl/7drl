@@ -194,19 +194,25 @@ pub fn usableAbilities() usize {
 }
 
 pub fn summonAngel() void {
-    state.message(.Info, "$gThe Presence summons a servant.$.", .{});
-
     // Leave my indented fn calls alone, zig fmt
     // zig fmt: off
-    var dijk = dijkstra.Dijkstra.init(state.player.coord, state.mapgeometry, mobs.PLAYER_VISION,
-        state.is_walkable, .{ .right_now = true }, state.GPA.allocator());
+    var dijk = dijkstra.Dijkstra.init(state.player.coord, state.mapgeometry, mobs.PLAYER_VISION / 2,
+        state.is_walkable, .{ .ignore_mobs = true }, state.GPA.allocator());
     // zig fmt: on
     defer dijk.deinit();
 
-    const spawn_c = while (dijk.next()) |child| {
-        if (state.dungeon.at(child).mob == null and state.is_walkable(child, .{ .right_now = true }))
-            break child;
-    } else return;
+    var spawn_cs = StackBuffer(Coord, 256).init(null);
+    while (dijk.next()) |child| {
+        if (state.player.cansee(child) and state.dungeon.at(child).mob == null and
+            state.is_walkable(child, .{ .right_now = true }))
+        {
+            spawn_cs.append(child) catch break;
+        }
+    }
+    if (spawn_cs.len == 0) return;
+    const spawn_c = rng.chooseUnweighted(Coord, spawn_cs.constSlice());
+
+    state.message(.Info, "$gThe Presence summons a servant.$.", .{});
 
     const mob_t = rng.chooseUnweighted(mobs.MobTemplate, &mobs.ANGELS);
     const mob = mobs.placeMob(state.GPA.allocator(), &mob_t, spawn_c, .{});

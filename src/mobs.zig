@@ -334,9 +334,9 @@ pub const EmberlingTemplate = MobTemplate{
 
 pub const CinderBruteTemplate = MobTemplate{
     .mob = .{
-        .id = "cinder_brute",
+        .id = "cinder_beast",
         .species = &Species{
-            .name = "cinder brute",
+            .name = "cinder beast",
             .default_attack = &Weapon{
                 .damage = 1,
                 .strs = &items.BITING_STRS,
@@ -368,9 +368,41 @@ pub const CinderBruteTemplate = MobTemplate{
         .faction = .Revgenunkim,
         .innate_resists = .{ .rFire = RESIST_IMMUNE, .rElec = -25, .rFume = 100 },
 
-        .stats = .{ .Willpower = 6, .Vision = 4 },
+        .stats = .{ .Willpower = 6, .Vision = PLAYER_VISION },
     },
     .statuses = &[_]StatusDataInfo{.{ .status = .Fire, .duration = .Prm }},
+};
+
+pub const QuicklimeBruteTemplate = MobTemplate{
+    .mob = .{
+        .id = "quicklime_brute",
+        .species = &Species{
+            .name = "quicklime brute",
+            .default_attack = &Weapon{
+                .damage = 1,
+                .strs = &items.BITING_STRS,
+            },
+        },
+        .tile = 'Q',
+        .alt_name = "acid angel",
+        .ai = AI{
+            .profession_description = "wandering",
+            .work_fn = ai.standStillAndGuardWork,
+            .fight_fn = ai.mageFight,
+        },
+        .max_HP = 10,
+
+        .spells = &[_]SpellOptions{
+            .{ .MP_cost = 0, .spell = &spells.BOLT_ACID, .power = 3 },
+        },
+
+        .memory_duration = 999,
+        .corpse = .None,
+        .faction = .Revgenunkim,
+        .innate_resists = .{ .rFire = RESIST_IMMUNE, .rElec = -25, .rFume = 100 },
+
+        .stats = .{ .Willpower = 8, .Vision = PLAYER_VISION },
+    },
 };
 
 pub const MOBS = [_]MobTemplate{
@@ -382,11 +414,14 @@ pub const MOBS = [_]MobTemplate{
     EmberMageTemplate,
     // BrimstoneMageTemplate,
     EmberlingTemplate,
+
     CinderBruteTemplate,
+    QuicklimeBruteTemplate,
 };
 
 pub const ANGELS = [_]MobTemplate{
     CinderBruteTemplate,
+    QuicklimeBruteTemplate,
 };
 
 pub const PRISONERS = [_]MobTemplate{};

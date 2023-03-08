@@ -551,6 +551,27 @@ pub const BOLT_IRON = Spell{
     }.f },
 };
 
+pub const BOLT_ACID = Spell{
+    .id = "sp_acid_bolt",
+    .name = "corroding bolt",
+    .cast_type = .Bolt,
+    .bolt_dodgeable = true,
+    .bolt_multitarget = true,
+    .animation = .{ .Particle = .{ .name = "zap-acid-messy-trails" } },
+    .noise = .Medium,
+    .effect_type = .{ .Custom = struct {
+        fn f(caster_c: Coord, _: Spell, opts: SpellOptions, coord: Coord) void {
+            if (state.dungeon.at(coord).mob) |victim| {
+                victim.takeDamage(.{
+                    .amount = opts.power,
+                    .source = .RangedAttack,
+                    .by_mob = state.dungeon.at(caster_c).mob,
+                }, .{ .noun = "The corroding bolt" });
+            }
+        }
+    }.f },
+};
+
 pub const BOLT_CRYSTAL = Spell{
     .id = "sp_crystal_shard",
     .name = "crystal shard",
