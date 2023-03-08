@@ -228,6 +228,13 @@ pub const Ctx = struct {
             if (!too_far) {
                 if (Roomie.getRandomDoorCoord(new, parent)) |door| {
                     new.connections.append(.{ .room = parent.rect.start, .door = door }) catch err.wat();
+                    if (rng.percent(Configs[level].subroom_chance)) {
+                        _ = mapgen.placeSubroom(&new, &Rect{
+                            .start = Coord.new(0, 0),
+                            .width = new.rect.width,
+                            .height = new.rect.height,
+                        }, state.GPA.allocator(), .{});
+                    }
                     mapgen.excavateRect(&new.rect);
                     mapgen.placeDoor(door, false);
                     state.rooms[level].append(new) catch err.wat();

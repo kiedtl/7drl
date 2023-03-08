@@ -345,3 +345,14 @@
 "crate_d"              	 "crate"                	 'æ' 	              .S_O_CrateD  	 0xb7bf90 	 -        	 nay 	 - 	10
 
 "pot"                  	 "pot"                  	 'æ' 	                 .S_O_Pot  	 0xb0c4de 	 -        	 nay 	 -
+
+"table_a"              	 "table"                	 '⊺' 	              .S_O_TableA  	 0xb7bf90 	 -        	 nay 	 - 	30
+"table_b"              	 "table"                	 '⊺' 	              .S_O_TableB  	 0xb7bf90 	 -        	 nay 	 - 	30
+"table_c"              	 "table"                	 '⊺' 	              .S_O_TableC  	 0xb7bf90 	 -        	 nay 	 - 	30
+"table_d"              	 "table"                	 '⊺' 	              .S_O_TableD  	 0xb7bf90 	 -        	 nay 	 - 	30
+
+"sink"                 	 "sink"                 	 '⊺' 	              .S_O_P_Sink  	 0xb0c4de 	 -        	 nay 	 - 	30
+"stove"                	 "stove"                	 '⊺' 	             .S_O_P_Stove  	 0xb0c4de 	 -        	 nay 	 - 	30
+
+"chair_a"              	 "chair"                	 'ⅎ' 	              .S_O_ChairA  	 0xb7bf90 	 -        	 yea 	 - 	30
+"chair_b"              	 "chair"                	 'ⅎ' 	              .S_O_ChairB  	 0xb7bf90 	 -        	 yea 	 - 	30

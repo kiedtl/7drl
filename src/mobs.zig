@@ -137,6 +137,34 @@ pub const GoblinTemplate = MobTemplate{
     },
 };
 
+pub fn createFlavoredGoblinTemplate(comptime id: []const u8, comptime name: []const u8, comptime sqmax: usize) MobTemplate {
+    return MobTemplate{
+        .mob = .{
+            .id = "goblin_" ++ id,
+            .species = &GoblinSpecies,
+            .tile = 'g',
+            .alt_name = "meatbag " ++ name,
+            .ai = AI{
+                .profession_name = "goblin " ++ name,
+                .profession_description = "wandering",
+                .work_fn = ai.wanderWork,
+                .fight_fn = ai.meleeFight,
+            },
+            .faction = .CaveGoblins,
+            .max_HP = 4,
+            .memory_duration = 20,
+            .stats = .{ .Willpower = 4, .Vision = 8, .Melee = 100 },
+        },
+        .squad = &[_][]const MobTemplate.SquadMember{
+            &[_]MobTemplate.SquadMember{
+                .{ .mob = "goblin", .weight = 1, .count = minmax(usize, 0, sqmax) },
+            },
+        },
+    };
+}
+
+pub const GoblinCookTemplate = createFlavoredGoblinTemplate("cook", "cook", 0);
+
 pub const PlayerTemplate = MobTemplate{
     .mob = .{
         .id = "player",
@@ -388,6 +416,7 @@ pub const QuicklimeBruteTemplate = MobTemplate{
 
 pub const MOBS = [_]MobTemplate{
     GuardTemplate,
+    GoblinCookTemplate,
     PlayerTemplate,
     GoblinTemplate,
     WarriorTemplate,

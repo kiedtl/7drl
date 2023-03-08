@@ -15,6 +15,12 @@ pub const Sprite = enum(u21) {
     S_O_CrateC = 0x2786,
     S_O_CrateD = 0x2787,
     S_O_Pot = 0x2788,
+    S_O_ChairA = 0x2789,
+    S_O_ChairB = 0x278A,
+    S_O_TableA = 0x278B,
+    S_O_TableB = 0x278C,
+    S_O_TableC = 0x278D,
+    S_O_TableD = 0x278E,
 
     S_G_Wall_Finished = 0x2790,
     S_G_Wall_Rough = 0x2791,
@@ -38,6 +44,8 @@ pub const Sprite = enum(u21) {
     S_O_P_Chair = 0x27B2,
     S_O_P_ControlPanel = 0x27B3,
     S_O_P_SwitchingStation = 0x27B4,
+    S_O_P_Stove = 0x27B5,
+    S_O_P_Sink = 0x27B6,
     S_G_M_Machine = 0x27BF,
 
     S_G_M_DoorShut = 0x27C0,

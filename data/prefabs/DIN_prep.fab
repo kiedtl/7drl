@@ -1,0 +1,42 @@
+:restriction 4
+:g_global_restriction 4
+:g_no_reset_feature_defs
+:g_tunneler
+
+@a p table_a
+@b p table_b
+@c p table_c
+@d p table_d
+@n p cabinet_a
+@o p cabinet_b
+@p p cabinet_c
+@q p cabinet_d
+@s p sink
+@r p stove
+@t p crate_a
+@u p crate_b
+@v p crate_c
+@w p crate_d
+@0 M goblin_cook
+
+:tunneler_orientation north
+
+uvwtuvw
+t.....t
+###+###
+opq.opq
+n.0...n
+s....0r
+n.....n
+
+\
+
+:tunneler_orientation south
+
+n.....n
+s.....r
+n0....n
+opq.opq
+###+###
+t....0t
+uvwtuvw

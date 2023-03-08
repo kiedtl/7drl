@@ -1,0 +1,61 @@
+:g_no_reset_feature_defs
+:subroom
+:restriction 999
+:g_global_restriction 999
+:center_align
+
+@1 p chair_a
+@2 p chair_b
+@a p table_a
+@b p table_b
+@c p table_c
+@d p table_d
+
+bdabd
+1bcd2
+1bcd2
+1bcd2
+bdabd
+
+\
+
+1bcd2
+1bcd2
+1bcd2
+1bcd2
+
+\
+
+1bcd2
+1bcd2
+1bcd2
+
+\
+
+1bd2
+1bd2
+
+\
+
+1bad2
+1bad2
+
+\
+
+1a2.1a2
+.......
+1a2.1a2
+
+\
+
+...1bd2...
+.1a2..1a2.
+1bd2..1bd2
+a2......1a
+a2......1a
+..........
+a2......1a
+a2......1a
+1bd2..1bd2
+.1a2..1a2.
+...1bd2...

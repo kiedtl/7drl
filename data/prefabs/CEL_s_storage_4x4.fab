@@ -1,5 +1,6 @@
 :subroom
 :restriction 999
+:g_global_restriction 999
 
 @a p cabinet_a
 @b p cabinet_b
