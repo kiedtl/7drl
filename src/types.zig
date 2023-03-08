@@ -2661,8 +2661,8 @@ pub const Mob = struct { // {{{
 
         if (self.life_type == .Living and
             state.player_rage >= state.RAGE_P_HEAL and amount > 0 and
-            (d.by_mob != null and d.by_mob.? == state.player) or
-            (d.by_mob != null and d.by_mob.?.faction == .Revgenunkim))
+            ((d.by_mob != null and d.by_mob.? == state.player) or
+            (d.by_mob != null and d.by_mob.?.faction == .Revgenunkim)))
         {
             state.player.takeHealing(amount);
         }
@@ -3594,8 +3594,8 @@ pub const Machine = struct {
                 restriction == by.faction)
             {
                 return true;
-            };
-        return false;
+            } else return false;
+        return true;
     }
 
     pub fn addPower(self: *Machine, by: *Mob) bool {

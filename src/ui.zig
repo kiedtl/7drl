@@ -1207,7 +1207,7 @@ pub fn coordToScreen(coord: Coord) ?Coord {
     return coordToScreenFromRefpoint(coord, state.player.coord);
 }
 
-fn modifyTile(moblist: []const *Mob, coord: Coord, p_tile: display.Cell) display.Cell {
+fn modifyTile(_: []const *Mob, coord: Coord, p_tile: display.Cell) display.Cell {
     var tile = p_tile;
 
     // Draw noise and indicate if that tile is visible by another mob
@@ -1215,31 +1215,17 @@ fn modifyTile(moblist: []const *Mob, coord: Coord, p_tile: display.Cell) display
         .Floor => {
             if (state.player.coord.eq(coord)) {
                 tile.fg = colors.AQUAMARINE;
-            }
-
-            if (_mobs_can_see(moblist, coord)) {
-                // // Treat this cell specially if it's the player and the player is
-                // // being watched.
-                // if (state.player.coord.eq(coord) and _mobs_can_see(moblist, coord)) {
-                //     return .{ .bg = colors.LIGHT_CONCRETE, .fg = colors.BG, .ch = '@' };
-                // }
-
-                // if (has_stuff) {
-                //     if (state.is_walkable(coord, .{ .right_now = true })) {
-                //         // Swap.
-                //         tile.fg ^= tile.bg;
-                //         tile.bg ^= tile.fg;
-                //         tile.fg ^= tile.bg;
-                //     }
-                // } else {
-                //tile.ch = '⬞';
-                //tile.ch = '÷';
-                //tile.fg = 0xffffff;
-                // tile.fg = 0xff6666;
-                if (state.is_walkable(coord, .{ .mob = state.player })) {
-                    tile.bg = colors.percentageOf(colors.DOBALENE_BLUE, 15);
+            } else if (state.dungeon.at(coord).surface) |surf| {
+                if (surf == .Machine and mem.eql(u8, "stair_exit", surf.Machine.id)) {
+                    const A = struct {
+                        pub var counter: usize = 1;
+                    };
+                    const d = (rng.range(usize, 0, 3) + coord.distance(state.player.coord)) * 350;
+                    const v = @intToFloat(f64, (A.counter + d) / 50 % 360) * math.pi / 180.0;
+                    tile.bg = colors.mix(tile.bg, 0x1f0f00, (math.sin(v) + 1) / 2);
+                    tile.fg = colors.mix(tile.fg, 0xeeb700, 1 - (math.sin(v) + 1) / 2);
+                    A.counter += 1;
                 }
-                // }
             }
         },
         else => {},

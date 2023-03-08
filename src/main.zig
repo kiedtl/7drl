@@ -9,7 +9,6 @@ const meta = std.meta;
 const StackBuffer = @import("buffer.zig").StackBuffer;
 
 const ai = @import("ai.zig");
-const alert = @import("alert.zig");
 const rng = @import("rng.zig");
 const janet = @import("janet.zig");
 const player = @import("player.zig");
@@ -138,7 +137,6 @@ fn initGame() bool {
     state.containers = ContainerList.init(state.GPA.allocator());
     state.evocables = EvocableList.init(state.GPA.allocator());
     state.messages = MessageArrayList.init(state.GPA.allocator());
-    state.alerts = alert.Alert.List.init(state.GPA.allocator());
 
     janet.init() catch return false;
     _ = janet.loadFile("scripts/particles.janet", state.GPA.allocator()) catch return false;
@@ -207,7 +205,6 @@ fn deinitGame() void {
     state.props.deinit();
     state.containers.deinit();
     state.evocables.deinit();
-    state.alerts.deinit();
 
     for (literature.posters.items) |poster|
         poster.deinit(state.GPA.allocator());
@@ -483,11 +480,6 @@ fn tickGame() !void {
     state.tickSound(cur_level);
     state.tickSpatter(cur_level);
 
-    if (state.ticks % 10 == 0) {
-        alert.tickCheckLevelHealth(cur_level);
-        alert.tickActOnAlert(cur_level);
-    }
-
     var iter = state.mobs.iterator();
     while (iter.next()) |mob| {
         if (mob.coord.z != cur_level) continue;
@@ -593,11 +585,6 @@ fn viewerTickGame(cur_level: usize, all: bool) void {
     fire.tickFire(cur_level);
     state.tickSound(cur_level);
     state.tickSpatter(cur_level);
-
-    if (state.ticks % 10 == 0) {
-        alert.tickCheckLevelHealth(cur_level);
-        alert.tickActOnAlert(cur_level);
-    }
 
     var iter = state.mobs.iterator();
     while (iter.next()) |mob| {
@@ -787,14 +774,14 @@ pub fn actualMain() anyerror!void {
         while (state.state != .Quit) switch (state.state) {
             .Game => tickGame() catch {},
             .Win => {
-                _ = ui.drawContinuePrompt("You escaped!", .{});
+                _ = ui.drawContinuePrompt("You leap into the chasm...", .{});
                 break;
             },
             .Lose => {
                 const msg = switch (rng.range(usize, 0, 99)) {
                     0...60 => "You die...",
                     61...70 => "You died. Not surprising given your playstyle.",
-                    71...80 => "Geez, you just died.",
+                    71...80 => "It seems you just died.",
                     81...95 => "Congrats! You died!",
                     96...99 => "You acquire Negative Health Syndrome!",
                     else => err.wat(),

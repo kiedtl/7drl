@@ -697,6 +697,7 @@ pub fn excavatePrefab(
             const tt: ?TileType = switch (fab.content[y][x]) {
                 .Any, .Connection => null,
                 .Window, .Wall => .Wall,
+                .Entry,
                 .LevelFeature,
                 .Feature,
                 .LockedDoor,
@@ -721,6 +722,11 @@ pub fn excavatePrefab(
                 };
 
             switch (fab.content[y][x]) {
+                .Entry => {
+                    state.dungeon.at(rc).type = .Floor;
+                    state.dungeon.at(rc).surface = .{ .Stair = null };
+                    state.dungeon.entries[room.rect.start.z] = rc;
+                },
                 .Window => state.dungeon.at(rc).material = Configs[room.rect.start.z].window_material,
                 .LevelFeature => |l| (Configs[room.rect.start.z].level_features[l].?)(l, rc, room, fab, allocator),
                 .Feature => |feature_id| {
@@ -787,8 +793,7 @@ pub fn excavatePrefab(
                         // TODO: we should create the prisoner corpse somewhere else
                         // and then move it here.
                     } else {
-                        const prisoner = mobs.placeMob(allocator, &mobs.GoblinTemplate, rc, .{});
-                        prisoner.prisoner_status = Prisoner{ .of = .CaveGoblins };
+                        const prisoner = mobs.placeMob(allocator, &mobs.GoblinTemplate, rc, .{ .no_squads = true });
                         prisoner.deinit();
                     }
                 },
@@ -2123,6 +2128,15 @@ pub fn placeStair(level: usize, dest_floor: usize, alloc: mem.Allocator) void {
 // Note: must be run before placeStairs()
 //
 pub fn placeEntry(level: usize, alloc: mem.Allocator) void {
+    if (state.dungeon.entries[level].z == level) { // stupid way to check if it's already set...
+        const entry = state.dungeon.entries[level];
+        switch (state.layout[level][entry.y][entry.x]) {
+            .Room => |r| state.rooms[level].items[r].has_stair = true,
+            else => {},
+        }
+        return;
+    }
+
     var reciever_locations = CoordArrayList.init(alloc);
     defer reciever_locations.deinit();
 
@@ -2670,6 +2684,7 @@ pub const Prefab = struct {
         Corpse,
         Ring,
         Any,
+        Entry,
     };
 
     pub const FeatureMob = struct {
@@ -3035,6 +3050,7 @@ pub const Prefab = struct {
                         };
 
                         f.content[y][x] = switch (c) {
+                            '<' => .Entry,
                             '&' => .Window,
                             '#' => .Wall,
                             '+' => .Door,
@@ -3443,11 +3459,20 @@ pub fn createLevelConfig_WRK(comptime prefabs: []const []const u8) LevelConfig {
     };
 }
 
+pub const DRK_BASE_LEVELCONFIG = LevelConfig{
+    .prefabs = &[_][]const u8{"DRK_main_exit"},
+    .mapgen_func = placeRandomRooms,
+    .prefab_chance = 100,
+    .mapgen_iters = 0,
+    .level_features = [_]?LevelConfig.LevelFeatureFunc{ null, null, null, null },
+    .material = &materials.Basalt,
+};
+
 pub var Configs = [LEVELS]LevelConfig{
     createLevelConfig_CEL(&[_][]const u8{"CEL_start"}), // CEL
     createLevelConfig_DIN(&[_][]const u8{}), // DIN
     createLevelConfig_QUA(&[_][]const u8{}), // QUA
     createLevelConfig_WRK(&[_][]const u8{}), // WRK
     createLevelConfig_ARM(), // ARM
-    createLevelConfig_DIN(&[_][]const u8{"PRI_main_exit"}), // CAV
+    DRK_BASE_LEVELCONFIG,
 };

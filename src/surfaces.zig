@@ -94,11 +94,17 @@ pub const MACHINES = [_]Machine{
 
 pub const StairExit = Machine{
     .id = "stair_exit",
-    .name = "exit staircase",
-    .powered_tile = '«',
-    .unpowered_tile = '«',
-    .powered_sprite = .S_G_StairsUp,
-    .unpowered_sprite = .S_G_StairsUp,
+    .name = "fiery chasm",
+    .powered_tile = ':',
+    .unpowered_tile = ':',
+    .powered_fg = 0xff5347,
+    .unpowered_fg = 0xff5347,
+    .powered_bg = 0x4b0f0f,
+    .unpowered_bg = 0x4b0f0f,
+    .powered_walkable = false,
+    .unpowered_walkable = false,
+    //.powered_sprite = .S_G_StairsUp,
+    //.unpowered_sprite = .S_G_StairsUp,
     .on_power = powerStairExit,
 };
 
@@ -441,10 +447,10 @@ pub const Fountain = Machine{
 fn powerNone(_: *Machine) void {}
 
 fn powerStairExit(machine: *Machine) void {
-    assert(machine.coord.z == 0);
+    std.log.info("triggered", .{});
     if (machine.last_interaction) |culprit| {
-        if (!culprit.coord.eq(state.player.coord)) return;
-        state.state = .Win;
+        if (culprit == state.player)
+            state.state = .Win;
     }
 }
 

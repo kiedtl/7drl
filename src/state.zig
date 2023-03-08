@@ -45,7 +45,6 @@ const MobArrayList = types.MobArrayList;
 const Direction = types.Direction;
 const CARDINAL_DIRECTIONS = types.CARDINAL_DIRECTIONS;
 
-const Alert = @import("alert.zig").Alert;
 const SoundState = @import("sound.zig").SoundState;
 const EvocableList = @import("items.zig").EvocableList;
 const PosterArrayList = literature.PosterArrayList;
@@ -58,7 +57,7 @@ pub const Layout = union(enum) { Unknown, Room: usize };
 pub const HEIGHT = 100;
 pub const WIDTH = 100;
 pub const LEVELS = 6;
-pub const PLAYER_STARTING_LEVEL = 0;
+pub const PLAYER_STARTING_LEVEL = 5;
 
 // Should only be used directly by functions in main.zig. For other applications,
 // should be passed as a parameter by caller.
@@ -166,7 +165,6 @@ pub var machines: MachineList = undefined;
 pub var props: PropList = undefined;
 pub var containers: ContainerList = undefined;
 pub var evocables: EvocableList = undefined;
-pub var alerts: Alert.List = undefined;
 
 pub var ticks: usize = 0;
 pub var player_turns: usize = 0;
