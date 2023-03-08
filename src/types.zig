@@ -2510,6 +2510,7 @@ pub const Mob = struct { // {{{
         }
 
         if (attacker.hasStatus(.A_Bomb)) {
+            recipient.tile = 'o';
             recipient.addStatus(.Insane, 0, .Prm);
             recipient.addStatus(.Lifespan, 0, .{ .Tmp = 5 });
             recipient.addStatus(.Explosive, 200, .Prm);
