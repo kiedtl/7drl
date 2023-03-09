@@ -214,9 +214,17 @@ pub fn kaboom(ground0: Coord, opts: ExplosionOpts) void {
         fov.rayCastOctants(ground0, (s / 100), s, S._opacityFunc, &result, deg, deg + 31);
     }
 
-    var animation_coords = StackBuffer(Coord, 256).init(null);
-
     result[ground0.y][ground0.x] = 100; // Ground zero is always harmed
+
+    var animation_coords = StackBuffer(Coord, 256).init(null);
+    for (result) |row, y| for (row) |cell, x| {
+        if (cell > 0) {
+            const coord = Coord.new2(ground0.z, x, y);
+            animation_coords.append(coord) catch {};
+        }
+    };
+    ui.Animation.blink(animation_coords.constSlice(), '#', colors.RED, .{}).apply();
+
     for (result) |row, y| for (row) |cell, x| {
         // Leave edge of map alone.
         if (y == 0 or x == 0 or y == (HEIGHT - 1) or x == (WIDTH - 1)) {
@@ -225,8 +233,6 @@ pub fn kaboom(ground0: Coord, opts: ExplosionOpts) void {
 
         if (cell > 0) {
             const coord = Coord.new2(ground0.z, x, y);
-
-            animation_coords.append(coord) catch {};
 
             const max_range = math.max(1, opts.strength / 100);
             const chance_for_fire = 100 - (coord.distance(ground0) * 100 / max_range);
@@ -245,7 +251,7 @@ pub fn kaboom(ground0: Coord, opts: ExplosionOpts) void {
 
             if (state.dungeon.at(coord).mob) |unfortunate| {
                 unfortunate.takeDamage(.{
-                    .amount = 3,
+                    .amount = 4,
                     .by_mob = opts.culprit,
                     .source = .Explosion,
                     .indirect = true,
@@ -260,6 +266,4 @@ pub fn kaboom(ground0: Coord, opts: ExplosionOpts) void {
             }
         }
     };
-
-    ui.Animation.blink(animation_coords.constSlice(), '#', colors.PALE_VIOLET_RED, .{}).apply();
 }

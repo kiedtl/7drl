@@ -2514,8 +2514,9 @@ pub const Mob = struct { // {{{
         if (attacker.hasStatus(.A_Bomb)) {
             recipient.tile = 'o';
             recipient.addStatus(.Insane, 0, .Prm);
-            recipient.addStatus(.Lifespan, 0, .{ .Tmp = 5 });
+            recipient.addStatus(.Lifespan, 0, .{ .Tmp = 4 });
             recipient.addStatus(.Explosive, 200, .Prm);
+            recipient.faction = .Revgenunkim;
             recipient.immobile = true;
         }
     }
@@ -2875,7 +2876,7 @@ pub const Mob = struct { // {{{
         if (self != state.player) {
             if (self.killed_by) |by_mob| {
                 if (by_mob == state.player) {
-                    state.message(.Damage, "You slew {c}.", .{self});
+                    state.message(.Damage, "You slew {}.", .{self});
                 } else if (state.player.cansee(by_mob.coord)) {
                     state.message(.Damage, "{c} killed {}.", .{ by_mob, self });
                 }
