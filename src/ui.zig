@@ -2097,7 +2097,7 @@ pub fn drawExamineScreen(starting_focus: ?ExamineTileFocus) bool {
                         _writerWrite(writer, "{s}", .{surfdesc});
                         _writerWrite(writer, "\n\n", .{});
                     }
-                } else assert(false);
+                }
             }
 
             var y = log_starty;

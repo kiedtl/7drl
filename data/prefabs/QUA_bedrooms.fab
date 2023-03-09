@@ -1,0 +1,58 @@
+:restriction 999
+:g_global_restriction 999
+:g_tunneler
+:g_no_reset_feature_defs
+:nostairs
+:noguards
+
+@0 M goblin_still
+@b p bed
+@d p desk
+@c p cabinet_a
+@h p chest
+@x p chair_a
+@y p chair_b
+
+:tunneler_orientation north
+b0.h
+c..h
+....
+
+\
+
+:tunneler_orientation north
+bc.h
+..0.
+..xd
+....
+
+\
+
+:tunneler_orientation south
+....
+c..h
+b0.h
+
+\
+
+:tunneler_orientation south
+..0.
+..xd
+....
+bc.h
+
+\
+
+:tunneler_orientation west
+..d.
+..x.
+b0..
+c...
+
+\
+
+:tunneler_orientation east
+.d0.
+.x..
+...b
+...c

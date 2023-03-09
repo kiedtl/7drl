@@ -1,0 +1,28 @@
+:subroom
+
+:restriction 5
+:g_global_restriction 5
+:g_no_reset_feature_defs
+:priority 10
+
+@a p sofa_a
+@b p sofa_b
+@c p sofa_c
+@t p table_a
+
+a.t.a
+a.t.a
+
+\
+
+bc
+
+\
+
+a.a
+...
+a.a
+
+\
+
+a.a

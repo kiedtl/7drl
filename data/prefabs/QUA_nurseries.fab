@@ -1,0 +1,68 @@
+:restriction 3
+:g_global_restriction 3
+:g_tunneler
+:g_no_reset_feature_defs
+:nostairs
+:noguards
+:priority 10
+
+% (any tunneler orientation)
+
+% toy_a 	building blocks
+% toy_b 	plushie (human)
+% toy_c 	plushie (byor)
+% toy_d 	plushie (olg)
+% toy_e 	plushie (bear)
+% toy_f 	toy lute
+% toy_g 	paper pickaxe
+% toy_h 	paper crossbow
+% toy_i 	carved figurines
+% toy_j 	carved toy vessels
+% toy_k 	carved toy goblets
+% toy_l 	paper target
+
+@0 M goblin_child
+@a p toy_a
+@b p toy_b
+@c p toy_c
+@d p toy_d
+@e p toy_e
+@f p toy_f
+@g p toy_g
+@h p toy_h
+@i p toy_i
+@j p toy_j
+@k p toy_k
+@l p toy_l
+@z p toybox
+
+........
+.zz.aa..
+.0..0a..
+....e...
+...d....
+.....0b.
+.b...c..
+........
+
+\
+
+........
+..ikj.z.
+.0i.0.z.
+........
+........
+.....0g.
+.f0.....
+........
+
+\
+
+........
+.g#.....
+........
+.z.000..
+.z.hhh..
+........
+...lllz.
+........

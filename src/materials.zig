@@ -14,6 +14,18 @@ pub const MATERIALS = [_]*const Material{
     &Slade,
 };
 
+pub const Armory = Material{
+    .name = "armory",
+    .color_fg = colors.RED,
+    .color_bg = null,
+    .color_floor = colors.percentageOf(colors.RED, 30),
+    .sprite = .S_G_Wall_Scifish,
+    .floor_sprite = .S_G_T_Polished,
+    .tileset = 1,
+    .luminescence = 0,
+    .opacity = 1.0,
+};
+
 pub const Ornate = Material{
     .name = "ornate",
     .color_fg = 0xe0ffff,

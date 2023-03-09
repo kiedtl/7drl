@@ -106,7 +106,6 @@
 "chain"                	 "chain"                	 '§' 	                        -  	 0xe0e0ff 	 -        	 nay 	 - 	 - 	               - 	 yea
 
 "table"                	 "table"                	 '⊺' 	             .S_O_P_Table  	 0xffffff 	 -        	 nay 	 - 	10
-"bed"                  	 "bed"                  	 'Θ' 	                        -  	 0xdaa520 	 -        	 -   	0.6	30
 "wood_table"           	 "table"                	 '⊺' 	             .S_O_P_Table  	 0xdaa520 	 -        	 nay 	 - 	30
 # chairs ⑁
 "wood_chair"           	 "chair"                	 'ⅎ' 	             .S_O_P_Chair  	 0xdaa520 	 -        	 yea 	 - 	30
@@ -339,6 +338,7 @@
 "cabinet_c"            	 "cabinet"              	 'π' 	            .S_O_StorageC  	 0xb7bf90 	 -        	 nay 	 - 	10
 "cabinet_d"            	 "cabinet"              	 'π' 	            .S_O_StorageD  	 0xb7bf90 	 -        	 nay 	 - 	10
 
+"chest"                	 "chest"                	 'æ' 	              .S_O_CrateA  	 0xb0c4de 	 -        	 nay 	 - 	10
 "crate_a"              	 "crate"                	 'æ' 	              .S_O_CrateA  	 0xb7bf90 	 -        	 nay 	 - 	10
 "crate_b"              	 "crate"                	 'æ' 	              .S_O_CrateB  	 0xb7bf90 	 -        	 nay 	 - 	10
 "crate_c"              	 "crate"                	 'æ' 	              .S_O_CrateC  	 0xb7bf90 	 -        	 nay 	 - 	10
@@ -346,6 +346,7 @@
 
 "pot"                  	 "pot"                  	 'æ' 	                 .S_O_Pot  	 0xb0c4de 	 -        	 nay 	 -
 
+"desk"                 	 "desk"                 	 '⊺' 	              .S_O_P_Desk  	 0xb0c4de 	 -        	 nay 	 - 	30
 "table_a"              	 "table"                	 '⊺' 	              .S_O_TableA  	 0xb7bf90 	 -        	 nay 	 - 	30
 "table_b"              	 "table"                	 '⊺' 	              .S_O_TableB  	 0xb7bf90 	 -        	 nay 	 - 	30
 "table_c"              	 "table"                	 '⊺' 	              .S_O_TableC  	 0xb7bf90 	 -        	 nay 	 - 	30
@@ -356,3 +357,22 @@
 
 "chair_a"              	 "chair"                	 'ⅎ' 	              .S_O_ChairA  	 0xb7bf90 	 -        	 yea 	 - 	30
 "chair_b"              	 "chair"                	 'ⅎ' 	              .S_O_ChairB  	 0xb7bf90 	 -        	 yea 	 - 	30
+"sofa_a"               	 "sofa"                 	 'ⅎ' 	             .S_O_P_SofaA  	 0x77ffd4 	 -        	 nay 	 - 	30
+"sofa_b"               	 "sofa"                 	 'ⅎ' 	             .S_O_P_SofaB  	 0x77ffd4 	 -        	 nay 	 - 	30
+"sofa_c"               	 "sofa"                 	 'ⅎ' 	             .S_O_P_SofaC  	 0x77ffd4 	 -        	 nay 	 - 	30
+
+"bed"                  	 "bed"                  	 'Θ' 	               .S_O_P_Bed  	 0xb7bf90 	 -        	 -   	 - 	30
+
+"toybox"               	 "toybox"               	 'æ' 	            .S_O_P_Toybox  	 0xb7bf90 	 -        	 nay 	 - 	10
+"toy_a"                	 "building blocks"      	 '*' 	                        -  	 0x77ffd4 	 -        	   - 	 - 	10
+"toy_b"                	 "plushie (human)"      	 '*' 	                        -  	 0x77ffd4 	 -        	   - 	 - 	10
+"toy_c"                	 "plushie (byor)"       	 '*' 	                        -  	 0x77ffd4 	 -        	   - 	 - 	10
+"toy_d"                	 "plushie (olg)"        	 '*' 	                        -  	 0x77ffd4 	 -        	   - 	 - 	10
+"toy_e"                	 "plushie (bear)"       	 '*' 	                        -  	 0x77ffd4 	 -        	   - 	 - 	10
+"toy_f"                	 "toy lute"             	 '*' 	                        -  	 0x77ffd4 	 -        	   - 	 - 	10
+"toy_g"                	 "paper pickaxe"        	 '*' 	                        -  	 0x77ffd4 	 -        	   - 	 - 	10
+"toy_h"                	 "paper crossbow"       	 '*' 	                        -  	 0x77ffd4 	 -        	   - 	 - 	10
+"toy_i"                	 "carved figurines"     	 '*' 	                        -  	 0x77ffd4 	 -        	   - 	 - 	10
+"toy_j"                	 "carved toy vessels"   	 '*' 	                        -  	 0x77ffd4 	 -        	   - 	 - 	10
+"toy_k"                	 "carved toy goblets"   	 '*' 	                        -  	 0x77ffd4 	 -        	   - 	 - 	10
+"toy_l"                	 "paper target"         	 '&' 	                        -  	 0x77ffd4 	 -        	   - 	 - 	10

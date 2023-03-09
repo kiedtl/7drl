@@ -131,6 +131,8 @@ pub fn emitGif(level: usize) void {
         const fname = std.fmt.allocPrintZ(state.GPA.allocator(), "L_{}_{s}.gif", .{ level, state.levelinfo[level].id }) catch err.oom();
         defer state.GPA.allocator().free(fname);
 
+        std.fs.cwd().deleteFile(fname) catch {};
+
         var g_error: c_int = 0;
         var g_file = giflib.EGifOpenFileName(fname.ptr, false, &g_error);
         if (g_file == null) @panic("error (EGifOpenFileName)");
@@ -2543,6 +2545,8 @@ pub fn initLevel(level: usize) void {
             placeStair(level, floor, state.GPA.allocator());
         };
 
+        emitGif(level);
+
         if (validateLevel(level, state.GPA.allocator())) |_| {
             // .
         } else |e| {
@@ -2558,7 +2562,6 @@ pub fn initLevel(level: usize) void {
             }
         }
 
-        emitGif(level);
         placeRoomFeatures(level, state.GPA.allocator());
         placeMobs(level, state.GPA.allocator());
         setLevelMaterial(level);
@@ -3265,7 +3268,7 @@ pub const LevelConfig = struct {
     shrink_corridors_to_fit: bool = true,
     prefab_chance: usize,
 
-    mapgen_func: fn (usize, mem.Allocator) void = placeTunnelsThenRandomRooms,
+    mapgen_func: fn (usize, mem.Allocator) void = tunneler.placeTunneledRooms, //placeTunnelsThenRandomRooms,
 
     tunneler_opts: tunneler.TunnelerOptions = .{},
 
@@ -3383,18 +3386,22 @@ pub fn createLevelConfig_DIN(comptime prefabs: []const []const u8) LevelConfig {
 pub fn createLevelConfig_QUA(comptime prefabs: []const []const u8) LevelConfig {
     return LevelConfig{
         .prefabs = prefabs,
-        .prefab_chance = 33,
-        .mapgen_iters = 2048,
-        .level_features = [_]?LevelConfig.LevelFeatureFunc{
-            levelFeaturePrisoners,
-            levelFeaturePrisonersMaybe,
-            null,
-            null,
+        .tunneler_opts = .{
+            // .add_extra_rooms = false,
+            .shrink_corridors = false, // hack to paste over bug
         },
+        .prefab_chance = 95,
+        .mapgen_iters = 2048,
+        .min_room_width = 4,
+        .min_room_height = 4,
+        .max_room_width = 9,
+        .max_room_height = 9,
+        .level_features = [_]?LevelConfig.LevelFeatureFunc{ null, null, null, null },
 
+        .subroom_chance = 100,
         .material = &materials.Ornate,
         .machines = &[_]*const Machine{},
-        .single_props = &[_][]const u8{ "wood_table", "wood_chair" },
+        .single_props = &[_][]const u8{ "sofa_a", "gold_statue", "realgar_statue", "iron_statue", "sodalite_statue", "hematite_statue", "flourite_statue" },
     };
 }
 
@@ -3426,14 +3433,8 @@ pub fn createLevelConfig_WRK(comptime prefabs: []const []const u8) LevelConfig {
             null,
         },
 
-        .material = &materials.Dobalene,
-        .window_material = &materials.LabGlass,
-        .bars = "titanium_bars",
-        .door = &surfaces.LabDoor,
-        //.containers = &[_]Container{ surfaces.Chest, surfaces.LabCabinet },
-        .containers = &[_]Container{surfaces.LabCabinet},
-        .utility_items = &surfaces.laboratory_item_props.items,
-        .props = &surfaces.laboratory_props.items,
+        .material = &materials.Polished,
+        .door = &surfaces.VaultDoor,
         .single_props = &[_][]const u8{"table"},
 
         .allow_statues = false,
@@ -3445,31 +3446,19 @@ pub fn createLevelConfig_WRK(comptime prefabs: []const []const u8) LevelConfig {
 pub fn createLevelConfig_ARM() LevelConfig {
     return LevelConfig{
         .tunneler_opts = .{
-            .turn_chance = 10,
-            .branch_chance = 4,
-            .shrink_chance = 60,
-            .grow_chance = 30,
-            // .remove_childless = false,
-            .shrink_corridors = false,
-
+            .shrink_chance = 90,
+            .grow_chance = 10,
             .initial_tunnelers = &[_]tunneler.TunnelerOptions.InitialTunneler{
-                .{ .start = Coord.new(1, HEIGHT / 2), .width = 0, .height = 2, .direction = .East },
+                .{ .start = Coord.new(1, HEIGHT / 2), .width = 0, .height = 1, .direction = .East },
             },
         },
-        .prefab_chance = 0, // No prefabs for CRY
+        .prefab_chance = 33,
         .mapgen_func = tunneler.placeTunneledRooms,
-
-        .min_room_width = 4,
-        .min_room_height = 4,
-        .max_room_width = 10,
-        .max_room_height = 10,
-
         .level_features = [_]?LevelConfig.LevelFeatureFunc{ null, null, null, null },
 
-        .material = &materials.Marble,
-        .no_windows = true,
-        .door = &surfaces.VaultDoor,
-        .allow_statues = false,
+        .material = &materials.Armory,
+        .window_material = &materials.LabGlass,
+        .door = &surfaces.LabDoor,
     };
 }
 

@@ -112,6 +112,31 @@ pub const GuardTemplate = MobTemplate{
     .weapon = &items.BludgeonWeapon,
 };
 
+pub const GoblinChildTemplate = MobTemplate{
+    .mob = .{
+        .id = "goblin_child",
+        .species = &GoblinSpecies,
+        .tile = 'i',
+        .alt_name = "filthy meatbag",
+        .ai = AI{
+            .profession_name = "goblin child",
+            .profession_description = "wandering",
+            .work_fn = ai.wanderWork,
+            .fight_fn = ai.watcherFight,
+            .flags = &[_]AI.Flag{.AvoidsEnemies},
+        },
+        .faction = .CaveGoblins,
+        .max_HP = 3,
+        .memory_duration = 15,
+        .stats = .{ .Speed = 90, .Vision = 8 },
+    },
+    .squad = &[_][]const MobTemplate.SquadMember{
+        &[_]MobTemplate.SquadMember{
+            .{ .mob = "goblin_child", .weight = 1, .count = minmax(usize, 0, 2) },
+        },
+    },
+};
+
 pub const GoblinTemplate = MobTemplate{
     .mob = .{
         .id = "goblin",
@@ -122,6 +147,31 @@ pub const GoblinTemplate = MobTemplate{
             .profession_name = "goblin",
             .profession_description = "wandering",
             .work_fn = ai.patrolWork,
+            .fight_fn = ai.meleeFight,
+            .flags = &[_]AI.Flag{.AvoidsEnemies},
+        },
+        .faction = .CaveGoblins,
+        .max_HP = 4,
+        .memory_duration = 20,
+        .stats = .{ .Willpower = 4, .Vision = 8, .Melee = 100 },
+    },
+    .squad = &[_][]const MobTemplate.SquadMember{
+        &[_]MobTemplate.SquadMember{
+            .{ .mob = "goblin", .weight = 1, .count = minmax(usize, 0, 1) },
+        },
+    },
+};
+
+pub const GoblinStayStillTemplate = MobTemplate{
+    .mob = .{
+        .id = "goblin_still",
+        .species = &GoblinSpecies,
+        .tile = 'g',
+        .alt_name = "meatbag",
+        .ai = AI{
+            .profession_name = "goblin",
+            .profession_description = "wandering",
+            .work_fn = ai.standStillAndGuardWork,
             .fight_fn = ai.meleeFight,
             .flags = &[_]AI.Flag{.AvoidsEnemies},
         },
@@ -416,9 +466,11 @@ pub const QuicklimeBruteTemplate = MobTemplate{
 
 pub const MOBS = [_]MobTemplate{
     GuardTemplate,
-    GoblinCookTemplate,
     PlayerTemplate,
+    GoblinChildTemplate,
     GoblinTemplate,
+    GoblinStayStillTemplate,
+    GoblinCookTemplate,
     WarriorTemplate,
     EmberMageTemplate,
     // BrimstoneMageTemplate,

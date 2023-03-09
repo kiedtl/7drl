@@ -1,0 +1,54 @@
+:restriction 5
+:g_global_restriction 5
+:g_tunneler
+:g_no_reset_feature_defs
+:priority 10
+
+@a p sofa_a
+@b p sofa_b
+@c p sofa_c
+@t p table_a
+
+:tunneler_orientation north
+.bc.bc.
+.......
+a..t..a
+a..t..a
+a..t..a
+a..t..a
+.......
+.......
+
+\
+
+:tunneler_orientation south
+.......
+.......
+a..t..a
+a..t..a
+a..t..a
+a..t..a
+.......
+.bc.bc.
+
+\
+
+:tunneler_orientation west
+..bcbc.
+a......
+a..t...
+...t...
+a..t...
+a......
+..bcbc.
+
+\
+
+:tunneler_orientation east
+.bcbc..
+......a
+...t..a
+...t...
+...t..a
+......a
+.bcbc..
