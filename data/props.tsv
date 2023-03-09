@@ -376,3 +376,10 @@
 "toy_j"                	 "carved toy vessels"   	 '*' 	                        -  	 0x77ffd4 	 -        	   - 	 - 	10
 "toy_k"                	 "carved toy goblets"   	 '*' 	                        -  	 0x77ffd4 	 -        	   - 	 - 	10
 "toy_l"                	 "paper target"         	 '&' 	                        -  	 0x77ffd4 	 -        	   - 	 - 	10
+
+"finished_goods"       	 "finished good"        	 '5' 	                        -  	 0xdaa520 	 -        	 nay 	 - 	30
+"lumber"               	 "lumber"               	 '=' 	                        -  	 0xdaa520 	 -        	 nay 	 - 	30
+
+"weapon_rack"          	 "weapon rack"          	 '7' 	                        -  	 0xb7bf90 	 -        	 nay 	 - 	30
+"target"               	 "target"               	 '0' 	                        -  	 0xdaa520 	 -        	 nay 	 - 	30
+"armor_stand"          	 "armor stand"          	 '8' 	                        -  	 0xb7bf90 	 -        	 nay 	 - 	30

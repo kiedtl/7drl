@@ -17,7 +17,7 @@ pub const LIGHT_PALE_VIOLET_RED: u32 = 0xfb90b3;
 pub const GOLD: u32 = 0xddb733;
 pub const LIGHT_GOLD: u32 = 0xfdd753;
 
-pub const RED: u32 = 0xebb4b4;
+pub const RED: u32 = 0xebafaf;
 pub const AQUAMARINE: u32 = 0x9fdfca; //0x7fffd4;
 pub const DARK_AQUAMARINE: u32 = 0x53c695;
 pub const VIOLET: u32 = 0xdfc0d5;

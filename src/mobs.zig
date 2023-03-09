@@ -214,6 +214,8 @@ pub fn createFlavoredGoblinTemplate(comptime id: []const u8, comptime name: []co
 }
 
 pub const GoblinCookTemplate = createFlavoredGoblinTemplate("cook", "cook", 0);
+pub const GoblinCarpenterTemplate = createFlavoredGoblinTemplate("carpenter", "carpenter", 0);
+pub const GoblinSmithTemplate = createFlavoredGoblinTemplate("smith", "smith", 0);
 
 pub const PlayerTemplate = MobTemplate{
     .mob = .{
@@ -471,6 +473,8 @@ pub const MOBS = [_]MobTemplate{
     GoblinTemplate,
     GoblinStayStillTemplate,
     GoblinCookTemplate,
+    GoblinCarpenterTemplate,
+    GoblinSmithTemplate,
     WarriorTemplate,
     EmberMageTemplate,
     // BrimstoneMageTemplate,

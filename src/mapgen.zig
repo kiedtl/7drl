@@ -1934,7 +1934,7 @@ pub fn placeRoomFeatures(level: usize, _: mem.Allocator) void {
 
         var forbidden_range: ?usize = null;
 
-        if (room_area > 64 and
+        if (room_area > 36 and
             rng.percent(Configs[level].chance_for_single_prop_placement) and
             Configs[level].single_props.len > 0)
         {
@@ -3415,6 +3415,7 @@ pub fn createLevelConfig_WRK(comptime prefabs: []const []const u8) LevelConfig {
             .grow_chance = 5,
             .intersect_chance = 100,
             .intersect_with_childless = true,
+            .add_extra_rooms = false,
 
             .initial_tunnelers = &[_]tunneler.TunnelerOptions.InitialTunneler{
                 .{ .start = Coord.new(1, 1), .width = 0, .height = 3, .direction = .East },
@@ -3426,16 +3427,11 @@ pub fn createLevelConfig_WRK(comptime prefabs: []const []const u8) LevelConfig {
         .prefab_chance = 50,
         .mapgen_func = tunneler.placeTunneledRooms,
 
-        .level_features = [_]?LevelConfig.LevelFeatureFunc{
-            null,
-            levelFeaturePrisoners,
-            levelFeatureDormantConstruct,
-            null,
-        },
+        .level_features = [_]?LevelConfig.LevelFeatureFunc{ null, null, null, null },
 
         .material = &materials.Polished,
         .door = &surfaces.VaultDoor,
-        .single_props = &[_][]const u8{"table"},
+        .single_props = &[_][]const u8{ "table_a", "finished_goods", "lumber" },
 
         .allow_statues = false,
 
@@ -3446,19 +3442,22 @@ pub fn createLevelConfig_WRK(comptime prefabs: []const []const u8) LevelConfig {
 pub fn createLevelConfig_ARM() LevelConfig {
     return LevelConfig{
         .tunneler_opts = .{
+            .max_iters = 400,
             .shrink_chance = 90,
             .grow_chance = 10,
             .initial_tunnelers = &[_]tunneler.TunnelerOptions.InitialTunneler{
                 .{ .start = Coord.new(1, HEIGHT / 2), .width = 0, .height = 1, .direction = .East },
             },
         },
-        .prefab_chance = 33,
+        .prefab_chance = 0, // No prefabs for ARM
         .mapgen_func = tunneler.placeTunneledRooms,
         .level_features = [_]?LevelConfig.LevelFeatureFunc{ null, null, null, null },
 
         .material = &materials.Armory,
         .window_material = &materials.LabGlass,
         .door = &surfaces.LabDoor,
+        .single_props = &[_][]const u8{ "chest", "armor_stand", "weapon_rack", "target" },
+        .chance_for_single_prop_placement = 100,
     };
 }
 

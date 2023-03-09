@@ -54,8 +54,8 @@ const GeneratorCtx = @import("generators.zig").GeneratorCtx;
 pub const GameState = union(enum) { Game, Win, Lose, Quit };
 pub const Layout = union(enum) { Unknown, Room: usize };
 
-pub const HEIGHT = 60;
-pub const WIDTH = 60;
+pub const HEIGHT = 80;
+pub const WIDTH = 80;
 pub const LEVELS = 6;
 pub const PLAYER_STARTING_LEVEL = 0;
 

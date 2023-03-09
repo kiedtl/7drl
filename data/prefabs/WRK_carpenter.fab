@@ -1,0 +1,23 @@
+:restriction 5
+:g_global_restriction 5
+:g_tunneler
+:g_no_reset_feature_defs
+
+@0 M goblin_carpenter
+@g p finished_goods
+@l p lumber
+@t p table_a
+
+.....
+.ttt.
+..0..
+.ggg.
+.....
+
+\
+
+.....
+.lll.
+.lll.
+..0..
+.....

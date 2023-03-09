@@ -21,7 +21,7 @@ pub const Armory = Material{
     .color_floor = colors.percentageOf(colors.RED, 30),
     .sprite = .S_G_Wall_Scifish,
     .floor_sprite = .S_G_T_Polished,
-    .tileset = 1,
+    .tileset = 0,
     .luminescence = 0,
     .opacity = 1.0,
 };
