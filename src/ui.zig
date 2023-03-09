@@ -1009,11 +1009,11 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
     _ = _drawStrf(bar_endx + 1, y, endx, "$.hit {: >3}%$.", .{hit}, .{});
     y += 1;
 
-    const ev = utils.SignedFormatter{ .v = state.player.stat(.Evade) };
+    const rF = utils.SignedFormatter{ .v = state.player.resistance(.rFire) };
     const is_raging = state.player_rage > 0;
     const rage_str = if (is_raging) "raging" else "sane";
     _drawBar(y, startx, bar_endx, state.player_rage, state.MAX_RAGE, rage_str, colors.percentageOf(colors.LIGHT_CONCRETE, 40), colors.LIGHT_CONCRETE, .{});
-    _ = _drawStrf(bar_endx + 1, y, endx, "ev  {: >3}%", .{ev}, .{ .fg = colors.LIGHT_CONCRETE });
+    _ = _drawStrf(bar_endx + 1, y, endx, "rF {: >4}%", .{rF}, .{ .fg = colors.LIGHT_CONCRETE });
     y += 1;
 
     const blood = state.dungeon.at(state.player.coord).spatter.get(.Blood);

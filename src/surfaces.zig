@@ -447,7 +447,6 @@ pub const Fountain = Machine{
 fn powerNone(_: *Machine) void {}
 
 fn powerStairExit(machine: *Machine) void {
-    std.log.info("triggered", .{});
     if (machine.last_interaction) |culprit| {
         if (culprit == state.player)
             state.state = .Win;

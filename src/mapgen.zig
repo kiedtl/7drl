@@ -3321,7 +3321,7 @@ pub const LevelConfig = struct {
     allow_statues: bool = true,
     door_chance: usize = 10,
     room_trapped_chance: usize = 60,
-    subroom_chance: usize = 90,
+    subroom_chance: usize = 80,
     allow_spawn_in_corridors: bool = false,
     allow_extra_corridors: bool = true,
 

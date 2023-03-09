@@ -2,6 +2,7 @@
 :restriction 1
 :priority 100
 :noguards
+:nostairs
 
 @s s 6/Outer Darkness
 @e Cmons emberling ([no_squads]yea)

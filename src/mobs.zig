@@ -336,13 +336,12 @@ pub const EmberMageTemplate = MobTemplate{
         },
 
         .spells = &[_]SpellOptions{
-            .{ .MP_cost = 5, .spell = &spells.CAST_CREATE_EMBERLING },
             .{ .MP_cost = 10, .spell = &spells.CAST_FLAMMABLE, .power = 20 },
         },
         .max_MP = 15,
 
-        .max_HP = 7,
-        .memory_duration = 10,
+        .max_HP = 6,
+        .memory_duration = 7,
         .stats = .{ .Willpower = 4, .Vision = V - 1 },
     },
     .weapon = &items.BludgeonWeapon,
@@ -363,7 +362,14 @@ pub const EmberlingTemplate = MobTemplate{
             .default_attack = &Weapon{
                 .damage = 1,
                 .damage_kind = .Fire,
-                .strs = &items.CLAW_STRS,
+                .strs = &[_]DamageStr{
+                    items._dmgstr(30, "burn", "burns", ""),
+                    items._dmgstr(60, "sear", "sears", ""),
+                    items._dmgstr(61, "torch", "torches", ""),
+                    items._dmgstr(90, "blast", "blasts", ""),
+                    items._dmgstr(100, "incinerate", "incinerates", ""),
+                    items._dmgstr(120, "cremate", "cremates", " into steaming ashes"),
+                },
             },
         },
         .tile = 'e',
@@ -372,30 +378,20 @@ pub const EmberlingTemplate = MobTemplate{
             .profession_description = "watching",
             .work_fn = ai.standStillAndGuardWork,
             .fight_fn = ai.meleeFight,
-            .is_curious = false,
             .is_fearless = true,
-            .flags = &[_]AI.Flag{.DetectWithHeat},
         },
         .life_type = .Construct,
 
         .blood = null,
         .corpse = .None,
 
-        .max_HP = 3,
+        .max_HP = 1,
         .memory_duration = 5,
         .innate_resists = .{ .rFume = 100, .rFire = RESIST_IMMUNE },
-        .stats = .{ .Willpower = 1, .Vision = V - 4, .Melee = 100 },
-    },
-    // XXX: Emberlings are never placed alone, this determines number of
-    // summoned emberlings from CAST_CREATE_EMBERLING
-    .squad = &[_][]const MobTemplate.SquadMember{
-        &[_]MobTemplate.SquadMember{
-            .{ .mob = "emberling", .weight = 1, .count = minmax(usize, 2, 3) },
-        },
+        .stats = .{ .Willpower = 1, .Speed = 110, .Vision = V - 4, .Melee = 100 },
     },
     .statuses = &[_]StatusDataInfo{
         .{ .status = .Sleeping, .duration = .Prm },
-        .{ .status = .Fire, .duration = .Prm },
         .{ .status = .Noisy, .duration = .Prm },
     },
 };

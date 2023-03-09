@@ -347,9 +347,10 @@ pub fn updateEnemyRecord(mob: *Mob, new: EnemyRecord) void {
     // No existing record, append.
     mob.enemyList().append(new) catch unreachable;
 
-    // Animation
+    // Animation + shout
     if (new.mob == state.player and state.player.cansee(mob.coord)) {
         ui.Animation.blinkMob(&.{mob}, '!', colors.AQUAMARINE, .{ .repeat = 2, .delay = 100 });
+        mob.makeNoise(.Shout, .Medium);
     }
 }
 
