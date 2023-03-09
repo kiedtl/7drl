@@ -574,7 +574,7 @@ pub const BOLT_ACID = Spell{
 
 pub const BOLT_BOLT = Spell{
     .id = "sp_bolt",
-    .name = "fire bolt",
+    .name = "crossbow",
     .cast_type = .Bolt,
     .bolt_dodgeable = true,
     .bolt_multitarget = false,
