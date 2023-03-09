@@ -3294,7 +3294,7 @@ pub const LevelConfig = struct {
     required_mobs: []const RequiredMob = &[_]RequiredMob{
         // .{ .count = 3, .template = &mobs.CleanerTemplate },
     },
-    room_crowd_max: usize = 4,
+    room_crowd_max: usize = 3,
     level_crowd_max: ?usize = null,
 
     no_lights: bool = false,
