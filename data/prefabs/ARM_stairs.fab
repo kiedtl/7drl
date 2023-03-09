@@ -1,0 +1,14 @@
+:g_tunneler
+:restriction 1
+:priority 100
+:noguards
+
+@s s 6/Outer Darkness
+@e Cmons emberling ([no_squads]yea)
+@a M arbalist_sadist
+
+a.......a
+.ee...ee.
+.ee.s.ee.
+.ee...ee.
+a.......a

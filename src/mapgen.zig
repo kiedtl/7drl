@@ -2987,8 +2987,9 @@ pub const Prefab = struct {
                             }
                         },
                         's' => {
-                            const level = state.findLevelByName(id orelse return error.InvalidMetadataValue) orelse
-                                return error.InvalidMetadataValue;
+                            const i = id orelse return error.MalformedFeatureDefinition;
+                            const lvlname = line[@ptrToInt(i.ptr) - @ptrToInt(line.ptr) ..];
+                            const level = state.findLevelByName(lvlname) orelse return error.InvalidMetadataValue;
                             f.features[identifier] = Feature{ .Stair = level };
                         },
                         'M' => {
@@ -3441,15 +3442,16 @@ pub fn createLevelConfig_WRK(comptime prefabs: []const []const u8) LevelConfig {
 
 pub fn createLevelConfig_ARM() LevelConfig {
     return LevelConfig{
+        .prefabs = &[_][]const u8{"ARM_stairs"},
         .tunneler_opts = .{
-            .max_iters = 400,
+            .max_iters = 300,
             .shrink_chance = 90,
             .grow_chance = 10,
             .initial_tunnelers = &[_]tunneler.TunnelerOptions.InitialTunneler{
-                .{ .start = Coord.new(1, HEIGHT / 2), .width = 0, .height = 1, .direction = .East },
+                .{ .start = Coord.new(1, HEIGHT / 2), .width = 0, .height = 4, .direction = .East },
             },
         },
-        .prefab_chance = 0, // No prefabs for ARM
+        .prefab_chance = 33,
         .mapgen_func = tunneler.placeTunneledRooms,
         .level_features = [_]?LevelConfig.LevelFeatureFunc{ null, null, null, null },
 

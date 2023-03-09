@@ -1099,11 +1099,11 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
             var buf = StackBuffer(u8, 256).init(null);
             var statuses = mob.statuses.iterator();
             while (statuses.next()) |entry| {
-                if (mob.isUnderStatus(entry.key) == null)
+                if (entry.key == .Noisy or mob.isUnderStatus(entry.key) == null)
                     continue;
 
                 const statusinfo = mob.isUnderStatus(entry.key).?;
-                const sname = statusinfo.status.string(state.player);
+                const sname = statusinfo.status.string(mob);
 
                 // const duration = statusinfo.duration.Tmp;
                 // _drawBar(y, startx, endx, duration, Status.MAX_DURATION, sname, 0x30055c, 0xd069fc, .{});

@@ -4,9 +4,14 @@
 #
 
 #
-# monster id          -6/Pri  -5/Pri  -4/Pri  -3/Pri  -2/Pri  -1/Pri
+# monster id          -6/Drk  -5/Arm  -4/Wrk  -3/Qua  -2/Din  -1/Cel
 
-"guard"                	 100 	  90 	  25 	   - 	 100 	  40
-"goblin"               	 100 	 100 	 100 	 100 	 100 	  60
+"goblin"               	   - 	   - 	  20 	  40 	  60 	  80
+"guard"                	   - 	   5 	  10 	  15 	  30 	  20
+"emberling"            	   - 	   - 	  10 	  10 	  10 	   -
+"warrior"              	   - 	  30 	  20 	  10 	   - 	   -
+"arbalist"             	   - 	  30 	  20 	   5 	   - 	   -
+"ember_mage"           	   - 	  30 	  20 	   - 	   - 	   -
+"arbalist_sadist"      	   - 	   5 	   - 	   - 	   - 	   -
 
-# monster id          -6/Pri  -5/Pri  -4/Pri  -3/Pri  -2/Pri  -1/Pri
+# monster id          -6/Drk  -5/Arm  -4/Wrk  -3/Qua  -2/Din  -1/Cel

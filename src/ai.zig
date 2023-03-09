@@ -1146,7 +1146,12 @@ pub fn mageFight(mob: *Mob, alloc: mem.Allocator) void {
     }
 
     switch (mob.ai.spellcaster_backup_action) {
-        .Melee => meleeFight(mob, alloc),
+        .Melee => if (state.player_rage == 0 or mob.immobile) {
+            meleeFight(mob, alloc);
+        } else {
+            const moved = keepDistance(mob, currentEnemy(mob).mob.coord, 5);
+            if (!moved) meleeFight(mob, alloc);
+        },
         .KeepDistance => if (!mob.immobile) {
             const dist = @intCast(usize, mob.stat(.Vision) -| 1);
             const moved = keepDistance(mob, currentEnemy(mob).mob.coord, dist);

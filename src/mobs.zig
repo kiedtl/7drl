@@ -58,6 +58,7 @@ const NONE_WEAPON = Weapon{
 };
 
 pub const PLAYER_VISION = 12;
+pub const V = PLAYER_VISION; // too lazy to type
 pub const RESIST_IMMUNE = 1000;
 pub const WILL_IMMUNE = 1000;
 
@@ -90,132 +91,6 @@ pub const MobTemplate = struct {
         return Rect{ .start = coord, .width = l, .height = l };
     }
 };
-
-pub const GuardTemplate = MobTemplate{
-    .mob = .{
-        .id = "guard",
-        .species = &GoblinSpecies,
-        .tile = 'ה',
-        .alt_name = "filthy meatbag",
-        .ai = AI{
-            .profession_name = "guard",
-            .profession_description = "guarding",
-            .work_fn = ai.guardWork,
-            .fight_fn = ai.meleeFight,
-        },
-
-        .max_HP = 5,
-        .memory_duration = 15,
-
-        .stats = .{ .Willpower = 1, .Melee = 100 },
-    },
-    .weapon = &items.BludgeonWeapon,
-};
-
-pub const GoblinChildTemplate = MobTemplate{
-    .mob = .{
-        .id = "goblin_child",
-        .species = &GoblinSpecies,
-        .tile = 'i',
-        .alt_name = "filthy meatbag",
-        .ai = AI{
-            .profession_name = "goblin child",
-            .profession_description = "wandering",
-            .work_fn = ai.wanderWork,
-            .fight_fn = ai.watcherFight,
-            .flags = &[_]AI.Flag{.AvoidsEnemies},
-        },
-        .faction = .CaveGoblins,
-        .max_HP = 3,
-        .memory_duration = 15,
-        .stats = .{ .Speed = 90, .Vision = 8 },
-    },
-    .squad = &[_][]const MobTemplate.SquadMember{
-        &[_]MobTemplate.SquadMember{
-            .{ .mob = "goblin_child", .weight = 1, .count = minmax(usize, 0, 2) },
-        },
-    },
-};
-
-pub const GoblinTemplate = MobTemplate{
-    .mob = .{
-        .id = "goblin",
-        .species = &GoblinSpecies,
-        .tile = 'g',
-        .alt_name = "meatbag",
-        .ai = AI{
-            .profession_name = "goblin",
-            .profession_description = "wandering",
-            .work_fn = ai.patrolWork,
-            .fight_fn = ai.meleeFight,
-            .flags = &[_]AI.Flag{.AvoidsEnemies},
-        },
-        .faction = .CaveGoblins,
-        .max_HP = 4,
-        .memory_duration = 20,
-        .stats = .{ .Willpower = 4, .Vision = 8, .Melee = 100 },
-    },
-    .squad = &[_][]const MobTemplate.SquadMember{
-        &[_]MobTemplate.SquadMember{
-            .{ .mob = "goblin", .weight = 1, .count = minmax(usize, 0, 1) },
-        },
-    },
-};
-
-pub const GoblinStayStillTemplate = MobTemplate{
-    .mob = .{
-        .id = "goblin_still",
-        .species = &GoblinSpecies,
-        .tile = 'g',
-        .alt_name = "meatbag",
-        .ai = AI{
-            .profession_name = "goblin",
-            .profession_description = "wandering",
-            .work_fn = ai.standStillAndGuardWork,
-            .fight_fn = ai.meleeFight,
-            .flags = &[_]AI.Flag{.AvoidsEnemies},
-        },
-        .faction = .CaveGoblins,
-        .max_HP = 4,
-        .memory_duration = 20,
-        .stats = .{ .Willpower = 4, .Vision = 8, .Melee = 100 },
-    },
-    .squad = &[_][]const MobTemplate.SquadMember{
-        &[_]MobTemplate.SquadMember{
-            .{ .mob = "goblin", .weight = 1, .count = minmax(usize, 0, 1) },
-        },
-    },
-};
-
-pub fn createFlavoredGoblinTemplate(comptime id: []const u8, comptime name: []const u8, comptime sqmax: usize) MobTemplate {
-    return MobTemplate{
-        .mob = .{
-            .id = "goblin_" ++ id,
-            .species = &GoblinSpecies,
-            .tile = 'g',
-            .alt_name = "meatbag " ++ name,
-            .ai = AI{
-                .profession_name = "goblin " ++ name,
-                .profession_description = "wandering",
-                .work_fn = ai.wanderWork,
-                .fight_fn = ai.meleeFight,
-            },
-            .faction = .CaveGoblins,
-            .max_HP = 4,
-            .memory_duration = 20,
-            .stats = .{ .Willpower = 4, .Vision = 8, .Melee = 100 },
-        },
-        .squad = &[_][]const MobTemplate.SquadMember{
-            &[_]MobTemplate.SquadMember{
-                .{ .mob = "goblin", .weight = 1, .count = minmax(usize, 0, sqmax) },
-            },
-        },
-    };
-}
-
-pub const GoblinCookTemplate = createFlavoredGoblinTemplate("cook", "cook", 0);
-pub const GoblinCarpenterTemplate = createFlavoredGoblinTemplate("carpenter", "carpenter", 0);
-pub const GoblinSmithTemplate = createFlavoredGoblinTemplate("smith", "smith", 0);
 
 pub const PlayerTemplate = MobTemplate{
     .mob = .{
@@ -251,23 +126,193 @@ pub const PlayerTemplate = MobTemplate{
     },
 };
 
+pub const GoblinChildTemplate = MobTemplate{
+    .mob = .{
+        .id = "goblin_child",
+        .species = &GoblinSpecies,
+        .tile = 'i',
+        .alt_name = "meatloaf",
+        .ai = AI{
+            .profession_name = "goblin child",
+            .profession_description = "wandering",
+            .work_fn = ai.wanderWork,
+            .fight_fn = ai.watcherFight,
+            .flags = &[_]AI.Flag{.AvoidsEnemies},
+        },
+        .faction = .CaveGoblins,
+        .max_HP = 3,
+        .memory_duration = 15,
+        .stats = .{ .Speed = 90, .Vision = V - 4 },
+    },
+    .squad = &[_][]const MobTemplate.SquadMember{
+        &[_]MobTemplate.SquadMember{
+            .{ .mob = "goblin_child", .weight = 1, .count = minmax(usize, 0, 2) },
+        },
+    },
+};
+
+pub const GoblinTemplate = MobTemplate{
+    .mob = .{
+        .id = "goblin",
+        .species = &GoblinSpecies,
+        .tile = 'g',
+        .alt_name = "meatbag",
+        .ai = AI{
+            .profession_name = "goblin",
+            .profession_description = "wandering",
+            .work_fn = ai.patrolWork,
+            .fight_fn = ai.meleeFight,
+            .flags = &[_]AI.Flag{.AvoidsEnemies},
+        },
+        .faction = .CaveGoblins,
+        .max_HP = 4,
+        .memory_duration = 20,
+        .stats = .{ .Willpower = 4, .Vision = V - 4, .Melee = 100 },
+    },
+    .squad = &[_][]const MobTemplate.SquadMember{
+        &[_]MobTemplate.SquadMember{
+            .{ .mob = "goblin", .weight = 1, .count = minmax(usize, 0, 1) },
+        },
+    },
+};
+
+pub const GoblinStayStillTemplate = MobTemplate{
+    .mob = .{
+        .id = "goblin_still",
+        .species = &GoblinSpecies,
+        .tile = 'g',
+        .alt_name = "meatbag",
+        .ai = AI{
+            .profession_name = "goblin",
+            .profession_description = "wandering",
+            .work_fn = ai.standStillAndGuardWork,
+            .fight_fn = ai.meleeFight,
+            .flags = &[_]AI.Flag{.AvoidsEnemies},
+        },
+        .faction = .CaveGoblins,
+        .max_HP = 4,
+        .memory_duration = 20,
+        .stats = .{ .Willpower = 4, .Vision = V - 4, .Melee = 100 },
+    },
+    .squad = &[_][]const MobTemplate.SquadMember{
+        &[_]MobTemplate.SquadMember{
+            .{ .mob = "goblin", .weight = 1, .count = minmax(usize, 0, 1) },
+        },
+    },
+};
+
+pub fn createFlavoredGoblinTemplate(comptime id: []const u8, comptime name: []const u8, comptime sqmax: usize) MobTemplate {
+    return MobTemplate{
+        .mob = .{
+            .id = "goblin_" ++ id,
+            .species = &GoblinSpecies,
+            .tile = 'g',
+            .alt_name = "meatbag " ++ name,
+            .ai = AI{
+                .profession_name = "goblin " ++ name,
+                .profession_description = "wandering",
+                .work_fn = ai.wanderWork,
+                .fight_fn = ai.meleeFight,
+            },
+            .faction = .CaveGoblins,
+            .max_HP = 4,
+            .memory_duration = 20,
+            .stats = .{ .Willpower = 4, .Vision = V - 4, .Melee = 100 },
+        },
+        .squad = &[_][]const MobTemplate.SquadMember{
+            &[_]MobTemplate.SquadMember{
+                .{ .mob = "goblin", .weight = 1, .count = minmax(usize, 0, sqmax) },
+            },
+        },
+    };
+}
+
+pub const GoblinCookTemplate = createFlavoredGoblinTemplate("cook", "cook", 0);
+pub const GoblinCarpenterTemplate = createFlavoredGoblinTemplate("carpenter", "carpenter", 0);
+pub const GoblinSmithTemplate = createFlavoredGoblinTemplate("smith", "smith", 0);
+
+pub const GuardTemplate = MobTemplate{
+    .mob = .{
+        .id = "guard",
+        .species = &GoblinSpecies,
+        .tile = 's',
+        .alt_name = "filthy meatbag",
+        .ai = AI{
+            .profession_name = "sentry",
+            .profession_description = "guarding",
+            .work_fn = ai.guardWork,
+            .fight_fn = ai.meleeFight,
+        },
+
+        .max_HP = 5,
+        .memory_duration = 15,
+
+        .stats = .{ .Willpower = 1, .Melee = 100 },
+    },
+    .weapon = &items.BludgeonWeapon,
+};
+
+pub const ArbalistTemplate = MobTemplate{
+    .mob = .{
+        .id = "arbalist",
+        .species = &GoblinSpecies,
+        .tile = 'a',
+        .ai = AI{
+            .profession_name = "arbalist",
+            .profession_description = "guarding",
+            .work_fn = ai.standStillAndGuardWork,
+            .fight_fn = ai.mageFight,
+            .spellcaster_backup_action = .Melee,
+        },
+        .spells = &[_]SpellOptions{
+            .{ .MP_cost = 2, .spell = &spells.BOLT_BOLT, .power = 1 },
+        },
+        .max_MP = 2,
+        .max_HP = 5,
+        .memory_duration = 7,
+        .stats = .{ .Vision = V - 2 },
+    },
+};
+
+pub const MasterArbalistTemplate = MobTemplate{
+    .mob = .{
+        .id = "arbalist_sadist",
+        .species = &GoblinSpecies,
+        .tile = 'A',
+        .ai = AI{
+            .profession_name = "master arbalist",
+            .profession_description = "guarding",
+            .work_fn = ai.standStillAndGuardWork,
+            .fight_fn = ai.mageFight,
+            .spellcaster_backup_action = .KeepDistance,
+        },
+        .spells = &[_]SpellOptions{
+            .{ .MP_cost = 2, .spell = &spells.BOLT_BOLT, .power = 1 },
+        },
+        .max_MP = 2,
+        .max_HP = 6,
+        .memory_duration = 14,
+        .stats = .{ .Vision = V + 1 },
+    },
+};
+
 pub const WarriorTemplate = MobTemplate{
     .mob = .{
         .id = "warrior",
         .species = &GoblinSpecies,
-        .tile = 'W',
+        .tile = 'w',
         .alt_name = "meat beast",
         .ai = AI{
             .profession_name = "warrior",
             .profession_description = "resting",
             .work_fn = ai.standStillAndGuardWork,
             .fight_fn = ai.meleeFight,
-            .flee_effect = .{ .status = .Enraged, .duration = .{ .Tmp = 10 }, .exhausting = true },
+            .flee_effect = .{ .status = .Enraged, .duration = .{ .Tmp = 20 }, .exhausting = true },
         },
 
-        .max_HP = 6,
+        .max_HP = 7,
         .memory_duration = 10,
-        .stats = .{ .Willpower = 2, .Melee = 100, .Vision = 10 },
+        .stats = .{ .Willpower = 2, .Melee = 100, .Vision = V - 1 },
     },
     .weapon = &items.MaceWeapon,
     .armor = &items.CuirassArmor,
@@ -298,55 +343,17 @@ pub const EmberMageTemplate = MobTemplate{
 
         .max_HP = 7,
         .memory_duration = 10,
-        .stats = .{ .Willpower = 4, .Vision = 11 },
+        .stats = .{ .Willpower = 4, .Vision = V - 1 },
     },
     .weapon = &items.BludgeonWeapon,
     .cloak = &items.SilCloak,
 
     .squad = &[_][]const MobTemplate.SquadMember{
         &[_]MobTemplate.SquadMember{
-            .{ .mob = "emberling", .weight = 1, .count = minmax(usize, 2, 4) },
+            .{ .mob = "emberling", .weight = 1, .count = minmax(usize, 1, 2) },
         },
     },
 };
-
-// pub const BrimstoneMageTemplate = MobTemplate{
-//     .mob = .{
-//         .id = "brimstone_mage",
-//         .species = &GoblinSpecies,
-//         .tile = 'R',
-//         .ai = AI{
-//             .profession_name = "brimstone mage",
-//             .profession_description = "watching",
-//             // Stand still and don't be curious; don't want emberling followers
-//             // to burn the world down
-//             .work_fn = ai.standStillAndGuardWork,
-//             .fight_fn = ai.mageFight,
-//             .spellcaster_backup_action = .KeepDistance,
-//             .flags = &[_]AI.Flag{.DetectWithHeat},
-//         },
-
-//         .spells = &[_]SpellOptions{
-//             .{ .MP_cost = 15, .spell = &spells.CAST_CREATE_EMBERLING },
-//             .{ .MP_cost = 1, .spell = &spells.CAST_FLAMMABLE, .power = 20 },
-//             .{ .MP_cost = 7, .spell = &spells.BOLT_FIREBALL, .power = 3, .duration = 3 },
-//         },
-//         .max_MP = 15,
-
-//         .max_HP = 7,
-//         .memory_duration = 10,
-//         .stats = .{ .Willpower = 6 },
-//     },
-//     .weapon = &items.MaceWeapon,
-//     .armor = &items.HauberkArmor,
-//     .cloak = &items.SilCloak,
-
-//     .squad = &[_][]const MobTemplate.SquadMember{
-//         &[_]MobTemplate.SquadMember{
-//             .{ .mob = "emberling", .weight = 1, .count = minmax(usize, 2, 4) },
-//         },
-//     },
-// };
 
 pub const EmberlingTemplate = MobTemplate{
     .mob = .{
@@ -359,7 +366,7 @@ pub const EmberlingTemplate = MobTemplate{
                 .strs = &items.CLAW_STRS,
             },
         },
-        .tile = 'ë',
+        .tile = 'e',
         .alt_name = "meat slave",
         .ai = AI{
             .profession_description = "watching",
@@ -377,7 +384,7 @@ pub const EmberlingTemplate = MobTemplate{
         .max_HP = 3,
         .memory_duration = 5,
         .innate_resists = .{ .rFume = 100, .rFire = RESIST_IMMUNE },
-        .stats = .{ .Willpower = 1, .Vision = 7, .Melee = 100 },
+        .stats = .{ .Willpower = 1, .Vision = V - 4, .Melee = 100 },
     },
     // XXX: Emberlings are never placed alone, this determines number of
     // summoned emberlings from CAST_CREATE_EMBERLING
@@ -429,7 +436,7 @@ pub const CinderBruteTemplate = MobTemplate{
         .faction = .Revgenunkim,
         .innate_resists = .{ .rFire = RESIST_IMMUNE, .rElec = -25, .rFume = 100 },
 
-        .stats = .{ .Willpower = 6, .Vision = PLAYER_VISION },
+        .stats = .{ .Willpower = 6, .Vision = V + 2 },
     },
     .statuses = &[_]StatusDataInfo{.{ .status = .Fire, .duration = .Prm }},
 };
@@ -462,7 +469,7 @@ pub const QuicklimeBruteTemplate = MobTemplate{
         .faction = .Revgenunkim,
         .innate_resists = .{ .rFire = RESIST_IMMUNE, .rElec = -25, .rFume = 100 },
 
-        .stats = .{ .Willpower = 8, .Vision = PLAYER_VISION },
+        .stats = .{ .Willpower = 8, .Vision = V + 2 },
     },
 };
 
@@ -475,9 +482,10 @@ pub const MOBS = [_]MobTemplate{
     GoblinCookTemplate,
     GoblinCarpenterTemplate,
     GoblinSmithTemplate,
+    ArbalistTemplate,
+    MasterArbalistTemplate,
     WarriorTemplate,
     EmberMageTemplate,
-    // BrimstoneMageTemplate,
     EmberlingTemplate,
 
     CinderBruteTemplate,
@@ -636,35 +644,3 @@ pub fn placeMobSurrounding(c: Coord, t: *const MobTemplate, opts: PlaceMobOption
         }
     };
 }
-
-//comptime {
-//    @setEvalBranchQuota(MOBS.len * MOBS.len * 10);
-
-//    inline for (&MOBS) |monster| {
-//        // Ensure no monsters have conflicting tiles
-//        const pu: ?[]const u8 = inline for (&MOBS) |othermonster| {
-//            if (!mem.eql(u8, monster.mob.id, othermonster.mob.id) and
-//                monster.mob.tile == othermonster.mob.tile and
-//                !monster.ignore_conflicting_tiles and
-//                !othermonster.ignore_conflicting_tiles)
-//            {
-//                break othermonster.mob.id;
-//            }
-//        } else null;
-//        if (pu) |prevuse| {
-//            @compileError("Monster " ++ prevuse ++ " tile conflicts w/ " ++ monster.mob.id);
-//        }
-
-//        // Ensure that no resist is equal to 100
-//        //
-//        // (Because that usually means that I intended to make them immune to
-//        // that damage type, but forgot that terrain and spells can affect that
-//        // resist and occasionally make them less-than-immune.)
-//        if (monster.mob.innate_resists.rFire == 100 or
-//            monster.mob.innate_resists.rElec == 100 or
-//            monster.mob.innate_resists.Armor == 100)
-//        {
-//            @compileError("Monster " ++ monster.mob.id ++ " has false immunity in one or more resistances");
-//        }
-//    }
-//}
