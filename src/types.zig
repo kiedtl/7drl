@@ -1135,6 +1135,13 @@ pub const Status = enum {
     pub const TOTAL = @typeInfo(@This()).Enum.fields.len;
     pub const MAX_DURATION: usize = 20;
 
+    pub fn noshow(self: Status) bool {
+        return switch (self) {
+            .A_Bomb, .A_Multiattack => true,
+            else => false,
+        };
+    }
+
     pub fn string(self: Status, mob: *const Mob) []const u8 { // {{{
         return switch (self) {
             .A_Bomb => "A: burnt offering",
@@ -2604,7 +2611,16 @@ pub const Mob = struct { // {{{
             const resisted = @intCast(isize, d.amount) - @intCast(isize, amount);
             const resist_str = if (d.kind == .Physical) "armor" else "resist";
 
-            if (msg.basic) {
+            var noun = StackBuffer(u8, 64).init(null);
+            if (msg.noun) |m_noun| {
+                noun.fmt("{s}", .{m_noun});
+            } else {
+                noun.fmt("{c}", .{d.by_mob.?});
+            }
+
+            if (d.amount > 0 and amount == 0) {
+                state.message(.CombatUnimportant, "{s} fails to hurt {} [{s}]", .{ noun.constSlice(), self, resist_str });
+            } else if (msg.basic) {
                 const basic_helper_verb: []const u8 = if (self == state.player) "are" else "is";
                 const basic_verb = switch (d.kind) {
                     .Irresistible, .Physical => "damaged",
@@ -2628,13 +2644,6 @@ pub const Mob = struct { // {{{
                 const nbone_str = if (msg.is_nbone) " $b*-Bone*$. " else "";
                 const copper_str = if (msg.is_copper) " $b*Copper*$. " else "";
                 const spikes_str = if (msg.is_spikes) " $b*Spikes*$. " else "";
-
-                var noun = StackBuffer(u8, 64).init(null);
-                if (msg.noun) |m_noun| {
-                    noun.fmt("{s}", .{m_noun});
-                } else {
-                    noun.fmt("{c}", .{d.by_mob.?});
-                }
 
                 const verb = if (d.by_mob != null and d.by_mob.? == state.player)
                     hitstrs.verb_self

@@ -1026,7 +1026,7 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
         var status_drawn = false;
         var statuses = state.player.statuses.iterator();
         while (statuses.next()) |entry| {
-            if (state.player.isUnderStatus(entry.key) == null)
+            if (entry.key.noshow() or state.player.isUnderStatus(entry.key) == null)
                 continue;
 
             const statusinfo = state.player.isUnderStatus(entry.key).?;
