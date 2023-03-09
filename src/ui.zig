@@ -1045,28 +1045,45 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
         if (status_drawn) y += 1;
     }
 
-    const spotted = player.isPlayerSpotted();
-    if (spotted) {
-        const spotted_str = if (spotted) "$bSpotted$. " else "";
-        y = _drawStrf(startx, y, endx, "{s}", .{spotted_str}, .{});
-        y += 1;
-    }
-
-    var ring_count: usize = 0;
-    var ring_active: ?usize = null;
-    var ring_i: usize = 0;
-    while (ring_i <= 9) : (ring_i += 1)
-        if (player.getRingByIndex(ring_i)) |ring| {
-            ring_count += 1;
-            if (ring.activated)
-                ring_active = ring_i;
+    if (state.dungeon.at(state.player.coord).surface) |surface| {
+        const str = switch (surface) {
+            .Corpse => "corpse",
+            .Machine => |m| m.name,
+            .Prop => |p| p.name,
+            else => "a shimmering eggplant",
         };
+        y = _drawStrf(startx, y, endx, "Standing on: $a{s}$.", .{str}, .{});
+    } else {
+        y = _drawStr(startx, y, endx, "Nothing here.", .{});
+    }
 
     if (state.rage_command) |command| {
         y = _drawStrf(startx, y, endx, "Current command: $a{s}$.", .{command.name2()}, .{});
     } else {
         y = _drawStr(startx, y, endx, "$bNo command.$.", .{});
     }
+
+    y += 1;
+
+    const has_abils = for (state.player_abilities) |a| {
+        if (a.received) break true;
+    } else false;
+    if (has_abils) {
+        y = _drawStr(startx, y, endx, "$bAbilities:", .{});
+        for (state.player_abilities) |a| if (a.received) {
+            if (a.isActive()) {
+                const d = state.player.isUnderStatus(a.a.statusInfo().s).?.duration.Tmp;
+                y = _drawStrf(startx, y, endx, "$g·$. {s} $aactive <{}>$.", .{ a.a.name(), d }, .{});
+            } else if (a.isCooldown()) |c| {
+                y = _drawStrf(startx, y, endx, "$g·$. {s} $acooldown <{}>$.", .{ a.a.name(), c }, .{});
+            } else {
+                y = _drawStrf(startx, y, endx, "$g·$. {s}", .{a.a.name()}, .{});
+            }
+        };
+    } else {
+        y = _drawStr(startx, y, endx, "$bAbilities: $gnone.$.", .{});
+    }
+
     y += 1;
 
     // ------------------------------------------------------------------------
