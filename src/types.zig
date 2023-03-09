@@ -932,6 +932,10 @@ pub const Status = enum {
     // Abilities
     A_Bomb,
     A_Multiattack,
+    A_Dominate,
+    A_MeatOffering,
+    A_BurningLance,
+    A_Paralyse,
 
     // Ring status effects
     RingTeleportation, // No power field
@@ -1137,15 +1141,19 @@ pub const Status = enum {
 
     pub fn noshow(self: Status) bool {
         return switch (self) {
-            .A_Bomb, .A_Multiattack => true,
+            .A_Bomb, .A_Multiattack, .A_Dominate, .A_MeatOffering, .A_BurningLance, .A_Paralyse => true,
             else => false,
         };
     }
 
     pub fn string(self: Status, mob: *const Mob) []const u8 { // {{{
         return switch (self) {
-            .A_Bomb => "A: burnt offering",
-            .A_Multiattack => "A: multi-attack",
+            .A_Bomb => "burnt offering",
+            .A_Multiattack => "multi-attack",
+            .A_Dominate => "dominate",
+            .A_MeatOffering => "meat offering",
+            .A_BurningLance => "burning lance",
+            .A_Paralyse => "paralysing",
 
             .RingTeleportation => "ring: teleportation",
             .RingDamnation => "ring: damnation",
@@ -1202,7 +1210,7 @@ pub const Status = enum {
 
     pub fn miniString(self: Status) ?[]const u8 { // {{{
         return switch (self) {
-            .A_Bomb, .A_Multiattack, .RingTeleportation, .RingDamnation, .RingElectrocution, .RingExcision, .RingConjuration => null,
+            .A_Bomb, .A_Multiattack, .A_Dominate, .A_MeatOffering, .A_BurningLance, .A_Paralyse, .RingTeleportation, .RingDamnation, .RingElectrocution, .RingExcision, .RingConjuration => null,
 
             .DetectHeat, .DetectElec, .CopperWeapon, .Riposte, .EtherealShield, .FumesVest, .Echolocation, .DayBlindness, .NightBlindness, .Explosive, .ExplosiveElec, .Lifespan => null,
 
@@ -2525,6 +2533,21 @@ pub const Mob = struct { // {{{
             recipient.addStatus(.Explosive, 200, .Prm);
             recipient.faction = .Revgenunkim;
             recipient.immobile = true;
+        } else if (attacker.hasStatus(.A_Dominate) and recipient.faction != .Revgenunkim) {
+            recipient.prefix = "dom. ";
+            recipient.faction = .Revgenunkim;
+        }
+
+        if (attacker.hasStatus(.A_Paralyse)) {
+            for (attacker.fov) |row, y| for (row) |cell, x| {
+                if (!cell) continue;
+                const fitem = Coord.new2(attacker.coord.z, x, y);
+                if (state.dungeon.at(fitem).mob) |mob| {
+                    if (mob.isHostileTo(attacker)) {
+                        mob.addStatus(.Paralysis, 0, .{ .Tmp = 4 });
+                    }
+                }
+            };
         }
     }
 

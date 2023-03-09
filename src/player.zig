@@ -54,6 +54,10 @@ pub var wiz_lidless_eye: bool = false;
 pub const Ability = enum(usize) {
     Bomb = 0,
     Multiattack = 1,
+    Dominate = 2,
+    MeatOffering = 3,
+    BurningLance = 4,
+    Paralyse = 5,
 
     pub const TOTAL = std.meta.fields(@This()).len;
 
@@ -61,6 +65,10 @@ pub const Ability = enum(usize) {
         return switch (self) {
             .Bomb => .{ .s = .A_Bomb, .d = 2 },
             .Multiattack => .{ .s = .A_Multiattack, .d = 4 },
+            .Dominate => .{ .s = .A_Dominate, .d = 5 },
+            .MeatOffering => .{ .s = .A_MeatOffering, .d = 8 },
+            .BurningLance => .{ .s = .A_BurningLance, .d = 6 },
+            .Paralyse => .{ .s = .A_Paralyse, .d = 4 },
         };
     }
 
@@ -68,6 +76,10 @@ pub const Ability = enum(usize) {
         return switch (self) {
             .Bomb => "Burnt Offering",
             .Multiattack => "Multi-attack",
+            .Dominate => "Dominate",
+            .MeatOffering => "Meat Offering",
+            .BurningLance => "Burning Lance",
+            .Paralyse => "Paralyse Foes",
         };
     }
 
@@ -75,6 +87,7 @@ pub const Ability = enum(usize) {
         return switch (self) {
             .Bomb => "b",
             .Multiattack => "m",
+            else => 'F',
         };
     }
 
@@ -82,6 +95,10 @@ pub const Ability = enum(usize) {
         return switch (self) {
             .Bomb => "Attacked enemies become insane, stationary, and explosive.",
             .Multiattack => "While standing on a corpse, attacking an enemy automatically attacks 3 other enemies.",
+            .Dominate => "Attacked foes become allies while you continue to rage.",
+            .MeatOffering => "You deal 3x damage while standing on a corpse.",
+            .BurningLance => "Conjures a burning lance nearby. When you move, the lance will attack foes in a line in the direction you moved, dealing 3x the damage you would deal.",
+            .Paralyse => "Each time you attack, all foes in sight become paralysed for 4 turns (stacking).",
         };
     }
 };
@@ -109,6 +126,18 @@ pub const AbilityInfo = struct {
         state.message(.Info, "Activated ability: {s}", .{self.a.name()});
         state.player.addStatus(self.a.statusInfo().s, 0, .{ .Tmp = self.a.statusInfo().d });
         self.last_used = state.player_turns;
+
+        if (self.a == .BurningLance) {
+            const spawn_c = _getSummonLocation() orelse {
+                state.message(.Info, "Shades of fiery red appear briefly, but nothing else happens.", .{});
+                return; // FIXME: shouldn't be doing this, what if there are other triggers?
+            };
+            state.message(.CombatUnimportant, "A burning lance appears nearby.", .{});
+
+            const mob = mobs.placeMob(state.GPA.allocator(), &mobs.BurningLanceTemplate, spawn_c, .{});
+            mob.addStatus(.Lifespan, 0, .{ .Tmp = state.player.isUnderStatus(.A_BurningLance).?.duration.Tmp + 1 });
+            state.player.addUnderling(mob);
+        }
     }
 };
 pub const AbilityEntry = struct { w: usize, a: Ability };
@@ -116,6 +145,10 @@ pub const AbilityEntry = struct { w: usize, a: Ability };
 pub const CONJ_AUGMENT_DROPS = [_]AbilityEntry{
     .{ .w = 99, .a = .Bomb },
     .{ .w = 99, .a = .Multiattack },
+    .{ .w = 99, .a = .Dominate },
+    .{ .w = 99, .a = .MeatOffering },
+    .{ .w = 99, .a = .BurningLance },
+    .{ .w = 99, .a = .Paralyse },
 };
 
 pub fn choosePlayerUpgrades() void {
@@ -199,7 +232,7 @@ pub fn usableAbilities() usize {
     return ctr;
 }
 
-pub fn summonAngel() void {
+fn _getSummonLocation() ?Coord {
     // Leave my indented fn calls alone, zig fmt
     // zig fmt: off
     var dijk = dijkstra.Dijkstra.init(state.player.coord, state.mapgeometry, mobs.PLAYER_VISION / 2,
@@ -215,9 +248,11 @@ pub fn summonAngel() void {
             spawn_cs.append(child) catch break;
         }
     }
-    if (spawn_cs.len == 0) return;
-    const spawn_c = rng.chooseUnweighted(Coord, spawn_cs.constSlice());
+    return if (spawn_cs.len == 0) null else rng.chooseUnweighted(Coord, spawn_cs.constSlice());
+}
 
+pub fn summonAngel() void {
+    const spawn_c = _getSummonLocation() orelse return;
     state.message(.Info, "$gThe Presence summons a servant.$.", .{});
 
     const mob_t = rng.chooseUnweighted(mobs.MobTemplate, &mobs.ANGELS);
@@ -336,6 +371,11 @@ pub fn bookkeepingFOV() void {
     };
 }
 
+pub fn isStandingOnCorpse() bool {
+    return state.dungeon.at(state.player.coord).surface != null and
+        state.dungeon.at(state.player.coord).surface.? == .Corpse;
+}
+
 pub fn tryRest() bool {
     if (state.player.hasStatus(.Pain)) {
         ui.drawAlertThenLog("You cannot rest while in pain!", .{});
@@ -370,20 +410,25 @@ pub fn moveOrFight(direction: Direction) bool {
     // Does the player want to stab or fight?
     if (state.dungeon.at(dest).mob) |mob| {
         if (state.player_rage > 0 and state.player.isHostileTo(mob)) {
-            state.player.fight(mob, .{});
+            if (!movementTriggersA(direction)) {
+                movementTriggersB(direction);
+                state.player.declareAction(Activity{ .Move = direction });
+                return true;
+            }
 
-            if (state.player.hasStatus(.A_Multiattack) and
-                state.dungeon.at(state.player.coord).surface != null and
-                state.dungeon.at(state.player.coord).surface.? == .Corpse)
-            {
+            const bonus: usize = if (state.player.hasStatus(.A_MeatOffering) and isStandingOnCorpse()) 300 else 100;
+            state.player.fight(mob, .{ .damage_bonus = bonus });
+
+            if (state.player.hasStatus(.A_Multiattack) and isStandingOnCorpse()) {
                 const ds = if (direction.is_diagonal()) &DIAGONAL_DIRECTIONS else &CARDINAL_DIRECTIONS;
                 for (ds) |d| if (state.player.coord.move(d, state.mapgeometry)) |n| if (state.dungeon.at(n).mob) |omob| {
                     if (state.player.isHostileTo(omob) and omob != mob) {
-                        state.player.fight(omob, .{ .free_attack = true, .auto_hit = true });
+                        state.player.fight(omob, .{ .free_attack = true, .auto_hit = true, .damage_bonus = bonus });
                     }
                 };
             }
 
+            movementTriggersB(direction);
             return true;
         }
     }
@@ -444,34 +489,16 @@ pub fn movementTriggersA(direction: Direction) bool {
 }
 
 pub fn movementTriggersB(direction: Direction) void {
-    if (state.player.hasStatus(.RingDamnation) and !direction.is_diagonal()) {
-        const power = state.player.isUnderStatus(.RingDamnation).?.power;
-        spells.SUPER_DAMNATION.use(
-            state.player,
-            state.player.coord,
-            state.player.coord,
-            .{ .MP_cost = 0, .no_message = true, .context_direction1 = direction, .free = true, .power = power },
-        );
-    }
-    if (state.player.hasStatus(.RingElectrocution)) {
-        const power = state.player.isUnderStatus(.RingElectrocution).?.power;
-
-        var anim_buf = StackBuffer(Coord, 4).init(null);
-        for (&DIAGONAL_DIRECTIONS) |d|
-            if (state.player.coord.move(d, state.mapgeometry)) |c|
-                anim_buf.append(c) catch err.wat();
-
-        ui.Animation.blink(anim_buf.constSlice(), '*', ui.Animation.ELEC_LINE_FG, .{}).apply();
-
-        for (&DIAGONAL_DIRECTIONS) |d|
-            if (utils.getHostileInDirection(state.player, d)) |hostile| {
-                hostile.takeDamage(.{
-                    .amount = power,
-                    .by_mob = state.player,
-                    .kind = .Electric,
-                }, .{ .noun = "Lightning" });
-            } else |_| {};
-        state.player.makeNoise(.Combat, .Loud);
+    if (state.player.hasStatus(.A_BurningLance)) {
+        state.player.squad.?.trimMembers();
+        const lance = for (state.player.squad.?.members.constSlice()) |mob| {
+            if (mem.eql(u8, mob.id, "burning_lance")) {
+                break mob;
+            }
+        } else unreachable;
+        const target = utils.getFarthestWalkableCoord(direction, lance.coord, .{ .only_if_breaks_lof = true, .ignore_mobs = true });
+        const damage = state.player.listOfWeapons().constSlice()[0].damage * 3;
+        spells.BOLT_SPINNING_SWORD.use(lance, lance.coord, target, .{ .MP_cost = 0, .free = true, .power = damage });
     }
 }
 

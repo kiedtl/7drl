@@ -3402,7 +3402,7 @@ pub fn createLevelConfig_QUA(comptime prefabs: []const []const u8) LevelConfig {
         .subroom_chance = 100,
         .material = &materials.Ornate,
         .machines = &[_]*const Machine{},
-        .single_props = &[_][]const u8{ "sofa_a", "gold_statue", "realgar_statue", "iron_statue", "sodalite_statue", "hematite_statue", "flourite_statue" },
+        .single_props = &[_][]const u8{ "sofa_a", "gold_statue", "realgar_statue", "iron_statue", "sodalite_statue", "hematite_statue", "fluorite_statue" },
     };
 }
 

@@ -469,6 +469,35 @@ pub const QuicklimeBruteTemplate = MobTemplate{
     },
 };
 
+pub const BurningLanceTemplate = MobTemplate{
+    .mob = .{
+        .id = "burning_lance",
+        .species = &Species{ .name = "burning lance" },
+        .tile = '|',
+        .ai = AI{
+            .profession_description = "[this is a bug]",
+            .work_fn = ai.suicideWork,
+            .fight_fn = ai.combatDummyFight,
+            .flags = &[_]AI.Flag{.IgnoredByEnemies},
+            .is_curious = false,
+            .is_fearless = true,
+        },
+
+        .deaf = true,
+        .base_night_vision = true,
+        .max_HP = 1,
+        .memory_duration = 999999,
+
+        .life_type = .Spectral,
+        .faction = .Revgenunkim,
+        .blood = null,
+        .corpse = .None,
+
+        .innate_resists = .{ .Armor = RESIST_IMMUNE, .rFire = RESIST_IMMUNE, .rElec = RESIST_IMMUNE, .rFume = 100 },
+        .stats = .{ .Willpower = WILL_IMMUNE, .Vision = V },
+    },
+};
+
 pub const MOBS = [_]MobTemplate{
     GuardTemplate,
     PlayerTemplate,
@@ -486,6 +515,8 @@ pub const MOBS = [_]MobTemplate{
 
     CinderBruteTemplate,
     QuicklimeBruteTemplate,
+
+    BurningLanceTemplate,
 };
 
 pub const ANGELS = [_]MobTemplate{

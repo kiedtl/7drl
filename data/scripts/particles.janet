@@ -741,7 +741,7 @@
    })]
   "zap-sword" @[(new-emitter @{
     :particle (new-particle @{
-      :tile (new-tile @{ :ch "|" :fg 0xef9fff :bg 0 :bg-mix 1 })
+      :tile (new-tile @{ :ch "|" :fg 0xffef9f :bg 0 :bg-mix 1 })
       :require-los 0
       :triggers @[
         [[:COND-nth-tick 1] [:TRIG-cycle-glyph "|/-\\"]]
@@ -749,12 +749,12 @@
         [[:COND-true] [:TRIG-set-speed (fn [self &] (+ 0.1 (- 1 (math/pow (:completed-journey self) 2))))]]
         [[:COND-true] [:TRIG-create-emitter (new-emitter @{
           :particle (new-particle @{
-            :tile (new-tile @{ :ch " " :fg 0 :bg 0x442266 :bg-mix 1 })
+            :tile (new-tile @{ :ch " " :fg 0 :bg 0x886644 :bg-mix 1 })
             :speed 0.1 :require-nonwall 0 :require-los 0
             :triggers @[
               [[:COND-reached-target? true] [:TRIG-set-speed 0]]
               [[:COND-true] [:TRIG-reset-lifetime-once (fn [&] (random-choose [9 5])) 0]]
-              [[:COND-true] [:TRIG-modify-color :bg "rg" [:completed-lifetime 1]]]
+              [[:COND-true] [:TRIG-modify-color :bg "gb" [:completed-lifetime 1]]]
             ]
           })
           :lifetime 2

@@ -467,7 +467,7 @@ pub const BOLT_PARALYSE = Spell{
 
 pub const BOLT_SPINNING_SWORD = Spell{
     .id = "sp_spinning_sword",
-    .name = "spinning sword",
+    .name = "pierce",
     .cast_type = .Bolt,
     .noise = .Loud,
     .animation = .{ .Particle = .{ .name = "zap-sword" } },
