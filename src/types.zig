@@ -931,6 +931,7 @@ pub const Status = enum {
 
     // Abilities
     A_Bomb,
+    A_Multiattack,
 
     // Ring status effects
     RingTeleportation, // No power field
@@ -1137,6 +1138,7 @@ pub const Status = enum {
     pub fn string(self: Status, mob: *const Mob) []const u8 { // {{{
         return switch (self) {
             .A_Bomb => "A: burnt offering",
+            .A_Multiattack => "A: multi-attack",
 
             .RingTeleportation => "ring: teleportation",
             .RingDamnation => "ring: damnation",
@@ -1193,7 +1195,7 @@ pub const Status = enum {
 
     pub fn miniString(self: Status) ?[]const u8 { // {{{
         return switch (self) {
-            .A_Bomb, .RingTeleportation, .RingDamnation, .RingElectrocution, .RingExcision, .RingConjuration => null,
+            .A_Bomb, .A_Multiattack, .RingTeleportation, .RingDamnation, .RingElectrocution, .RingExcision, .RingConjuration => null,
 
             .DetectHeat, .DetectElec, .CopperWeapon, .Riposte, .EtherealShield, .FumesVest, .Echolocation, .DayBlindness, .NightBlindness, .Explosive, .ExplosiveElec, .Lifespan => null,
 

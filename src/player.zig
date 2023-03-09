@@ -53,30 +53,35 @@ pub var wiz_lidless_eye: bool = false;
 
 pub const Ability = enum(usize) {
     Bomb = 0,
+    Multiattack = 1,
 
     pub const TOTAL = std.meta.fields(@This()).len;
 
     pub fn statusInfo(self: Ability) struct { s: Status, d: usize } {
         return switch (self) {
             .Bomb => .{ .s = .A_Bomb, .d = 2 },
+            .Multiattack => .{ .s = .A_Multiattack, .d = 4 },
         };
     }
 
     pub fn name(self: Ability) []const u8 {
         return switch (self) {
             .Bomb => "Burnt Offering",
+            .Multiattack => "Multi-attack",
         };
     }
 
     pub fn char(self: Ability) []const u8 {
         return switch (self) {
             .Bomb => "b",
+            .Multiattack => "m",
         };
     }
 
     pub fn description(self: Ability) []const u8 {
         return switch (self) {
             .Bomb => "Attacked enemies become insane, stationary, and explosive.",
+            .Multiattack => "While standing on a corpse, attacking an enemy automatically attacks 3 other enemies.",
         };
     }
 };
@@ -110,6 +115,7 @@ pub const AbilityEntry = struct { w: usize, a: Ability };
 
 pub const CONJ_AUGMENT_DROPS = [_]AbilityEntry{
     .{ .w = 99, .a = .Bomb },
+    .{ .w = 99, .a = .Multiattack },
 };
 
 pub fn choosePlayerUpgrades() void {
@@ -365,6 +371,19 @@ pub fn moveOrFight(direction: Direction) bool {
     if (state.dungeon.at(dest).mob) |mob| {
         if (state.player_rage > 0 and state.player.isHostileTo(mob)) {
             state.player.fight(mob, .{});
+
+            if (state.player.hasStatus(.A_Multiattack) and
+                state.dungeon.at(state.player.coord).surface != null and
+                state.dungeon.at(state.player.coord).surface.? == .Corpse)
+            {
+                const ds = if (direction.is_diagonal()) &DIAGONAL_DIRECTIONS else &CARDINAL_DIRECTIONS;
+                for (ds) |d| if (state.player.coord.move(d, state.mapgeometry)) |n| if (state.dungeon.at(n).mob) |omob| {
+                    if (state.player.isHostileTo(omob) and omob != mob) {
+                        state.player.fight(omob, .{ .free_attack = true, .auto_hit = true });
+                    }
+                };
+            }
+
             return true;
         }
     }

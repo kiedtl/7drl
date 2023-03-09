@@ -419,9 +419,10 @@ fn readInput() !bool {
                 // state.dungeon.at(target).mob.?.addStatus(.RingTeleportation, 0, .{ .Tmp = 5 });
                 // state.dungeon.at(target).mob.?.addStatus(.RingElectrocution, 0, .{ .Tmp = 5 });
                 // state.dungeon.at(target).mob.?.addStatus(.RingConjuration, 0, .{ .Tmp = 2 });
-                // state.player_abilities[0].received = true;
-                state.player_rage = 20;
-                break :blk true;
+                for (state.player_abilities) |*abil|
+                    abil.received = true;
+                state.player_rage = 14;
+                break :blk false;
             },
             .F8 => b: {
                 _ = janet.loadFile("scripts/particles.janet", state.GPA.allocator()) catch break :b false;
