@@ -53,12 +53,12 @@ pub const labels = @import("ui/labels.zig");
 
 pub const FRAMERATE = 1000 / 30;
 
-pub const LEFT_INFO_WIDTH: usize = 30;
+pub const LEFT_INFO_WIDTH: usize = 31;
 //pub const RIGHT_INFO_WIDTH: usize = 24;
 pub const LOG_HEIGHT = 6;
 pub const ZAP_HEIGHT = player.Ability.TOTAL + 6;
 pub const MAP_HEIGHT_R = 12;
-pub const MAP_WIDTH_R = 12;
+pub const MAP_WIDTH_R = 17;
 
 pub const MIN_HEIGHT = (MAP_HEIGHT_R * 2) + LOG_HEIGHT + 2;
 pub const MIN_WIDTH = (MAP_WIDTH_R * 4) + LEFT_INFO_WIDTH + 2 + 1;
@@ -1639,15 +1639,16 @@ pub fn initLoadingScreen() LoadingScreen {
     defer map.deinit();
 
     win_c.main_con = Console.init(state.GPA.allocator(), win.width(), win.height());
-    win_c.logo_con = Console.init(state.GPA.allocator(), map.width, map.height + 1); // +1 padding
+
+    win_c.logo_con = Console.init(state.GPA.allocator(), map.width, win.height() + 1); // +1 padding
     win_c.text_con = Console.init(state.GPA.allocator(), LoadingScreen.TEXT_CON_WIDTH, LoadingScreen.TEXT_CON_HEIGHT);
 
-    const starty = (win.height() / 2) - ((map.height + LoadingScreen.TEXT_CON_HEIGHT + 2) / 2) - 4;
+    // const starty = (win.height() / 2) - ((map.height + LoadingScreen.TEXT_CON_HEIGHT + 2) / 2) - 4;
 
-    win_c.logo_con.drawXP(&map, 0, 0, null, false);
-    win_c.main_con.addSubconsole(win_c.logo_con, win_c.main_con.centerX(map.width), starty);
+    win_c.main_con.drawXP(&map, 0, 0, null, true);
+    // win_c.main_con.addSubconsole(win_c.logo_con, 0, 0);
 
-    win_c.main_con.addSubconsole(win_c.text_con, win_c.main_con.centerX(LoadingScreen.TEXT_CON_WIDTH), starty + win_c.logo_con.height);
+    // win_c.main_con.addSubconsole(win_c.text_con, win_c.main_con.centerX(LoadingScreen.TEXT_CON_WIDTH), starty + win_c.logo_con.height);
 
     return win_c;
 }
@@ -2778,6 +2779,10 @@ pub const Console = struct {
 
     // TODO: draw multiple layers as needed
     pub fn drawXP(self: *const Self, map: *const RexMap, startx: usize, starty: usize, pmrect: ?Rect, wide: bool) void {
+        const tilemap = RexMap.DEFAULT_TILEMAP ++ [_]u21{
+            0x2760, 0x2761, 0, 0, 0, 0x2765, 0x2766, 0x2767, 0x2768,
+        };
+
         const mrect = pmrect orelse Rect.new(Coord.new(0, 0), map.width, map.height);
         var dy: usize = starty;
         var y: usize = mrect.start.y;
@@ -2805,7 +2810,7 @@ pub const Console = struct {
                 const bg = tile.bg.asU32();
 
                 self.setCell(dx, dy, .{
-                    .ch = RexMap.DEFAULT_TILEMAP[tile.ch],
+                    .ch = tilemap[tile.ch],
                     .fg = tile.fg.asU32(),
                     .bg = if (bg == 0) colors.BG else bg,
                     .fl = .{ .wide = wide },
