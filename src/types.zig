@@ -1986,6 +1986,18 @@ pub const Mob = struct { // {{{
         }
     }
 
+    pub fn equipItem(self: *Mob, slot: Inventory.EquSlot, item: Item) void {
+        if (slot != .Backup) {
+            switch (item) {
+                .Weapon => |w| for (w.equip_effects) |effect| self.applyStatus(effect, .{}),
+                .Armor => |a| for (a.equip_effects) |effect| self.applyStatus(effect, .{}),
+                .Aux => |a| for (a.equip_effects) |effect| self.applyStatus(effect, .{}),
+                else => {},
+            }
+        }
+        self.inventory.equipment(slot).* = item;
+    }
+
     // This is what happens when you flail to dodge a net.
     //
     // If held, flail around trying to get free.

@@ -1863,7 +1863,6 @@ pub fn _dmgstr(p: usize, vself: []const u8, vother: []const u8, vdeg: []const u8
 }
 
 pub const CRUSHING_STRS = [_]DamageStr{
-    _dmgstr(5, "whack", "whacks", ""),
     _dmgstr(10, "cudgel", "cudgels", ""),
     _dmgstr(30, "bash", "bashes", ""),
     _dmgstr(40, "hit", "hits", ""),

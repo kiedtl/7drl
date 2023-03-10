@@ -247,6 +247,7 @@ pub const GuardTemplate = MobTemplate{
         .max_HP = 5,
         .memory_duration = 15,
 
+        .innate_resists = .{ .Armor = 15 },
         .stats = .{ .Willpower = 1, .Melee = 100 },
     },
     .weapon = &items.BludgeonWeapon,
@@ -312,10 +313,10 @@ pub const WarriorTemplate = MobTemplate{
 
         .max_HP = 7,
         .memory_duration = 10,
+        .innate_resists = .{ .Armor = 25 },
         .stats = .{ .Willpower = 2, .Melee = 100, .Vision = V - 1 },
     },
     .weapon = &items.MaceWeapon,
-    .armor = &items.CuirassArmor,
 };
 
 pub const EmberMageTemplate = MobTemplate{
@@ -611,6 +612,11 @@ pub fn placeMob(
         mob.addStatus(s, 0, .Prm);
     if (opts.prm_status2) |s|
         mob.addStatus(s, 0, .Prm);
+
+    if (template.weapon) |w| mob.equipItem(.Weapon, Item{ .Weapon = w });
+    if (template.backup_weapon) |w| mob.equipItem(.Backup, Item{ .Weapon = w });
+    if (template.armor) |a| mob.equipItem(.Armor, Item{ .Armor = a });
+    if (template.cloak) |c| mob.equipItem(.Cloak, Item{ .Cloak = c });
 
     if (opts.facing) |dir| mob.facing = dir;
     mob.ai.work_area.append(opts.work_area orelse coord) catch err.wat();
