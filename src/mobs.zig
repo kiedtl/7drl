@@ -386,9 +386,9 @@ pub const EmberlingTemplate = MobTemplate{
         .blood = null,
         .corpse = .None,
 
-        .max_HP = 1,
+        .max_HP = 2,
         .memory_duration = 5,
-        .innate_resists = .{ .rFume = 100, .rFire = RESIST_IMMUNE },
+        .innate_resists = .{ .rFume = 100, .rFire = RESIST_IMMUNE, .rElec = -100 },
         .stats = .{ .Willpower = 1, .Speed = 110, .Vision = V - 4, .Melee = 100 },
     },
     .statuses = &[_]StatusDataInfo{
