@@ -437,7 +437,6 @@ fn _getSurfDescription(w: io.FixedBufferStream([]u8).Writer, surface: SurfaceIte
     switch (surface) {
         .Machine => |m| {
             _writerWrite(w, "$c{s}$.\n", .{m.name});
-            _writerWrite(w, "feature\n", .{});
             _writerWrite(w, "\n", .{});
 
             if (m.player_interact) |interaction| {
@@ -451,7 +450,7 @@ fn _getSurfDescription(w: io.FixedBufferStream([]u8).Writer, surface: SurfaceIte
 
             _writerWrite(w, "\n", .{});
         },
-        .Prop => |p| _writerWrite(w, "$c{s}$.\nobject\n\n$gNothing to see here.$.\n", .{p.name}),
+        .Prop => {},
         .Container => |c| {
             _writerWrite(w, "$cA {s}$.\nContainer\n\n", .{c.name});
             if (c.items.len == 0) {
@@ -637,7 +636,7 @@ fn _getMonsSpellsDescription(w: io.FixedBufferStream([]u8).Writer, mob: *Mob, li
     _writerWrite(w, "\n", .{});
 
     if (mob.spells.len == 0) {
-        _writerWrite(w, "$gThis monster has no spells, and is thus (relatively) safe to underestimate.$.\n", .{});
+        _writerWrite(w, "$gNo special abilities.$.\n", .{});
         _writerWrite(w, "\n", .{});
     } else {
         const chance = spells.appxChanceOfWillOverpowered(mob, state.player);
@@ -733,24 +732,12 @@ fn _getMonsDescription(w: io.FixedBufferStream([]u8).Writer, mob: *Mob, linewidt
 
     _writerWrite(w, "\n", .{});
 
-    const you_melee = combat.chanceOfMeleeLanding(state.player, mob);
-    const you_evade = combat.chanceOfAttackEvaded(state.player, null);
-    const mob_melee = combat.chanceOfMeleeLanding(mob, state.player);
-    const mob_evade = combat.chanceOfAttackEvaded(mob, null);
-
-    const c_melee_you = mob_melee * (100 - you_evade) / 100;
-    const c_evade_you = 100 - (you_melee * (100 - mob_evade) / 100);
-
-    const m_colorsets = [_]u21{ 'g', 'g', 'g', 'g', 'b', 'b', 'b', 'b', 'r', 'r', 'r' };
-    const e_colorsets = [_]u21{ 'g', 'b', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r' };
-    const c_melee_you_color = m_colorsets[c_melee_you / 10];
-    const c_evade_you_color = e_colorsets[c_evade_you / 10];
-
-    _writerWrite(w, "${u}{}%$. to hit you.\n", .{ c_melee_you_color, c_melee_you });
-    _writerWrite(w, "${u}{}%$. to evade you.\n", .{ c_evade_you_color, c_evade_you });
-    _writerWrite(w, "\n", .{});
-
-    _writerWrite(w, "Hits for ~$r{}$. damage.\n", .{mob.totalMeleeOutput(state.player)});
+    const arm = utils.SignedFormatter{ .v = mob.resistance(.Armor) };
+    const rF = utils.SignedFormatter{ .v = mob.resistance(.rFire) };
+    const rE = utils.SignedFormatter{ .v = mob.resistance(.rElec) };
+    _writerWrite(w, "$cArmor$.: {: >3}%\n", .{arm});
+    _writerWrite(w, "$crFire$.: {: >3}%  $crElec$.: {: >3}%\n", .{ rF, rE });
+    _writerWrite(w, "Hits for $r{}$. damage.\n", .{mob.totalMeleeOutput(state.player)});
     _writerWrite(w, "\n", .{});
 
     var statuses = mob.statuses.iterator();
@@ -762,24 +749,10 @@ fn _getMonsDescription(w: io.FixedBufferStream([]u8).Writer, mob: *Mob, linewidt
     _writerWrite(w, "\n", .{});
 
     _writerHeader(w, linewidth, "info", .{});
-    if (mob.life_type == .Construct)
-        _writerWrite(w, "· is non-living ($bconstruct$.)\n", .{})
-    else if (mob.life_type == .Undead)
-        _writerWrite(w, "· is non-living ($bundead$.)\n", .{})
-    else if (mob.life_type == .Spectral)
-        _writerWrite(w, "· is non-living ($bspectral$.)\n", .{});
-    if (mob.ai.is_curious and !mob.deaf)
-        _writerWrite(w, "· investigates noises\n", .{})
-    else
-        _writerWrite(w, "· won't investigate noises\n", .{});
-    if (mob.ai.flag(.SocialFighter))
-        _writerWrite(w, "· won't attack alone\n", .{});
-    if (mob.ai.flag(.MovesDiagonally))
-        _writerWrite(w, "· (usually) moves diagonally\n", .{});
-    if (mob.ai.flag(.DetectWithHeat))
-        _writerWrite(w, "· detected w/ $bDetect Heat$.\n", .{});
-    if (mob.ai.flag(.DetectWithElec))
-        _writerWrite(w, "· detected w/ $bDetect Electricity$.\n", .{});
+    if (mob.life_type != .Living) {
+        _writerWrite(w, "· It is non-living.\n", .{});
+        _writerWrite(w, "  (Attacking it won't heal you)\n", .{});
+    }
     _writerWrite(w, "\n", .{});
 
     if (mob.ai.flee_effect) |effect| {
@@ -1995,7 +1968,7 @@ pub fn drawExamineScreen(starting_focus: ?ExamineTileFocus) bool {
     const logw = dimensions(.Log);
     const infow = dimensions(.PlayerInfo);
 
-    const MobTileFocus = enum { Main, Stats, Spells };
+    const MobTileFocus = enum { Main, Spells };
 
     var coord: Coord = state.player.coord;
     var tile_focus = starting_focus orelse .Mob;
@@ -2040,7 +2013,6 @@ pub fn drawExamineScreen(starting_focus: ?ExamineTileFocus) bool {
                 switch (mob_tile_focus) {
                     .Main => _getMonsDescription(writer, mob, linewidth),
                     .Spells => _getMonsSpellsDescription(writer, mob, linewidth),
-                    .Stats => _getMonsStatsDescription(writer, mob, linewidth),
                 }
             } else if (tile_focus == .Surface and has_surf) {
                 if (state.dungeon.at(coord).surface) |surf| {
@@ -2056,9 +2028,8 @@ pub fn drawExamineScreen(starting_focus: ?ExamineTileFocus) bool {
                 if (mob != state.player) {
                     kbd_s = true;
                     switch (mob_tile_focus) {
-                        .Main => _writerWrite(writer, "Press $bs$. to see stats.\n", .{}),
-                        .Stats => _writerWrite(writer, "Press $bs$. to see spells.\n", .{}),
-                        .Spells => _writerWrite(writer, "Press $bs$. to see mob.\n", .{}),
+                        .Main => _writerWrite(writer, "Press $bs$. to see abilities.\n", .{}),
+                        .Spells => _writerWrite(writer, "Press $bs$. to see mob info.\n", .{}),
                     }
                 }
             } else if (tile_focus == .Surface and has_surf) {
@@ -2172,8 +2143,7 @@ pub fn drawExamineScreen(starting_focus: ?ExamineTileFocus) bool {
                 'c', 'n' => coord = coord.move(.SouthEast, state.mapgeometry) orelse coord,
                 's' => if (kbd_s) {
                     mob_tile_focus = switch (mob_tile_focus) {
-                        .Main => .Stats,
-                        .Stats => .Spells,
+                        .Main => .Spells,
                         .Spells => .Main,
                     };
                 },
