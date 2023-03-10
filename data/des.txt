@@ -319,10 +319,6 @@ A unarmed guard.
 % warden
 The Dungeon warden. It will call for help with its warning horn if it spots you.
 
-% guard
-He seems to fear no danger, or he would be wielding something better than his
-bludgeon.
-
 % defender
 A lone guard, standing motionless in the stagnant air of the Dungeon.
 
@@ -349,14 +345,6 @@ copper-colored entrails wrap around its silver abdomen.
 An ordinary hill-goblin guard, with a crude mace and some light armor. Not much
 to say about it. You can't help but wonder if a glaive would suit it better.
 
-% player
-Always remember that you are completely unique. Just like everyone else.
-
-% goblin
-One of the last few prisoners of war captured in the battle in which the
-hill-goblins overran this cave-goblin stronghold. It sits here, nursing its
-wounds and waiting miserably until its execution.
-
 % convult
 A foul apprentice mage, specializing in the manipulation of emotions. His craft,
 however, has caused him to lose control over his own, and now his features
@@ -368,9 +356,6 @@ Wow, he really does look weak on his own.
 % dustling
 A humanoid construct created by a minor sorcerer. It seems to be more or less
 harmless...
-
-% cinder_worm
-An ancient demon, incarnate as a writhing mass of molten granite.
 
 % war_olg
 Also known as the plains-troll to the swarthy men, the olg is a naturally
@@ -482,10 +467,6 @@ have to do for now...
 An unusually sadistic death mage, tasked with making the prisoner's lives as
 miserable as possible. His features are perpetually twisted into a leer of cruel
 contempt.
-
-% burning_brute
-A raging winged demon composed of boiling basalt, feared even by its peers for
-its vicious fire attacks.
 
 % sulfur_fiend
 A writhing mass of golden sulfur. It has supreme power over electricity.
@@ -786,3 +767,62 @@ $G    $C$~#$.$G....    $C$~#$.$G....    $C$~#$.$G....    $C$~#$.$G....
 
 $cEffect:$. You are launched 7 tiles in the direction opposite to your first
 movement's direction.
+
+% player
+Something inside wishes that you had never laid eyes on that Amulet.
+
+% goblin_child
+The very sight of it fills you with a maddening desire to tear its face open and
+feast on its brains.
+
+% goblin
+It is minding its own business. Regrettably, the Amulet seems to have no
+intention of allowing you to mind yours.
+
+% goblin_still
+It is minding its own business. Regrettably, the Amulet seems to have no
+intention of allowing you to mind yours.
+
+% goblin_cook
+It is minding its own business. Regrettably, the Amulet seems to have no
+intention of allowing you to mind yours.
+
+% goblin_smith
+It is minding its own business. Regrettably, the Amulet seems to have no
+intention of allowing you to mind yours.
+
+% guard
+An ordinary cave-goblin sentry, wielding a bludgeon and some ceremonial armor.
+
+% arbalist
+You had always heard the cave-goblins were noted crossbow aficionados. Now, you
+will experience it first-hand.
+
+% arbalist_sadist.
+Oh no.
+
+% warrior
+"Now you will show these filthy earthlings what power you have."
+
+% ember_mage
+Back at the inn you were told these goblins had sorcerers of some sort, that
+could make hunks of metal move and breathe fire. It seems this goblins is what
+they were referring to.
+
+% emberling
+A whirring metal contraption with a large tube mounted on its head.
+
+% revgenunkim
+A strange squatting beast with yellow fur. According to rumor, the hill-goblins
+of Iredelemnul had been seeking assistance from this same cave-goblin city for
+defending against a sudden invasion of these beasts.
+
+% cinder_beast
+It is clothed in tormenting fire.
+
+% quicklime_brute
+A tall and sinister being. It is gesturing horribly at His enemies, while blasts
+of acid fly from its fingers.
+
+% burning_lance
+An ethereal lance, the legendary armament of the mythological Burning Brute.
