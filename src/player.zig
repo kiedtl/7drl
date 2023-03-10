@@ -209,10 +209,10 @@ pub fn triggerStair(cur_stair: Coord, dest_floor: usize) bool {
         err.bug("Unable to ascend stairs! (something's in the way, maybe?)", .{});
     }
 
-    const rep = &state.night_rep[@enumToInt(state.player.faction)];
-    if (rep.* < 0) rep.* += 1;
-
-    combat.disruptAllUndead(dest_stair.z);
+    if (state.levelinfo[state.player.coord.z].upgr) {
+        state.player.max_HP += 5;
+        state.player.HP += 5;
+    }
 
     // "Garbage-collect" previous level.
     var iter = state.mobs.iterator();
