@@ -2,6 +2,7 @@
 // (c) Kiëd Llaentenn 2022
 //
 // ## TODO list to make this a standalone library:
+// - Upgrade from Zig 0.9.1 and remove WSAStartup()/WSACleanup() win32 calls.
 // - Completely rework the API to be more like standard SDK APIs
 // - DSN configuration/parsing
 // - Gracefully failing when unable to connect to sentry server
@@ -24,9 +25,9 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 // TODO: *don't* encode this in here
-const DSN = "https://029cc3a31c3740d4a60e3747e48c4aa2@o110999.ingest.sentry.io/6550409";
-const DSN_HASH = "029cc3a31c3740d4a60e3747e48c4aa2";
-const DSN_ID = 6550409;
+const DSN = "https://5522e95ba8614a9e93bb411df882a3de@o110999.ingest.sentry.io/4504816908369920";
+const DSN_HASH = "5522e95ba8614a9e93bb411df882a3de";
+const DSN_ID = 4504816908369920;
 
 pub const SentryEvent = struct {
     sentry_event: ActualEvent,
@@ -134,6 +135,14 @@ fn uploadError(ev: *const SentryEvent, alloc: std.mem.Allocator) !void {
     const UA_STR = "zig-sentry";
     const UA_VER = "0.1.0";
 
+    // TODO: when upgrading from Zig 0.9.1, remove this
+    if (builtin.os.tag == .windows) {
+        _ = try std.os.windows.WSAStartup(2, 2);
+    }
+    defer if (builtin.os.tag == .windows) {
+        _ = std.os.windows.WSACleanup() catch {};
+    };
+
     std.log.debug("zig-sentry: connecting...", .{});
     const stream = std.net.tcpConnectToHost(alloc, HOST, PORT) catch |e| return e;
     defer stream.close();
@@ -166,6 +175,7 @@ fn uploadError(ev: *const SentryEvent, alloc: std.mem.Allocator) !void {
         std.log.debug("zig-sentry: error when reading response: {s}", .{@errorName(err)});
     }
     // ---
+
 }
 
 pub fn createEvent(
