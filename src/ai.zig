@@ -1053,6 +1053,9 @@ pub fn rangedFight(mob: *Mob, alloc: mem.Allocator) void {
 fn _isValidTargetForSpell(caster: *Mob, spell: SpellOptions, target: *Mob) bool {
     assert(!target.is_dead);
 
+    if (target.should_be_dead())
+        return false;
+
     if (spell.spell.checks_will and
         target.stat(.Willpower) > caster.stat(.Willpower))
         return false;
