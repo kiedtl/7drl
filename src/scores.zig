@@ -378,11 +378,11 @@ fn exportTextMorgue(info: Info, alloc: mem.Allocator) !std.ArrayList(u8) {
     var buf = std.ArrayList(u8).init(alloc);
     var w = buf.writer();
 
-    try w.print("// Oathbreaker morgue entry @@ {}-{}-{} {}:{}\n", .{ info.end_datetime.Y, info.end_datetime.M, info.end_datetime.D, info.end_datetime.h, info.end_datetime.m });
+    try w.print("// Ancient Rage morgue entry @@ {}-{}-{} {}:{}\n", .{ info.end_datetime.Y, info.end_datetime.M, info.end_datetime.D, info.end_datetime.h, info.end_datetime.m });
     try w.print("// Seed: {}\n", .{info.seed});
     try w.print("\n", .{});
 
-    try w.print("{s} the Oathbreaker\n", .{info.username.constSlice()});
+    try w.print("{s} the Burdened\n", .{info.username.constSlice()});
     try w.print("\n", .{});
     try w.print("*** {s} ***\n", .{info.result});
     try w.print("\n", .{});

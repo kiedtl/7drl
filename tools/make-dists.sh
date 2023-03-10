@@ -15,7 +15,7 @@ set -e
 }
 
 mktarball() {
-    pkgname="oathbreaker-${1}-${2}-${3}-${VERSION}"
+    pkgname="ancient-rage-${1}-${2}-${3}-${VERSION}"
     [ -d ${pkgname} ] && rm -rf ${pkgname}
     mkdir ${pkgname}
 

@@ -261,7 +261,7 @@ pub fn init(preferred_width: usize, preferred_height: usize) InitErr!void {
             }
 
             window = driver_m.SDL_CreateWindow(
-                "Oathbreaker", // TODO: move to const
+                "Ancient Rage", // TODO: move to const
                 driver_m.SDL_WINDOWPOS_CENTERED,
                 driver_m.SDL_WINDOWPOS_CENTERED,
                 @floatToInt(c_int, @intToFloat(f64, preferred_width * font.FONT_WIDTH) * SCALE),

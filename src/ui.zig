@@ -2210,7 +2210,7 @@ pub fn drawEscapeMenu() void {
     y += main_c.drawTextAt(5 + 18 + pad, y, "$CActivate feature$.    $bA$.", .{});
 
     y += 8;
-    y += main_c.drawTextAtf(0, y, "$gOathbreaker v{s} (dist {s})$.", .{
+    y += main_c.drawTextAtf(0, y, "$gAncient Rage v{s} (dist {s})$.", .{
         @import("build_options").release,
         @import("build_options").dist,
     }, .{});
