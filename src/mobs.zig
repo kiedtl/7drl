@@ -396,6 +396,39 @@ pub const EmberlingTemplate = MobTemplate{
     },
 };
 
+const REVGEN_CLAW_WEAPON = Weapon{
+    .damage = 1,
+    .strs = &items.CLAW_STRS,
+};
+
+pub const RevgenunkimTemplate = MobTemplate{
+    .mob = .{
+        .id = "revgenunkim",
+        .species = &Species{
+            .name = "Revgenunkim",
+            .default_attack = &REVGEN_CLAW_WEAPON,
+            .aux_attacks = &[_]*const Weapon{&REVGEN_CLAW_WEAPON},
+        },
+        .tile = 'R',
+        .alt_name = "earthen angel",
+        .ai = AI{
+            .profession_description = "sulking",
+            .work_fn = ai.standStillAndGuardWork,
+            .fight_fn = ai.meleeFight,
+            //.is_fearless = true, // Flee effect won't trigger otherwise.
+            .flee_effect = .{ .status = .Enraged, .duration = .{ .Tmp = 10 }, .exhausting = true },
+        },
+
+        .faction = .Revgenunkim,
+        .max_HP = 10,
+        .memory_duration = 10,
+        .blood = null,
+        .corpse = .None,
+
+        .innate_resists = .{ .rFire = RESIST_IMMUNE },
+        .stats = .{ .Willpower = 8, .Speed = 70 },
+    },
+};
 pub const CinderBruteTemplate = MobTemplate{
     .mob = .{
         .id = "cinder_beast",
@@ -513,6 +546,7 @@ pub const MOBS = [_]MobTemplate{
     EmberMageTemplate,
     EmberlingTemplate,
 
+    RevgenunkimTemplate,
     CinderBruteTemplate,
     QuicklimeBruteTemplate,
 
@@ -520,6 +554,7 @@ pub const MOBS = [_]MobTemplate{
 };
 
 pub const ANGELS = [_]MobTemplate{
+    RevgenunkimTemplate,
     CinderBruteTemplate,
     QuicklimeBruteTemplate,
 };
