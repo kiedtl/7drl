@@ -1317,6 +1317,16 @@ pub fn drawNoPresent() void {
     labels.drawLabels();
     map_win.map.renderFullyW(.Main);
 
+    {
+        var y: usize = log_window.starty;
+        while (y < log_window.endy) : (y += 1) {
+            var x: usize = log_window.startx;
+            while (x < log_window.endx) : (x += 1) {
+                display.setCell(x, y, .{});
+            }
+        }
+    }
+
     var log_console = drawLog(log_window.startx, log_window.endx, alloc);
     log_console.renderAreaAt(
         @intCast(usize, log_window.startx),
