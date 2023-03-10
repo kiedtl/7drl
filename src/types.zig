@@ -936,6 +936,7 @@ pub const Status = enum {
     A_MeatOffering,
     A_BurningLance,
     A_Paralyse,
+    A_LivingBolt,
 
     // Ring status effects
     RingTeleportation, // No power field
@@ -1141,7 +1142,7 @@ pub const Status = enum {
 
     pub fn noshow(self: Status) bool {
         return switch (self) {
-            .A_Bomb, .A_Multiattack, .A_Dominate, .A_MeatOffering, .A_BurningLance, .A_Paralyse => true,
+            .A_Bomb, .A_Multiattack, .A_Dominate, .A_MeatOffering, .A_BurningLance, .A_Paralyse, .A_LivingBolt => true,
             else => false,
         };
     }
@@ -1154,6 +1155,7 @@ pub const Status = enum {
             .A_MeatOffering => "meat offering",
             .A_BurningLance => "burning lance",
             .A_Paralyse => "paralysing",
+            .A_LivingBolt => "living bolt",
 
             .RingTeleportation => "ring: teleportation",
             .RingDamnation => "ring: damnation",
@@ -1210,7 +1212,7 @@ pub const Status = enum {
 
     pub fn miniString(self: Status) ?[]const u8 { // {{{
         return switch (self) {
-            .A_Bomb, .A_Multiattack, .A_Dominate, .A_MeatOffering, .A_BurningLance, .A_Paralyse, .RingTeleportation, .RingDamnation, .RingElectrocution, .RingExcision, .RingConjuration => null,
+            .A_Bomb, .A_Multiattack, .A_Dominate, .A_MeatOffering, .A_BurningLance, .A_Paralyse, .A_LivingBolt, .RingTeleportation, .RingDamnation, .RingElectrocution, .RingExcision, .RingConjuration => null,
 
             .DetectHeat, .DetectElec, .CopperWeapon, .Riposte, .EtherealShield, .FumesVest, .Echolocation, .DayBlindness, .NightBlindness, .Explosive, .ExplosiveElec, .Lifespan => null,
 

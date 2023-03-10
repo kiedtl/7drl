@@ -58,6 +58,7 @@ pub const Ability = enum(usize) {
     MeatOffering = 3,
     BurningLance = 4,
     Paralyse = 5,
+    LivingBolt = 6,
 
     pub const TOTAL = std.meta.fields(@This()).len;
 
@@ -69,6 +70,7 @@ pub const Ability = enum(usize) {
             .MeatOffering => .{ .s = .A_MeatOffering, .d = 8 },
             .BurningLance => .{ .s = .A_BurningLance, .d = 6 },
             .Paralyse => .{ .s = .A_Paralyse, .d = 4 },
+            .LivingBolt => .{ .s = .A_LivingBolt, .d = 4 },
         };
     }
 
@@ -80,6 +82,7 @@ pub const Ability = enum(usize) {
             .MeatOffering => "Meat Offering",
             .BurningLance => "Burning Lance",
             .Paralyse => "Paralyse Foes",
+            .LivingBolt => "Living Bolt",
         };
     }
 
@@ -99,6 +102,7 @@ pub const Ability = enum(usize) {
             .MeatOffering => "You deal 3x damage while standing on a corpse.",
             .BurningLance => "Conjures a burning lance nearby. When you move, the lance will attack foes in a line in the direction you moved, dealing 3x the damage you would deal.",
             .Paralyse => "Each time you attack, all foes in sight become paralysed for 4 turns (stacking).",
+            .LivingBolt => "You zip around as living lightning, phasing through foes and dealing 2 electric damage.",
         };
     }
 };
@@ -149,6 +153,7 @@ pub const CONJ_AUGMENT_DROPS = [_]AbilityEntry{
     .{ .w = 99, .a = .MeatOffering },
     .{ .w = 99, .a = .BurningLance },
     .{ .w = 99, .a = .Paralyse },
+    .{ .w = 99, .a = .LivingBolt },
 };
 
 pub fn choosePlayerUpgrades() void {
@@ -459,7 +464,7 @@ pub fn moveOrFight(direction: Direction) bool {
 }
 
 pub fn movementTriggersA(direction: Direction) bool {
-    if (state.player.hasStatus(.RingTeleportation)) {
+    if (state.player.hasStatus(.A_LivingBolt)) {
         // Get last enemy in chain of enemies.
         var last_coord = state.player.coord;
         var mob_chain_count: usize = 0;
@@ -476,11 +481,7 @@ pub fn movementTriggersA(direction: Direction) bool {
             } else break;
         }
 
-        spells.BOLT_BLINKBOLT.use(state.player, state.player.coord, last_coord, .{
-            .MP_cost = 0,
-            .spell = &spells.BOLT_BLINKBOLT,
-            .power = math.clamp(mob_chain_count, 2, 5),
-        });
+        spells.BOLT_BLINKBOLT.use(state.player, state.player.coord, last_coord, .{ .MP_cost = 0, .spell = &spells.BOLT_BLINKBOLT, .power = 2 });
 
         return false;
     }
