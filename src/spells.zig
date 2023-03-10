@@ -485,7 +485,6 @@ pub const BOLT_SPINNING_SWORD = Spell{
             if (state.dungeon.at(coord).mob) |victim| {
                 if (!victim.isHostileTo(caster)) return;
                 victim.takeDamage(.{ .amount = opts.power, .source = .RangedAttack, .by_mob = caster }, .{ .strs = &items.SLASHING_STRS });
-                victim.addStatus(.Held, 0, .{ .Tmp = opts.power });
             }
         }
     }.f },
