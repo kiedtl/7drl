@@ -114,15 +114,15 @@ pub const NormalDoor = Machine{
 
     .powered_tile = '\'',
     .unpowered_tile = '+',
-    .powered_fg = 0xffaaaa,
-    .unpowered_fg = 0xffaaaa,
-    .powered_bg = 0x7a2914,
-    .unpowered_bg = 0x7a2914,
+    .powered_fg = colors.DARK_AQUAMARINE,
+    .unpowered_fg = colors.DARK_AQUAMARINE,
+    .powered_bg = colors.percentageOf(50, colors.DARK_AQUAMARINE),
+    .unpowered_bg = colors.percentageOf(50, colors.DARK_AQUAMARINE),
 
     .powered_sprite = .S_G_M_DoorOpen,
     .unpowered_sprite = .S_G_M_DoorShut,
-    .powered_sfg = 0xba7964,
-    .unpowered_sfg = 0xba7964,
+    .powered_sfg = colors.DARK_AQUAMARINE,
+    .unpowered_sfg = colors.DARK_AQUAMARINE,
     .powered_sbg = colors.BG,
     .unpowered_sbg = colors.BG,
 
@@ -142,8 +142,8 @@ pub const LabDoor = Machine{
 
     .powered_tile = '+',
     .unpowered_tile = 'x',
-    .powered_fg = 0xffdf10,
-    .unpowered_fg = 0xffbfff,
+    .powered_fg = colors.LIGHT_STEEL_BLUE,
+    .unpowered_fg = colors.LIGHT_STEEL_BLUE,
     .powered_sprite = .S_O_M_LabDoorOpen,
 
     .power_drain = 0,
@@ -164,15 +164,15 @@ pub const VaultDoor = Machine{ // TODO: rename to QuartersDoor
 
     .powered_tile = '░',
     .unpowered_tile = '+',
-    .powered_fg = 0xaaaaaa,
-    .unpowered_bg = 0xffffff,
+    .powered_fg = colors.OFF_WHITE,
+    .unpowered_bg = colors.WHITE,
     .unpowered_fg = colors.BG,
 
     .powered_sprite = .S_O_M_QrtDoorOpen,
     .unpowered_sprite = .S_O_M_QrtDoorShut,
-    .powered_sfg = 0xffffff,
+    .powered_sfg = colors.OFF_WHITE,
     .powered_sbg = colors.BG,
-    .unpowered_sfg = 0xffffff,
+    .unpowered_sfg = colors.OFF_WHITE,
     .unpowered_sbg = colors.BG,
 
     .power_drain = 49,

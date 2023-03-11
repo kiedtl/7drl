@@ -366,7 +366,7 @@ pub fn bookkeepingFOV() void {
                         ui.labels.addAt(fc, m.name, .{ .color = colors.LIGHT_STEEL_BLUE, .last_for = 5 }),
                     .Stair => |s| if (s != null)
                         //S._addToAnnouncements(SBuf.init("upward stairs"), &announcements),
-                        ui.labels.addAt(fc, state.levelinfo[s.?].name, .{ .color = colors.GOLD, .last_for = 5 }),
+                        ui.labels.addAt(fc, state.levelinfo[s.?].name, .{ .color = colors.AQUAMARINE, .last_for = 3 }),
                     else => {},
                 };
             }

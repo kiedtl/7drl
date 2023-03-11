@@ -3222,7 +3222,7 @@ pub const Mob = struct { // {{{
             state.message(.Info, "{c} {s} $a{s}$..", .{ self, verb, string });
             if (ministring) |str| {
                 const pref = if (got.?) "+" else "-";
-                ui.labels.addForf(self, "{s}{s}", .{ pref, str }, .{ .color = colors.AQUAMARINE });
+                ui.labels.addForf(self, "{s}{s}", .{ pref, str }, .{ .color = colors.OFF_WHITE, .last_for = 2 });
             }
         }
     }
