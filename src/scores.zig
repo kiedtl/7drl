@@ -80,18 +80,12 @@ pub const Info = struct {
 
         s.result = switch (state.state) {
             .Game => "Began meditating on the mysteries of eggplants",
-            .Win => "Escaped the Necromancer's wrath",
+            .Win => "Returned the Amulet",
             .Quit => "Overcome by the Fear of death",
             .Lose => b: {
                 if (state.player.killed_by) |by| {
-                    if (by.faction == .Necromancer) {
-                        if (by.life_type == .Undead) {
-                            break :b "Suffered the Necromancer's wrath";
-                        } else {
-                            break :b "Paid for their treachery";
-                        }
-                    } else {
-                        break :b "Died on the journey";
+                    if (by.faction == .Revgenunkim) {
+                        break :b "Failed in the appointed task";
                     }
                 }
                 break :b "Died on the journey";
@@ -216,7 +210,6 @@ pub const CHUNKS = [_]Chunk{
     .{ .Stat = .{ .s = .SpaceExplored, .n = "% explored" } },
     .{ .Header = .{ .n = "Combat" } },
     .{ .Stat = .{ .s = .KillRecord, .n = "vanquished foes" } },
-    .{ .Stat = .{ .s = .StabRecord, .n = "stabbed foes" } },
     .{ .Stat = .{ .s = .DamageInflicted, .n = "inflicted damage" } },
     .{ .Stat = .{ .s = .DamageEndured, .n = "endured damage" } },
     .{ .Header = .{ .n = "Rages" } },

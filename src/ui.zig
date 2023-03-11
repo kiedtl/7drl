@@ -1718,18 +1718,18 @@ pub fn drawGameOverScreen(scoreinfo: scores.Info) void {
 
     {
         var tmpbuf = StackBuffer(u8, 128).init(null);
-        const x = player_dc.x -| (24 + 4); // padding + space between @ and text
+        const x = player_dc.x -| (30 + 4); // padding + space between @ and text
 
         tmpbuf.fmt("{s} the Burdened", .{scoreinfo.username.constSlice()});
-        _ = container_c.drawTextAtf(x, player_dc.y - 1, "{s: >32}", .{tmpbuf.constSlice()}, .{});
+        _ = container_c.drawTextAtf(x, player_dc.y - 1, "{s: >30}", .{tmpbuf.constSlice()}, .{});
         tmpbuf.clear();
 
         tmpbuf.fmt("** {s} **", .{scoreinfo.result});
-        _ = container_c.drawTextAtf(x, player_dc.y + 0, "$c{s: >32}$.", .{tmpbuf.constSlice()}, .{});
+        _ = container_c.drawTextAtf(x, player_dc.y + 0, "$c{s: >30}$.", .{tmpbuf.constSlice()}, .{});
         tmpbuf.clear();
 
         tmpbuf.fmt("after {} turns", .{scoreinfo.turns});
-        _ = container_c.drawTextAtf(x, player_dc.y + 1, "$b{s: >32}$.", .{tmpbuf.constSlice()}, .{});
+        _ = container_c.drawTextAtf(x, player_dc.y + 1, "$b{s: >30}$.", .{tmpbuf.constSlice()}, .{});
         tmpbuf.clear();
     }
 
@@ -1752,10 +1752,12 @@ pub fn drawGameOverScreen(scoreinfo: scores.Info) void {
 
         // zig fmt: off
         const stats = [_]struct { b: []const u8, v: scores.Stat }{
-            .{ .b = "      Foes slain:",      .v = .KillRecord },
-            .{ .b = "    Foes stabbed:",      .v = .StabRecord },
-            .{ .b = "Inflicted damage:", .v = .DamageInflicted },
-            .{ .b = "  Endured damage:",   .v = .DamageEndured },
+            .{ .b = "      Foes slain:",       .v = .KillRecord },
+            .{ .b = "   Rages entered:", .v = .TimesEnteredRage },
+            .{ .b = "Inflicted damage:",  .v = .DamageInflicted },
+            .{ .b = "  Endured damage:",    .v = .DamageEndured },
+            .{ .b = "  Abilities used:",    .v = .AbilitiesUsed },
+            .{ .b = "     Angels sent:",       .v = .AngelsSeen },
         };
         // zig fmt: on
 

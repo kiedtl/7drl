@@ -578,6 +578,11 @@ fn tickGame() !void {
             mob.kill();
             continue;
         }
+
+        if (state.player.is_dead or state.player.should_be_dead()) {
+            state.state = .Lose;
+            return;
+        }
     }
 }
 
