@@ -735,8 +735,12 @@ fn _getMonsDescription(w: io.FixedBufferStream([]u8).Writer, mob: *Mob, linewidt
     const arm = utils.SignedFormatter{ .v = mob.resistance(.Armor) };
     const rF = utils.SignedFormatter{ .v = mob.resistance(.rFire) };
     const rE = utils.SignedFormatter{ .v = mob.resistance(.rElec) };
+    const Mis = utils.SignedFormatter{ .v = mob.stat(.Missile) };
+    if (mob.stat(.Missile) != 0)
+        _writerWrite(w, "$cMissile hit%$.: {: >3}%\n", .{Mis});
     _writerWrite(w, "$cArmor$.: {: >3}%\n", .{arm});
-    _writerWrite(w, "$crFire$.: {: >3}%  $crElec$.: {: >3}%\n", .{ rF, rE });
+    _writerWrite(w, "$crFire$.: {: >3}%\n", .{rF});
+    _writerWrite(w, "$crElec$.: {: >3}%\n", .{rE});
     _writerWrite(w, "Hits for $r{}$. damage.\n", .{mob.totalMeleeOutput(state.player)});
     _writerWrite(w, "\n", .{});
 
@@ -2625,10 +2629,10 @@ pub const Console = struct {
     }
 
     pub fn setBorder(self: *const Self) void {
-        _ = self.clearLineTo(0, self.width - 1, 0, .{ .ch = '▄', .fg = colors.CONCRETE, .bg = colors.BG });
-        _ = self.clearLineTo(0, self.width - 1, self.height - 1, .{ .ch = '▀', .fg = colors.CONCRETE, .bg = colors.BG });
-        _ = self.clearColumnTo(1, self.height - 2, 0, .{ .ch = '█', .fg = colors.CONCRETE, .bg = colors.BG });
-        _ = self.clearColumnTo(1, self.height - 2, self.width - 1, .{ .ch = '█', .fg = colors.CONCRETE, .bg = colors.BG });
+        _ = self.clearLineTo(0, self.width - 1, 0, .{ .ch = '▄', .fg = colors.OFF_WHITE, .bg = colors.BG });
+        _ = self.clearLineTo(0, self.width - 1, self.height - 1, .{ .ch = '▀', .fg = colors.OFF_WHITE, .bg = colors.BG });
+        _ = self.clearColumnTo(1, self.height - 2, 0, .{ .ch = '█', .fg = colors.OFF_WHITE, .bg = colors.BG });
+        _ = self.clearColumnTo(1, self.height - 2, self.width - 1, .{ .ch = '█', .fg = colors.OFF_WHITE, .bg = colors.BG });
 
         // _ = self.setCell(0, 0, .{ .ch = '▗', .fg = colors.LIGHT_STEEL_BLUE, .bg = colors.BG });
         // _ = self.setCell(0, self.height - 1, .{ .ch = '▙', .bg = colors.LIGHT_STEEL_BLUE, .fg = colors.BG });
