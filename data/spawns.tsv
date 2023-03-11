@@ -6,12 +6,12 @@
 #
 # monster id          -6/Drk  -5/Arm  -4/Wrk  -3/Qua  -2/Din  -1/Cel
 
-"goblin"               	   - 	   - 	  20 	  40 	  60 	  80
-"guard"                	   - 	   5 	  10 	  20 	  35 	  20
+"goblin"               	   - 	   - 	  20 	   - 	  60 	  80
+"guard"                	   - 	   5 	  10 	  50 	  35 	  20
 "emberling"            	   - 	   - 	  15 	   5 	   5 	   -
-"warrior"              	   - 	  55 	  35 	  10 	   - 	   -
-"arbalist"             	   - 	  20 	  10 	   5 	   - 	   -
-"ember_mage"           	   - 	  15 	  10 	   - 	   - 	   -
+"warrior"              	   - 	  60 	  35 	  20 	   - 	   -
+"arbalist"             	   - 	  10 	  10 	   5 	   - 	   -
+"ember_mage"           	   - 	  20 	  10 	   - 	   - 	   -
 "arbalist_sadist"      	   - 	   5 	   - 	   - 	   - 	   -
 
 # monster id          -6/Drk  -5/Arm  -4/Wrk  -3/Qua  -2/Din  -1/Cel
