@@ -1609,8 +1609,9 @@ pub const LoadingScreen = struct {
         self.main_con.deinit();
 
         // Deinit'ing main_con automatically frees subconsoles
-        //self.logo_con.deinit();
-        //self.text_con.deinit();
+        // Actually nah their disabled
+        self.logo_con.deinit();
+        self.text_con.deinit();
     }
 };
 

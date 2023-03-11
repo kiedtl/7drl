@@ -22,6 +22,10 @@ const WIDTH = state.WIDTH;
 const HEIGHT = state.HEIGHT;
 const LEVELS = state.LEVELS;
 
+pub fn _mobname(m: *const Mob) []const u8 {
+    return if (m == state.player) "<player>" else m.ai.profession_name orelse m.species.name;
+}
+
 pub const Info = struct {
     seed: u64,
     username: BStr(128),
@@ -34,17 +38,14 @@ pub const Info = struct {
     slain_by_captain_id: []const u8, // Empty if won/quit
     slain_by_captain_name: BStr(32), // Empty if won/quit
     level: usize,
+    HP: usize,
+    maxHP: usize,
     statuses: StackBuffer(types.StatusDataInfo, Status.TOTAL),
     stats: Mob.MobStat,
     surroundings: [SURROUND_RADIUS][SURROUND_RADIUS]u21,
     messages: StackBuffer(Message, MESSAGE_COUNT),
-
     in_view_ids: StackBuffer([]const u8, 32),
     in_view_names: StackBuffer(BStr(32), 32),
-
-    inventory_ids: StackBuffer([]const u8, Mob.Inventory.PACK_SIZE),
-    inventory_names: StackBuffer(BStr(128), Mob.Inventory.PACK_SIZE),
-    equipment: StackBuffer(Equipment, Mob.Inventory.EQU_SLOT_SIZE),
     ability_names: StackBuffer([]const u8, player.Ability.TOTAL),
     ability_descs: StackBuffer([]const u8, player.Ability.TOTAL),
 
@@ -55,6 +56,8 @@ pub const Info = struct {
     pub const Equipment = struct { slot_id: []const u8, slot_name: []const u8, id: []const u8, name: BStr(128) };
 
     pub fn collect() Self {
+        player.recordStatsAtLevelExit();
+
         // FIXME: should be a cleaner way to do this...
         var s: Self = undefined;
 
@@ -68,7 +71,7 @@ pub const Info = struct {
                 s.username.reinit(env);
                 state.GPA.allocator().free(env);
             } else |_| {
-                s.username.reinit("Obmirnul");
+                s.username.reinit("Lord_of_eggplants");
             }
         }
 
@@ -111,17 +114,19 @@ pub const Info = struct {
 
             const killer = state.player.killed_by.?;
             s.slain_by_id = killer.id;
-            s.slain_by_name.reinit(killer.displayName());
+            s.slain_by_name.reinit(_mobname(killer));
 
             if (!killer.isAloneOrLeader()) {
                 if (killer.squad.?.leader) |leader| {
                     s.slain_by_captain_id = leader.id;
-                    s.slain_by_captain_name.reinit(leader.displayName());
+                    s.slain_by_captain_name.reinit(_mobname(leader));
                 }
             }
         }
 
         s.level = state.player.coord.z;
+        s.HP = state.player.HP;
+        s.maxHP = state.player.max_HP;
 
         s.statuses.reinit(null);
         var statuses = state.player.statuses.iterator();
@@ -145,7 +150,11 @@ pub const Info = struct {
                     dx += 1;
                     mx += 1;
                 }) {
-                    if (mx >= WIDTH or my >= HEIGHT) continue;
+                    if (mx >= WIDTH or my >= HEIGHT) {
+                        s.surroundings[dy][dx] = ' ';
+                        continue;
+                    }
+
                     const coord = Coord.new2(state.player.coord.z, mx, my);
 
                     if (state.dungeon.neighboringWalls(coord, true) == 9) {
@@ -179,27 +188,8 @@ pub const Info = struct {
             defer can_see.deinit();
             for (can_see.items) |mob| {
                 s.in_view_ids.append(mob.id) catch break;
-                s.in_view_names.append(BStr(32).init(mob.displayName())) catch err.wat();
+                s.in_view_names.append(BStr(32).init(_mobname(mob))) catch err.wat();
             }
-        }
-
-        s.inventory_ids.reinit(null);
-        s.inventory_names.reinit(null);
-        for (state.player.inventory.pack.constSlice()) |item| {
-            s.inventory_ids.append(item.id().?) catch err.wat();
-            s.inventory_names.append(BStr(128).init((item.longName() catch err.wat()).constSlice())) catch err.wat();
-        }
-
-        s.equipment.reinit(null);
-        inline for (@typeInfo(Mob.Inventory.EquSlot).Enum.fields) |slots_f| {
-            const slot = @intToEnum(Mob.Inventory.EquSlot, slots_f.value);
-            const item = state.player.inventory.equipment(slot).*;
-            s.equipment.append(.{
-                .slot_id = @tagName(slot),
-                .slot_name = slot.name(),
-                .id = if (item) |i| i.id().? else "",
-                .name = BStr(128).init(if (item) |i| (i.longName() catch err.wat()).constSlice() else ""),
-            }) catch err.wat();
         }
 
         s.ability_names.reinit(null);
@@ -219,22 +209,22 @@ pub const Chunk = union(enum) {
 };
 
 pub const CHUNKS = [_]Chunk{
-    .{ .Header = .{ .n = "General stats" } },
+    .{ .Header = .{ .n = "General" } },
     .{ .Stat = .{ .s = .TurnsSpent, .n = "turns spent" } },
     .{ .Stat = .{ .s = .StatusRecord, .n = "turns w/ statuses" } },
+    .{ .Stat = .{ .s = .AbilitiesGranted, .n = "abilities received" } },
+    .{ .Stat = .{ .s = .SpaceExplored, .n = "% explored" } },
     .{ .Header = .{ .n = "Combat" } },
     .{ .Stat = .{ .s = .KillRecord, .n = "vanquished foes" } },
     .{ .Stat = .{ .s = .StabRecord, .n = "stabbed foes" } },
     .{ .Stat = .{ .s = .DamageInflicted, .n = "inflicted damage" } },
     .{ .Stat = .{ .s = .DamageEndured, .n = "endured damage" } },
-    .{ .Header = .{ .n = "Items/patterns" } },
-    .{ .Stat = .{ .s = .ItemsUsed, .n = "items used" } },
-    .{ .Stat = .{ .s = .ItemsThrown, .n = "items thrown" } },
-    .{ .Stat = .{ .s = .PatternsUsed, .n = "patterns used" } },
-    .{ .Header = .{ .n = "Misc" } },
-    .{ .Stat = .{ .s = .RaidedLairs, .n = "lairs trespassed" } },
-    .{ .Stat = .{ .s = .CandlesDestroyed, .n = "candles destroyed" } },
-    .{ .Stat = .{ .s = .TimesCorrupted, .n = "times corrupted" } },
+    .{ .Header = .{ .n = "Rages" } },
+    .{ .Stat = .{ .s = .TimesEnteredRage, .n = "entered rage" } },
+    .{ .Stat = .{ .s = .CommandsObeyed, .n = "disobeyed commands" } },
+    .{ .Stat = .{ .s = .CommandsDisobeyed, .n = "obeyed commands" } },
+    .{ .Stat = .{ .s = .AbilitiesUsed, .n = "abilities used" } },
+    .{ .Stat = .{ .s = .AngelsSeen, .n = "angels seen" } },
 };
 
 pub const Stat = enum(usize) {
@@ -250,6 +240,21 @@ pub const Stat = enum(usize) {
     RaidedLairs = 9,
     CandlesDestroyed = 10,
     TimesCorrupted = 11,
+    TimesEnteredRage = 12,
+    HPExitedWith = 13,
+    AbilitiesUsed = 14,
+    AngelsSeen = 15,
+    AbilitiesGranted = 16,
+    CommandsObeyed = 17,
+    CommandsDisobeyed = 18,
+    SpaceExplored = 19,
+
+    pub fn ignoretotal(self: Stat) bool {
+        return switch (self) {
+            .HPExitedWith => true,
+            else => false,
+        };
+    }
 
     pub fn stattype(self: Stat) std.meta.FieldEnum(StatValue) {
         return switch (self) {
@@ -265,6 +270,14 @@ pub const Stat = enum(usize) {
             .RaidedLairs => .SingleUsize,
             .CandlesDestroyed => .SingleUsize,
             .TimesCorrupted => .BatchUsize,
+            .TimesEnteredRage => .SingleUsize,
+            .HPExitedWith => .SingleUsize,
+            .AbilitiesUsed => .BatchUsize,
+            .AngelsSeen => .BatchUsize,
+            .AbilitiesGranted => .BatchUsize,
+            .CommandsObeyed => .BatchUsize,
+            .CommandsDisobeyed => .BatchUsize,
+            .SpaceExplored => .SingleUsize,
         };
     }
 };
@@ -292,8 +305,8 @@ pub const StatValue = struct {
                 .values = StackBuffer(JsonValue, LEVELS).init(null),
             };
 
-            var c: usize = state.levelinfo.len - 1;
-            while (c > 0) : (c -= 1) if (_isLevelSignificant(c)) {
+            var c: usize = 0;
+            while (c < LEVELS) : (c += 1) if (_isLevelSignificant(c)) {
                 const v = JsonValue{
                     .floor_type = state.levelinfo[c].id,
                     .floor_name = state.levelinfo[c].name,
@@ -325,7 +338,8 @@ pub fn get(s: Stat) *StatValue {
 pub fn recordUsize(stat: Stat, value: usize) void {
     switch (stat.stattype()) {
         .SingleUsize => {
-            data[@enumToInt(stat)].SingleUsize.total += value;
+            if (!stat.ignoretotal())
+                data[@enumToInt(stat)].SingleUsize.total += value;
             data[@enumToInt(stat)].SingleUsize.each[state.player.coord.z] += value;
         },
         else => unreachable,
@@ -339,7 +353,7 @@ pub const Tag = union(enum) {
 
     pub fn intoString(self: Tag) StackBuffer(u8, 64) {
         return switch (self) {
-            .M => |mob| StackBuffer(u8, 64).initFmt("{s}", .{mob.displayName()}),
+            .M => |mob| StackBuffer(u8, 64).initFmt("{s}", .{_mobname(mob)}),
             .I => |item| StackBuffer(u8, 64).init((item.shortName() catch err.wat()).slice()),
             .s => |str| StackBuffer(u8, 64).init(str),
         };
@@ -352,7 +366,8 @@ pub fn recordTaggedUsize(stat: Stat, tag: Tag, value: usize) void {
     const key = tag.intoString();
     switch (stat.stattype()) {
         .BatchUsize => {
-            data[@enumToInt(stat)].BatchUsize.total += value;
+            if (!stat.ignoretotal())
+                data[@enumToInt(stat)].BatchUsize.total += value;
             const index: ?usize = for (data[@enumToInt(stat)].BatchUsize.singles.constSlice()) |single, i| {
                 if (mem.eql(u8, single.id.constSlice(), key.constSlice())) break i;
             } else null;
@@ -396,24 +411,11 @@ fn exportTextMorgue(info: Info, alloc: mem.Allocator) !std.ArrayList(u8) {
     }
 
     try w.print("... at {s} after {} turns\n", .{ state.levelinfo[info.level].name, info.turns });
+    try w.print("... with {}/{} HP\n", .{ info.HP, info.maxHP });
     try w.print("\n", .{});
 
     try w.print(" State \n", .{});
     try w.print("=======\n", .{});
-    try w.print("\n", .{});
-
-    for (info.equipment.constSlice()) |equ| {
-        try w.print("{s: <7} {s}\n", .{ equ.slot_name, equ.name.constSlice() });
-    }
-    try w.print("\n", .{});
-
-    if (info.inventory_ids.len > 0) {
-        try w.print("Inventory:\n", .{});
-        for (info.inventory_names.constSlice()) |item|
-            try w.print("- {s}\n", .{item.constSlice()});
-    } else {
-        try w.print("Your inventory was empty.\n", .{});
-    }
     try w.print("\n", .{});
 
     if (info.ability_names.len > 0) {
@@ -421,11 +423,13 @@ fn exportTextMorgue(info: Info, alloc: mem.Allocator) !std.ArrayList(u8) {
         for (info.ability_names.constSlice()) |apt, i|
             try w.print("- [{s}] {s}\n", .{ apt, info.ability_descs.data[i] });
         try w.print("\n", .{});
+    } else {
+        try w.print("You were granted no abilities.\n", .{});
+        try w.print("\n", .{});
     }
 
     const killed = data[@enumToInt(@as(Stat, .KillRecord))].BatchUsize.total;
-    const stabbed = data[@enumToInt(@as(Stat, .StabRecord))].BatchUsize.total;
-    try w.print("You killed {} foe(s), stabbing {} of them.\n", .{ killed, stabbed });
+    try w.print("You slew {} foe(s).\n", .{killed});
     try w.print("\n", .{});
 
     try w.print(" Circumstances \n", .{});
@@ -483,17 +487,22 @@ fn exportTextMorgue(info: Info, alloc: mem.Allocator) !std.ArrayList(u8) {
     if (info.in_view_ids.len > 0) {
         try w.print("You could see:\n", .{});
 
-        var can_see_counted = std.StringHashMap(usize).init(state.GPA.allocator());
-        defer can_see_counted.deinit();
+        const R = struct { n: BStr(32), c: usize };
+        var records = std.ArrayList(R).init(state.GPA.allocator());
+        defer records.deinit();
 
         for (info.in_view_names.constSlice()) |name| {
-            const prevtotal = (can_see_counted.getOrPutValue(name.constSlice(), 0) catch err.wat()).value_ptr.*;
-            can_see_counted.put(name.constSlice(), prevtotal + 1) catch unreachable;
+            const r = for (records.items) |*rec| {
+                if (mem.eql(u8, rec.n.constSlice(), name.constSlice())) break rec;
+            } else b: {
+                records.append(.{ .n = BStr(32).init(name.constSlice()), .c = 1 }) catch err.wat();
+                break :b &records.items[records.items.len - 1];
+            };
+            r.c += 1;
         }
 
-        var iter = can_see_counted.iterator();
-        while (iter.next()) |mobcount| {
-            try w.print("- {: >2} {s}\n", .{ mobcount.value_ptr.*, mobcount.key_ptr.* });
+        for (records.items) |rec| {
+            try w.print("- {: >2} {s}\n", .{ rec.c, rec.n.constSlice() });
         }
     } else {
         try w.print("There was nothing in sight.\n", .{});
@@ -509,8 +518,8 @@ fn exportTextMorgue(info: Info, alloc: mem.Allocator) !std.ArrayList(u8) {
                 try w.print(" {s: <30}", .{header.n});
                 try w.print("| ", .{});
                 {
-                    var c: usize = state.levelinfo.len - 1;
-                    while (c > 0) : (c -= 1) if (_isLevelSignificant(c)) {
+                    var c: usize = 0;
+                    while (c < LEVELS) : (c += 1) if (_isLevelSignificant(c)) {
                         try w.print("{: <4} ", .{state.levelinfo[c].depth});
                     };
                 }
@@ -523,8 +532,8 @@ fn exportTextMorgue(info: Info, alloc: mem.Allocator) !std.ArrayList(u8) {
                     try w.print(" ", .{});
                 try w.print("| ", .{});
                 {
-                    var c: usize = state.levelinfo.len - 1;
-                    while (c > 0) : (c -= 1) if (_isLevelSignificant(c)) {
+                    var c: usize = 0;
+                    while (c < LEVELS) : (c += 1) if (_isLevelSignificant(c)) {
                         try w.print("{s: <4} ", .{state.levelinfo[c].shortname});
                     };
                 }
@@ -536,8 +545,8 @@ fn exportTextMorgue(info: Info, alloc: mem.Allocator) !std.ArrayList(u8) {
                     .SingleUsize => {
                         try w.print("{s: <24} {: >5} | ", .{ stat.n, entry.SingleUsize.total });
                         {
-                            var c: usize = state.levelinfo.len - 1;
-                            while (c > 0) : (c -= 1) if (_isLevelSignificant(c)) {
+                            var c: usize = 0;
+                            while (c < LEVELS) : (c += 1) if (_isLevelSignificant(c)) {
                                 if (stat.ign0 and entry.SingleUsize.each[c] == 0) {
                                     try w.print("-    ", .{});
                                 } else {
@@ -551,8 +560,8 @@ fn exportTextMorgue(info: Info, alloc: mem.Allocator) !std.ArrayList(u8) {
                         try w.print("{s: <24} {: >5} |\n", .{ stat.n, entry.BatchUsize.total });
                         for (entry.BatchUsize.singles.slice()) |batch_entry| {
                             try w.print("  {s: <22} {: >5} | ", .{ batch_entry.id.constSlice(), batch_entry.val.total });
-                            var c: usize = state.levelinfo.len - 1;
-                            while (c > 0) : (c -= 1) if (_isLevelSignificant(c)) {
+                            var c: usize = 0;
+                            while (c < LEVELS) : (c += 1) if (_isLevelSignificant(c)) {
                                 if (stat.ign0 and batch_entry.val.each[c] == 0) {
                                     try w.print("-    ", .{});
                                 } else {

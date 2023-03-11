@@ -130,6 +130,7 @@ pub const AbilityInfo = struct {
         state.message(.Info, "Activated ability: {s}", .{self.a.name()});
         state.player.addStatus(self.a.statusInfo().s, 0, .{ .Tmp = self.a.statusInfo().d });
         self.last_used = state.player_turns;
+        scores.recordTaggedUsize(.AbilitiesUsed, .{ .s = self.a.name() }, 1);
 
         if (self.a == .BurningLance) {
             const spawn_c = _getSummonLocation() orelse {
@@ -196,7 +197,31 @@ pub fn triggerPoster(coord: Coord) bool {
     return false;
 }
 
+pub fn recordStatsAtLevelExit() void {
+    var open_space_seen: usize = 0;
+    var open_space_total: usize = 0;
+    {
+        var my: usize = 0;
+        while (my < HEIGHT) : (my += 1) {
+            var mx: usize = 0;
+            while (mx < WIDTH) : (mx += 1) {
+                const coord = Coord.new2(state.player.coord.z, mx, my);
+                if (state.dungeon.at(coord).type == .Floor) {
+                    if (state.memory.contains(coord))
+                        open_space_seen += 1;
+                    open_space_total += 1;
+                }
+            }
+        }
+    }
+
+    scores.recordUsize(.HPExitedWith, state.player.HP);
+    scores.recordUsize(.SpaceExplored, open_space_seen * 100 / open_space_total);
+}
+
 pub fn triggerStair(cur_stair: Coord, dest_floor: usize) bool {
+    recordStatsAtLevelExit();
+
     // state.message(.Move, "You ascend...", .{});
     _ = ui.drawTextModal("You descend...", .{});
 
@@ -263,6 +288,18 @@ pub fn summonAngel() void {
     const mob_t = rng.chooseUnweighted(mobs.MobTemplate, &mobs.ANGELS);
     const mob = mobs.placeMob(state.GPA.allocator(), &mob_t, spawn_c, .{});
     mob.addStatus(.Lifespan, 0, .{ .Tmp = 5 });
+    scores.recordTaggedUsize(.AngelsSeen, .{ .M = mob }, 1);
+}
+
+pub fn setNewCommand() void {
+    var direcs = StackBuffer(Direction, 4).init(null);
+    for (&CARDINAL_DIRECTIONS) |d| if (state.player.coord.move(d, state.mapgeometry)) |n| {
+        const hostile = if (utils.getHostileInDirection(state.player, d)) true else |_| false;
+        if (hostile or state.is_walkable(n, .{ .mob = state.player }))
+            direcs.append(d) catch err.wat();
+    };
+    state.rage_command = rng.chooseUnweighted(Direction, direcs.constSlice());
+    state.message(.Info, "$gThe Presence speaks.$. $a\"{s}!\"$.", .{state.rage_command.?.name2()});
 }
 
 pub fn tickRage() void {
@@ -274,6 +311,7 @@ pub fn tickRage() void {
         } else null) |n| {
             state.player_abilities[n].received = true;
             state.message(.Info, "$gThe Presence seems pleased.$. $aNew ability: {s}$.", .{state.player_abilities[n].a.name()});
+            scores.recordTaggedUsize(.AbilitiesGranted, .{ .s = state.player_abilities[n].a.name() }, 1);
         }
     }
 
@@ -288,6 +326,7 @@ pub fn tickRage() void {
         if (enemies >= 4 and !state.player.hasStatus(.Exhausted)) {
             state.player_rage = 5;
             state.message(.Info, "You enter a martial trance.", .{});
+            scores.recordUsize(.TimesEnteredRage, 1);
         }
     } else {
         if (enemies == 0) {
@@ -304,15 +343,10 @@ pub fn tickRage() void {
     } else if (state.player_rage == state.RAGE_P_ANGEL) {
         decreaseRage(4);
         summonAngel();
-    } else {
-        var direcs = StackBuffer(Direction, 4).init(null);
-        for (&CARDINAL_DIRECTIONS) |d| if (state.player.coord.move(d, state.mapgeometry)) |n| {
-            const hostile = if (utils.getHostileInDirection(state.player, d)) true else |_| false;
-            if (hostile or state.is_walkable(n, .{ .mob = state.player }))
-                direcs.append(d) catch err.wat();
-        };
-        state.rage_command = rng.chooseUnweighted(Direction, direcs.constSlice());
-        state.message(.Info, "$gThe Presence speaks.$. $a\"{s}!\"$.", .{state.rage_command.?.name2()});
+    }
+
+    if (state.player_rage > 0) {
+        setNewCommand();
     }
 }
 
@@ -325,8 +359,10 @@ pub fn tickRageEnd() void {
 
     if (d != null and d.? == state.rage_command.?) {
         increaseRage();
+        scores.recordTaggedUsize(.CommandsObeyed, .{ .s = state.rage_command.?.name2() }, 1);
     } else {
         decreaseRage(null);
+        scores.recordTaggedUsize(.CommandsDisobeyed, .{ .s = state.rage_command.?.name2() }, 1);
     }
 }
 

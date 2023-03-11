@@ -258,6 +258,7 @@ pub const ArbalistTemplate = MobTemplate{
         .id = "arbalist",
         .species = &GoblinSpecies,
         .tile = 'a',
+        .alt_name = "meat wimp",
         .ai = AI{
             .profession_name = "arbalist",
             .profession_description = "guarding",
@@ -280,6 +281,7 @@ pub const MasterArbalistTemplate = MobTemplate{
         .id = "arbalist_sadist",
         .species = &GoblinSpecies,
         .tile = 'A',
+        .alt_name = "meat pussy",
         .ai = AI{
             .profession_name = "master arbalist",
             .profession_description = "guarding",
@@ -288,7 +290,7 @@ pub const MasterArbalistTemplate = MobTemplate{
             .spellcaster_backup_action = .KeepDistance,
         },
         .spells = &[_]SpellOptions{
-            .{ .MP_cost = 2, .spell = &spells.BOLT_BOLT, .power = 1 },
+            .{ .MP_cost = 1, .spell = &spells.BOLT_BOLT, .power = 1 },
         },
         .max_MP = 2,
         .max_HP = 6,
