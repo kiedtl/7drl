@@ -403,11 +403,6 @@ One of the feared Lightning Mages, wielding unparalleled power over the
 atmosphere. She can call on the surrounding air to discharge a powerful
 lightning bolt into unsuspecting foes.
 
-% ember_mage
-A rather stocky fellow, wearing a maroon tunic. He is tasked with leading a band
-of emberlings, and has been given the power to create more from a fallen
-friend's corpse.
-
 % brimstone_mage
 This unassuming human is one of the dreaded Brimstone Mages, learned in the ways
 of fiery sorcerery. The ornate lettering on her armor testifies to the power she
@@ -431,18 +426,11 @@ braindamaged death mage.
 % skeleton
 A mouldering skeleton, imbued with a parody of life.
 
-% emberling
-A construct of smoldering ash, imbued with false life and commanded by a
-human sorcerer.
-
 % sparkling
 An insubstantial construct. It's trying to electrocute you!
 
 % recruit
 A goblin warrior in training. It's waving its wooden mace wildly in the air.
-
-% warrior
-A competent and highly trained infantry-goblin wearing a battle cuirass.
 
 % hunter
 He is tasked with liquidating escaped prisoners, like you.
