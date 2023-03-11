@@ -679,6 +679,7 @@ pub const BOLT_FIREBALL = Spell{
                 // explosions.fireBurst(target, 1, .{ .initial_damage = opts.power, .culprit = caster });
                 if (state.dungeon.at(target).mob) |target_m| {
                     target_m.takeDamage(.{
+                        .kind = .Fire,
                         .amount = opts.power,
                         .source = .RangedAttack,
                         .by_mob = state.dungeon.at(caster_coord).mob,
