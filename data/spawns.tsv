@@ -5,6 +5,9 @@
 
 #
 # monster id          -6/Drk  -5/Arm  -4/Wrk  -3/Qua  -2/Din  -1/Cel
+#
+# notes:
+# - no goblins on Qua because prefabs already have a lot of them.
 
 "goblin"               	   - 	   - 	  20 	   - 	  60 	  80
 "guard"                	   - 	   5 	  10 	  50 	  35 	  20
