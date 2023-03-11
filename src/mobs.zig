@@ -424,7 +424,7 @@ pub const RevgenunkimTemplate = MobTemplate{
 
         .faction = .Revgenunkim,
         .max_HP = 10,
-        .memory_duration = 10,
+        .memory_duration = 99,
         .blood = null,
         .corpse = .None,
 
@@ -505,6 +505,57 @@ pub const QuicklimeBruteTemplate = MobTemplate{
     },
 };
 
+const BURNING_BRUTE_CLAW_WEAPON = Weapon{
+    .damage = 2,
+    .strs = &items.CLAW_STRS,
+};
+
+pub const BurningBruteTemplate = MobTemplate{
+    .mob = .{
+        .id = "burning_brute",
+        .species = &Species{
+            .name = "burning brute",
+            .default_attack = &BURNING_BRUTE_CLAW_WEAPON,
+            .aux_attacks = &[_]*const Weapon{
+                &BURNING_BRUTE_CLAW_WEAPON,
+                &BURNING_BRUTE_CLAW_WEAPON,
+                &Weapon{ .knockback = 5, .damage = 1, .strs = &items.KICK_STRS },
+            },
+        },
+        .tile = 'B',
+        .alt_name = "brimstone marshal",
+        .ai = AI{
+            .profession_description = "sulking",
+            .work_fn = ai.patrolWork,
+            .fight_fn = ai.mageFight,
+            //.is_fearless = true, // Flee effect won't trigger otherwise.
+            .flee_effect = .{ .status = .Enraged, .duration = .{ .Tmp = 10 }, .exhausting = true },
+            .spellcaster_backup_action = .Melee,
+            .flags = &[_]AI.Flag{.DetectWithHeat},
+        },
+
+        .spells = &[_]SpellOptions{
+            .{ .MP_cost = 0, .spell = &spells.BOLT_FIREBALL, .power = 3, .duration = 5 },
+            .{ .MP_cost = 5, .spell = &spells.CAST_RESURRECT_FIRE, .power = 200, .duration = 6 },
+        },
+        .max_MP = 5,
+
+        .faction = .Revgenunkim,
+        .multitile = 2,
+        .max_HP = 15,
+        .memory_duration = 99,
+        .blood = null,
+        .corpse = .None,
+
+        .innate_resists = .{ .rFire = RESIST_IMMUNE },
+        .stats = .{ .Vision = V + 3, .Speed = 90 },
+    },
+    .statuses = &[_]StatusDataInfo{
+        .{ .status = .Fire, .duration = .Prm },
+        .{ .status = .Noisy, .duration = .Prm },
+    },
+};
+
 pub const BurningLanceTemplate = MobTemplate{
     .mob = .{
         .id = "burning_lance",
@@ -552,6 +603,7 @@ pub const MOBS = [_]MobTemplate{
     RevgenunkimTemplate,
     CinderBruteTemplate,
     QuicklimeBruteTemplate,
+    BurningBruteTemplate,
 
     BurningLanceTemplate,
 };
@@ -560,6 +612,7 @@ pub const ANGELS = [_]MobTemplate{
     RevgenunkimTemplate,
     CinderBruteTemplate,
     QuicklimeBruteTemplate,
+    BurningBruteTemplate,
 };
 
 pub const PRISONERS = [_]MobTemplate{};

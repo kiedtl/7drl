@@ -4,6 +4,8 @@ const assert = std.debug.assert;
 const mem = std.mem;
 const meta = std.meta;
 
+const Generator = @import("generators.zig").Generator;
+const GeneratorCtx = @import("generators.zig").GeneratorCtx;
 const StackBuffer = @import("buffer.zig").StackBuffer;
 
 const ai = @import("ai.zig");
@@ -26,6 +28,7 @@ const mobs = @import("mobs.zig");
 const err = @import("err.zig");
 
 const Activity = types.Activity;
+const Rect = types.Rect;
 const Coord = types.Coord;
 const Tile = types.Tile;
 const Item = types.Item;
@@ -133,7 +136,7 @@ pub const AbilityInfo = struct {
         scores.recordTaggedUsize(.AbilitiesUsed, .{ .s = self.a.name() }, 1);
 
         if (self.a == .BurningLance) {
-            const spawn_c = _getSummonLocation() orelse {
+            const spawn_c = _getSummonLocation(&mobs.BurningLanceTemplate) orelse {
                 state.message(.Info, "Shades of fiery red appear briefly, but nothing else happens.", .{});
                 return; // FIXME: shouldn't be doing this, what if there are other triggers?
             };
@@ -262,7 +265,7 @@ pub fn usableAbilities() usize {
     return ctr;
 }
 
-fn _getSummonLocation() ?Coord {
+fn _getSummonLocation(t: *const mobs.MobTemplate) ?Coord {
     // Leave my indented fn calls alone, zig fmt
     // zig fmt: off
     var dijk = dijkstra.Dijkstra.init(state.player.coord, state.mapgeometry, mobs.PLAYER_VISION / 2,
@@ -271,24 +274,34 @@ fn _getSummonLocation() ?Coord {
     defer dijk.deinit();
 
     var spawn_cs = StackBuffer(Coord, 256).init(null);
-    while (dijk.next()) |child| {
-        if (state.player.cansee(child) and state.dungeon.at(child).mob == null and
-            state.is_walkable(child, .{ .right_now = true }))
-        {
-            spawn_cs.append(child) catch break;
-        }
+    dijk: while (dijk.next()) |child| {
+        if (!state.player.cansee(child))
+            continue;
+        var gen = Generator(Rect.rectIter).init(t.mobAreaRect(child));
+        while (gen.next()) |childchild|
+            if (state.dungeon.at(childchild).mob != null or
+                !state.is_walkable(childchild, .{ .right_now = true }))
+            {
+                continue :dijk;
+            };
+        spawn_cs.append(child) catch break;
     }
     return if (spawn_cs.len == 0) null else rng.chooseUnweighted(Coord, spawn_cs.constSlice());
 }
 
 pub fn summonAngel() void {
-    const spawn_c = _getSummonLocation() orelse return;
-    state.message(.Info, "$gThe Presence summons a servant.$.", .{});
+    var tries: usize = 10;
+    while (tries > 0) : (tries -= 1) {
+        const mob_t = rng.chooseUnweighted(mobs.MobTemplate, &mobs.ANGELS);
 
-    const mob_t = rng.chooseUnweighted(mobs.MobTemplate, &mobs.ANGELS);
-    const mob = mobs.placeMob(state.GPA.allocator(), &mob_t, spawn_c, .{});
-    mob.addStatus(.Lifespan, 0, .{ .Tmp = 5 });
-    scores.recordTaggedUsize(.AngelsSeen, .{ .M = mob }, 1);
+        const spawn_c = _getSummonLocation(&mob_t) orelse continue;
+        state.message(.Info, "$gThe Presence summons a servant.$.", .{});
+
+        const mob = mobs.placeMob(state.GPA.allocator(), &mob_t, spawn_c, .{});
+        mob.addStatus(.Lifespan, 0, .{ .Tmp = 5 });
+        scores.recordTaggedUsize(.AngelsSeen, .{ .M = mob }, 1);
+        return;
+    }
 }
 
 pub fn setNewCommand() void {

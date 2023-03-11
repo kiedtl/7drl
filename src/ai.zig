@@ -1144,7 +1144,7 @@ pub fn mageFight(mob: *Mob, alloc: mem.Allocator) void {
     for (mob.spells) |spell| {
         if (spell.MP_cost > mob.MP) continue;
         if (_findValidTargetForSpell(mob, spell)) |coord| {
-            spell.spell.use(mob, mob.coord, coord, spell);
+            spell.spell.use(mob, mob.coordMT(coord), coord, spell);
             return;
         }
     }

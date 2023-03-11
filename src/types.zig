@@ -1922,33 +1922,6 @@ pub const Mob = struct { // {{{
     pub fn tick_env(self: *Mob) void {
         self.push_flag = false;
         self.MP = math.clamp(self.MP + 1, 0, self.max_MP);
-
-        // Corruption effects
-        if (self.life_type == .Living and !self.hasStatus(.Corruption)) {
-            const adjacent_undead: ?*Mob = for (&DIRECTIONS) |d| {
-                if (utils.getHostileInDirection(self, d)) |hostile| {
-                    if (hostile.life_type == .Undead)
-                        break hostile;
-                } else |_| {}
-            } else null;
-
-            if (adjacent_undead) |hostile| {
-                self.corruption_ctr += 1;
-                if (self.corruption_ctr >= self.stat(.Willpower)) {
-                    if (self == state.player) {
-                        scores.recordTaggedUsize(.TimesCorrupted, .{ .M = hostile }, 1);
-                    }
-                    if (state.player.cansee(self.coord)) {
-                        state.message(.Combat, "{c} corrupts {}!", .{ hostile, self });
-                    }
-                    self.addStatus(.Corruption, 0, .{ .Tmp = 7 });
-                    ai.updateEnemyKnowledge(hostile, self, null);
-                    self.corruption_ctr = 0;
-                }
-            } else {
-                self.corruption_ctr = 0;
-            }
-        }
     }
 
     // Decrement status durations, and do stuff for various statuses that need

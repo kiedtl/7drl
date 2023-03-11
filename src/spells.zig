@@ -654,7 +654,7 @@ pub const BOLT_LIGHTNING = Spell{
 
 pub const BOLT_FIREBALL = Spell{
     .id = "sp_fireball",
-    .name = "fireball",
+    .name = "fire blast",
     .animation = .{ .Particle = .{ .name = "zap-fire-messy" } },
     .cast_type = .Bolt,
     // Has effect if:
@@ -670,13 +670,24 @@ pub const BOLT_FIREBALL = Spell{
         }
     }.f,
     .noise = .Loud,
-    .effect_type = .{ .Custom = struct {
-        fn f(caster_coord: Coord, _: Spell, opts: SpellOptions, target: Coord) void {
-            const caster = state.dungeon.at(caster_coord).mob;
-            explosions.fireBurst(target, 2, .{ .initial_damage = opts.power, .culprit = caster });
-            state.dungeon.at(target).mob.?.addStatus(.Fire, 0, .{ .Tmp = opts.duration });
-        }
-    }.f },
+    .bolt_avoids_allies = true, // hack fix for burning brutes kiling themselves (multitile-related bug i assume)
+    .bolt_multitarget = true,
+    .effect_type = .{
+        .Custom = struct {
+            fn f(caster_coord: Coord, _: Spell, opts: SpellOptions, target: Coord) void {
+                // const caster = state.dungeon.at(caster_coord).mob;
+                // explosions.fireBurst(target, 1, .{ .initial_damage = opts.power, .culprit = caster });
+                if (state.dungeon.at(target).mob) |target_m| {
+                    target_m.takeDamage(.{
+                        .amount = opts.power,
+                        .source = .RangedAttack,
+                        .by_mob = state.dungeon.at(caster_coord).mob,
+                    }, .{ .noun = "The blast of fire" });
+                    target_m.addStatus(.Fire, 0, .{ .Tmp = opts.duration });
+                }
+            }
+        }.f,
+    },
 };
 
 pub const CAST_ENRAGE_UNDEAD = Spell{
@@ -737,7 +748,7 @@ fn _resurrectFire(_: Coord, _: Spell, opts: SpellOptions, coord: Coord) void {
         corpse.addStatus(.Fire, 0, .Prm);
         corpse.addStatus(.Fast, 0, .Prm);
         corpse.addStatus(.Explosive, opts.power, .Prm);
-        corpse.addStatus(.Lifespan, opts.power, .{ .Tmp = 20 });
+        corpse.addStatus(.Lifespan, opts.power, .{ .Tmp = opts.duration });
     }
 }
 
