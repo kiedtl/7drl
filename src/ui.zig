@@ -2460,7 +2460,7 @@ pub fn drawChoicePrompt(comptime fmt: []const u8, args: anytype, options: []cons
         for (options) |option, i| {
             const ind = if (chosen == i) ">" else "-";
             const color = if (chosen == i) colors.LIGHT_CONCRETE else colors.GREY;
-            y = options_c.drawTextAtf(0, y, "{s} {s}", .{ ind, option }, .{ .fg = color, .bg = colors.ABG });
+            y += options_c.drawTextAtf(0, y, "{s} {s}", .{ ind, option }, .{ .fg = color, .bg = colors.ABG });
         }
 
         container_c.renderFully(
