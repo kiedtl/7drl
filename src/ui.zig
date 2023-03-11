@@ -1204,7 +1204,7 @@ fn modifyTile(_: []const *Mob, coord: Coord, p_tile: display.Cell) display.Cell 
     switch (state.dungeon.at(coord).type) {
         .Floor => {
             if (state.player.coord.eq(coord)) {
-                tile.fg = colors.AQUAMARINE;
+                tile.fg = if (state.player_rage > 0) colors.RED else colors.AQUAMARINE;
             } else if (state.dungeon.at(coord).surface) |surf| {
                 if (surf == .Machine and mem.eql(u8, "stair_exit", surf.Machine.id)) {
                     const A = struct {
