@@ -20,7 +20,6 @@ mktarball() {
     mkdir ${pkgname}
 
     cp -r data           ${pkgname}
-    cp -r doc            ${pkgname}
     cp -r run.sh         ${pkgname}
 
     if [ ${1} = "windows" ]; then
@@ -43,16 +42,16 @@ mktarball() {
 }
 
 printf "Compiling for x86_64 Linux SDL...\n"
-zig build -Drelease-safe -Duse-sdl=true
+zig build -Dcpu=baseline -Duse-sdl=true
 mktarball linux x86_64 SDL
 
 # oathbreaker-termbox crashes with illegal instruction if build with
 # release-safe, so build in debug mode.
 
-printf "Compiling for x86_64 Linux termbox...\n"
-zig build -Drelease-safe -Dtarget=x86_64-linux-gnu   -Duse-sdl=false
-mktarball linux x86_64 termbox
+# printf "Compiling for x86_64 Linux termbox...\n"
+# zig build -Drelease-safe -Dtarget=x86_64-linux-gnu   -Duse-sdl=false
+# mktarball linux x86_64 termbox
 
 printf "Compiling for x86_64 Windows SDL...\n"
-zig build -Drelease-safe -Dtarget=x86_64-windows-gnu -Duse-sdl=true
+zig build -Dcpu=baseline -Dtarget=x86_64-windows-gnu -Duse-sdl=true
 mktarball windows x86_64 SDL
