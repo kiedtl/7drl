@@ -786,7 +786,7 @@ An ordinary cave-goblin sentry, wielding a bludgeon and some ceremonial armor.
 You had always heard the cave-goblins were noted crossbow aficionados. Now, you
 will experience it first-hand.
 
-% arbalist_sadist.
+% arbalist_sadist
 Oh no.
 
 % warrior
