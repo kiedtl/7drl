@@ -505,6 +505,75 @@ pub const QuicklimeBruteTemplate = MobTemplate{
     },
 };
 
+pub const BasaltFiendTemplate = MobTemplate{
+    .mob = .{
+        .id = "basalt_fiend",
+        .species = &Species{ .name = "basalt fiend" },
+        .tile = 'F',
+        .alt_name = "golden seraph",
+        .ai = AI{
+            .profession_description = "patrolling",
+            .work_fn = ai.patrolWork,
+            .fight_fn = ai.mageFight,
+            .is_fearless = true,
+            .spellcaster_backup_action = .Melee,
+        },
+
+        .spells = &[_]SpellOptions{
+            .{ .MP_cost = 1, .spell = &spells.CAST_POLAR_LAYER, .power = 14 },
+            .{ .MP_cost = 1, .spell = &spells.CAST_RESURRECT_BASALT, .power = 21 },
+        },
+        .max_MP = 5,
+
+        .faction = .Revgenunkim,
+        .max_HP = 8,
+        .memory_duration = 99,
+        .blood = null,
+        .corpse = .None,
+
+        .innate_resists = .{ .rElec = 75, .rFire = 75 },
+        .stats = .{ .Vision = V },
+    },
+};
+
+pub const LivingStoneTemplate = MobTemplate{
+    .mob = .{
+        .id = "living_stone",
+        .species = &Species{
+            .name = "living stone",
+            .default_attack = &Weapon{
+                .damage = 3,
+                .strs = &[_]DamageStr{
+                    items._dmgstr(10, "hit", "hits", ""),
+                },
+            },
+        },
+        .tile = 'S',
+        .ai = AI{
+            .profession_description = "watching",
+            .work_fn = ai.dummyWork,
+            .fight_fn = ai.meleeFight,
+            .is_curious = false,
+            .is_fearless = true,
+        },
+
+        .faction = .Revgenunkim,
+        .immobile = true,
+        .max_HP = 5,
+        .memory_duration = 1,
+
+        .life_type = .Construct,
+
+        .blood = .Water,
+        .corpse = .Wall,
+
+        .innate_resists = .{ .rFire = RESIST_IMMUNE, .rElec = RESIST_IMMUNE, .Armor = 50, .rFume = 100 },
+        .stats = .{ .Melee = 100, .Vision = 2 },
+    },
+    // This status should be added by whatever spell created it.
+    //.statuses = &[_]StatusDataInfo{.{ .status = .Lifespan, .duration = .{.Tmp=10} }},
+};
+
 const BURNING_BRUTE_CLAW_WEAPON = Weapon{
     .damage = 2,
     .strs = &items.CLAW_STRS,
@@ -603,6 +672,7 @@ pub const MOBS = [_]MobTemplate{
     RevgenunkimTemplate,
     CinderBruteTemplate,
     QuicklimeBruteTemplate,
+    BasaltFiendTemplate,
     BurningBruteTemplate,
 
     BurningLanceTemplate,
@@ -612,6 +682,7 @@ pub const ANGELS = [_]MobTemplate{
     RevgenunkimTemplate,
     CinderBruteTemplate,
     QuicklimeBruteTemplate,
+    BasaltFiendTemplate,
     BurningBruteTemplate,
 };
 

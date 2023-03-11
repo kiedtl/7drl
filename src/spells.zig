@@ -753,9 +753,9 @@ fn _resurrectFire(_: Coord, _: Spell, opts: SpellOptions, coord: Coord) void {
     }
 }
 
-pub const CAST_RESURRECT_FROZEN = Spell{
-    .id = "sp_raise_frozen",
-    .name = "frozen resurrection",
+pub const CAST_RESURRECT_BASALT = Spell{
+    .id = "sp_raise_basalt",
+    .name = "basalt resurrection",
     .animation = .{ .Particle = .{ .name = "glow-blue-dblue" } },
     .cast_type = .Smite,
     .smite_target_type = .Corpse,
@@ -785,7 +785,7 @@ fn _resurrectFrozen(_: Coord, _: Spell, opts: SpellOptions, coord: Coord) void {
 
 pub const CAST_POLAR_LAYER = Spell{
     .id = "sp_polar_casing",
-    .name = "polar casing",
+    .name = "awaken stone",
     .animation = .{ .Particle = .{ .name = "chargeover-blue-out" } },
     .cast_type = .Smite,
     .smite_target_type = .Mob,
@@ -802,15 +802,15 @@ fn _effectPolarLayer(_: Coord, _: Spell, opts: SpellOptions, coord: Coord) void 
         if (state.dungeon.at(neighbor).type == .Wall) {
             state.dungeon.at(neighbor).type = .Floor;
             // FIXME: passing allocator directly is anti-pattern?
-            const w = mobs.placeMob(state.GPA.allocator(), &mobs.LivingIceTemplate, neighbor, .{});
+            const w = mobs.placeMob(state.GPA.allocator(), &mobs.LivingStoneTemplate, neighbor, .{});
             w.addStatus(.Lifespan, 0, .{ .Tmp = opts.power });
         }
     };
 
     if (mob == state.player) {
-        state.message(.SpellCast, "The walls near you transmute into living ice!", .{});
+        state.message(.SpellCast, "The walls near you transmute into living stone!", .{});
     } else if (state.player.cansee(mob.coord)) {
-        state.message(.SpellCast, "The walls near the {s} transmute into living ice!", .{mob.displayName()});
+        state.message(.SpellCast, "The walls near the {s} transmute into living stone!", .{mob.displayName()});
     }
 }
 
