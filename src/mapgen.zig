@@ -993,7 +993,6 @@ pub fn validateLevel(level: usize, alloc: mem.Allocator) !void {
 
         const rec = fab_records.getPtr(fab.name.constSlice());
         if (rec == null or rec.?.level[level] == 0) {
-            std.log.info("fab: {s}, rec? {}", .{ fab.name.constSlice(), rec == null });
             return error.RequiredPrefabsNotUsed;
         }
     }
