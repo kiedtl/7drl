@@ -812,6 +812,9 @@ It is clothed in tormenting fire.
 A tall and sinister being. It is gesturing horribly at His enemies, while blasts
 of acid fly from its fingers.
 
+% basalt_fiend
+It is very ancient.
+
 % burning_brute
 A raging demon of legendary deeds and terror, holding even its peers in awe.
 Sparks continually fly from the boiling granite its body is composed of.
