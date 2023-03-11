@@ -1666,7 +1666,7 @@ pub const Stat = enum {
     pub fn showMobStat(self: Stat, value: isize) bool {
         return switch (self) {
             .Melee, .Evade, .Vision, .Willpower => true,
-            .Missile => value != 40,
+            .Missile => value != 0,
             .Speed => value != 100,
             .Martial, .Spikes, .Conjuration => value > 0,
         };
@@ -1770,7 +1770,7 @@ pub const Mob = struct { // {{{
     // defaults.
     pub const MobStat = struct {
         Melee: isize = 100,
-        Missile: isize = 40,
+        Missile: isize = 0,
         Martial: isize = 0,
         Evade: isize = 0,
         Speed: isize = 100,

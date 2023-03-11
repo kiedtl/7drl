@@ -272,7 +272,7 @@ pub const ArbalistTemplate = MobTemplate{
         .max_MP = 2,
         .max_HP = 5,
         .memory_duration = 7,
-        .stats = .{ .Vision = V - 2 },
+        .stats = .{ .Missile = 60, .Vision = V - 2 },
     },
 };
 
@@ -295,7 +295,7 @@ pub const MasterArbalistTemplate = MobTemplate{
         .max_MP = 2,
         .max_HP = 6,
         .memory_duration = 14,
-        .stats = .{ .Vision = V + 1 },
+        .stats = .{ .Missile = 80, .Vision = V + 1 },
     },
 };
 

@@ -576,6 +576,7 @@ pub const BOLT_BOLT = Spell{
     .name = "crossbow",
     .cast_type = .Bolt,
     .bolt_dodgeable = true,
+    .bolt_missable = true,
     .bolt_multitarget = false,
     .animation = .{ .Particle = .{ .name = "zap-bolt" } },
     .noise = .Medium,
@@ -998,6 +999,7 @@ pub const Spell = struct {
     } = .Mob,
 
     // Only used if cast_type == .Bolt
+    bolt_missable: bool = false,
     bolt_dodgeable: bool = false,
     bolt_multitarget: bool = true,
     bolt_avoids_allies: bool = false,
@@ -1101,6 +1103,12 @@ pub const Spell = struct {
                         const hit_mob = state.dungeon.at(c).mob;
 
                         if (hit_mob) |victim| {
+                            if (self.bolt_missable and caster != null) {
+                                if (!rng.percent(combat.chanceOfMissileLanding(caster.?))) {
+                                    state.message(.CombatUnimportant, "{c} missed {}", .{ caster.?, hit_mob });
+                                    continue;
+                                }
+                            }
                             if (self.bolt_dodgeable) {
                                 if (rng.percent(combat.chanceOfAttackEvaded(victim, caster))) {
                                     state.messageAboutMob(victim, caster_coord, .CombatUnimportant, "dodge the {s}.", .{self.name}, "dodges the {s}.", .{self.name});
