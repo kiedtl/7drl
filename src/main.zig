@@ -758,7 +758,7 @@ pub fn actualMain() anyerror!void {
 
     ui.draw();
 
-    state.message(.Info, "Outer Darkness: a 2023 7drl", .{});
+    state.message(.Info, "Ancient Darkness: a 2023 7drl", .{});
 
     var use_viewer: bool = undefined;
 
