@@ -2192,10 +2192,12 @@ pub fn drawEscapeMenu() void {
     clearScreen();
 
     const main_c_dim = dimensions(.Main);
-    const main_c = Console.init(state.GPA.allocator(), main_c_dim.width(), main_c_dim.height());
+    var main_c = Console.init(state.GPA.allocator(), main_c_dim.width(), main_c_dim.height());
+    defer main_c.deinit();
 
     const menu_c_dim = dimensions(.PlayerInfo);
-    const menu_c = Console.init(state.GPA.allocator(), menu_c_dim.width(), menu_c_dim.height());
+    var menu_c = Console.init(state.GPA.allocator(), menu_c_dim.width(), menu_c_dim.height());
+    defer menu_c.deinit();
 
     const movement = RexMap.initFromFile(state.GPA.allocator(), "data/keybinds_movement.xp") catch err.wat();
     defer movement.deinit();
@@ -2205,29 +2207,27 @@ pub fn drawEscapeMenu() void {
     var y: usize = 0;
     y += main_c.drawTextAt(0, y, "$c──── Movement ────$.", .{});
     y += 1;
-    main_c.drawXP(&movement, 5, y, Rect{ .start = Coord.new(0, 0), .width = 9, .height = 9 }, true);
-    main_c.drawXP(&movement, 5 + 18 + pad, y, Rect{ .start = Coord.new(9, 0), .width = 9, .height = 9 }, true);
-    y += 11 + 1;
+    main_c.drawXP(&movement, 5, y, Rect{ .start = Coord.new(0, 0), .width = 7, .height = 7 }, true);
+    main_c.drawXP(&movement, 5 + 14 + pad, y, Rect{ .start = Coord.new(7, 0), .width = 7, .height = 7 }, true);
+    y += 7 + 1;
     y += main_c.drawTextAt(5, y, "$g(qweasdzxc movement keys, or hjklyubn for neckbeards.)$.", .{});
     y += 2;
     y += main_c.drawTextAt(0, y, "$c──── Misc ────$.", .{});
     y += 1;
     // Two columns
-    y += main_c.drawTextAt(5, y, "$CMessages$.            $bM$.", .{});
-    y += main_c.drawTextAt(5, y, "$CInventory$.           $bi$.", .{});
-    y += main_c.drawTextAt(5, y, "$CExamine$.             $bv$.", .{});
-    y += main_c.drawTextAt(5, y, "$CAbilities$.       $bSPACE$.", .{});
-    y -= 4; // Next column
-    y += main_c.drawTextAt(5 + 18 + pad, y, "$CSwap weapons$.        $b'$.", .{});
-    y += main_c.drawTextAt(5 + 18 + pad, y, "$CPickup item$.         $b,$.", .{});
-    y += main_c.drawTextAt(5 + 18 + pad, y, "$CActivate feature$.    $bA$.", .{});
+    y += main_c.drawTextAt(5, y, "$CMessages$.     $b<M>$.", .{});
+    y -= 1; // Next column
+    y += main_c.drawTextAt(5 + 14 + pad, y, "$CExamine$.      $b<v>$.", .{});
+    y += 1;
 
-    y += 8;
+    y += main_c.drawTextAt(5, y, "See the itch.io page for gameplay info.", .{});
+    y += 3;
+
     y += main_c.drawTextAtf(0, y, "$gAncient Rage v{s} (dist {s})$.", .{
         @import("build_options").release,
         @import("build_options").dist,
     }, .{});
-    y += main_c.drawTextAt(0, y, "$gCreated by kiedtl on a Raspberry Pi Zero.$.", .{});
+    y += main_c.drawTextAt(0, y, "$gCreated by kiedtl for the 2023 7drl.$.", .{});
 
     const Tab = enum(usize) { Continue = 0, Quit = 1 };
     var tab: usize = @enumToInt(@as(Tab, .Continue));
