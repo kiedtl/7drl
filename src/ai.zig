@@ -350,7 +350,8 @@ pub fn updateEnemyRecord(mob: *Mob, new: EnemyRecord) void {
     // Animation + shout
     if (new.mob == state.player and state.player.cansee(mob.coord)) {
         ui.Animation.blinkMob(&.{mob}, '!', colors.AQUAMARINE, .{ .repeat = 2, .delay = 100 });
-        mob.makeNoise(.Shout, .Medium);
+        if (mob.life_type == .Living)
+            mob.makeNoise(.Shout, .Medium);
     }
 }
 
