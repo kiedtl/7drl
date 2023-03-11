@@ -1066,6 +1066,7 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
     // ------------------------------------------------------------------------
 
     for (moblist) |mob| {
+        if (y == endy) break;
         if (mob.is_dead) continue;
 
         _clear_line(startx, endx, y);
