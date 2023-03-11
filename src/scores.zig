@@ -4,6 +4,7 @@ const math = std.math;
 const assert = std.debug.assert;
 
 const err = @import("err.zig");
+const ui = @import("ui.zig");
 const state = @import("state.zig");
 const rng = @import("rng.zig");
 const types = @import("types.zig");
@@ -27,6 +28,8 @@ pub fn _mobname(m: *const Mob) []const u8 {
 }
 
 pub const Info = struct {
+    version: []const u8,
+    dist: []const u8,
     seed: u64,
     username: BStr(128),
     end_datetime: utils.DateTime,
@@ -60,6 +63,9 @@ pub const Info = struct {
 
         // FIXME: should be a cleaner way to do this...
         var s: Self = undefined;
+
+        s.version = @import("build_options").release;
+        s.dist = @import("build_options").dist;
 
         s.seed = rng.seed;
 
@@ -618,6 +624,61 @@ fn exportJsonMorgue(info: Info) !std.ArrayList(u8) {
     try w.writeByte('}');
 
     return buf;
+}
+
+pub fn uploadMorgue(p_info: Info) void {
+    var info = p_info;
+
+    switch (ui.drawChoicePrompt("Upload morgue file?", .{}, &[_][]const u8{ "Yes", "Yes (anonymous)", "No" }) orelse 2) {
+        0 => {},
+        1 => info.username.reinit("Anonymous"),
+        2 => return,
+        else => unreachable,
+    }
+
+    const morgue = exportJsonMorgue(info) catch err.wat();
+    defer morgue.deinit();
+
+    // TODO: when upgrading from Zig 0.9.1, remove this
+    if (@import("builtin").os.tag == .windows) {
+        _ = try std.os.windows.WSAStartup(2, 2);
+    }
+    defer if (@import("builtin").os.tag == .windows) {
+        _ = std.os.windows.WSACleanup() catch {};
+    };
+
+    const HOST = "7drl.000webhostapp.com";
+    const PORT = 80;
+
+    std.log.info("Connecting to {s}...", .{HOST});
+    const stream = std.net.tcpConnectToHost(state.GPA.allocator(), HOST, PORT) catch |e| {
+        std.log.info("Could not connect ({e}), aborting.", .{e});
+        return;
+    };
+    defer stream.close();
+
+    std.log.info("Sending content...", .{});
+    stream.writer().print("POST /index.php HTTP/1.1\r\n", .{}) catch return;
+    stream.writer().print("Host: {s}\r\n", .{HOST}) catch return;
+    stream.writer().print("User-Agent: Ancient_Rage\r\n", .{}) catch return;
+    stream.writer().print("Content-Type: application/json\r\n", .{}) catch return;
+    stream.writer().print("Content-Length: {}\r\n", .{morgue.items.len}) catch return;
+    stream.writer().print("\r\n", .{}) catch return;
+    stream.writer().print("{s}", .{morgue.items}) catch return;
+    stream.writer().print("\r\n", .{}) catch return;
+
+    // ---
+    std.log.info("Waiting for response...", .{});
+    var response: [2048]u8 = undefined;
+    if (stream.read(&response)) |ret| {
+        var lines = std.mem.tokenize(u8, response[0..ret], "\n");
+        while (lines.next()) |line|
+            std.log.info("Response: > {s}", .{line});
+    } else |e| {
+        std.log.info("Error when reading response: {s}", .{@errorName(e)});
+    }
+    // ---
+
 }
 
 pub fn createMorgue() Info {
