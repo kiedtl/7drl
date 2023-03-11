@@ -641,7 +641,7 @@ pub fn uploadMorgue(p_info: Info) void {
 
     // TODO: when upgrading from Zig 0.9.1, remove this
     if (@import("builtin").os.tag == .windows) {
-        _ = try std.os.windows.WSAStartup(2, 2);
+        _ = std.os.windows.WSAStartup(2, 2) catch return;
     }
     defer if (@import("builtin").os.tag == .windows) {
         _ = std.os.windows.WSACleanup() catch {};
