@@ -938,6 +938,7 @@ pub const Status = enum {
     A_Paralyse,
     A_LivingBolt,
     A_Invincibility,
+    A_Yoink,
 
     // Ring status effects
     RingTeleportation, // No power field
@@ -1143,7 +1144,7 @@ pub const Status = enum {
 
     pub fn noshow(self: Status) bool {
         return switch (self) {
-            .A_Bomb, .A_Multiattack, .A_Dominate, .A_MeatOffering, .A_BurningLance, .A_Paralyse, .A_LivingBolt, .A_Invincibility => true,
+            .A_Bomb, .A_Multiattack, .A_Dominate, .A_MeatOffering, .A_BurningLance, .A_Paralyse, .A_LivingBolt, .A_Invincibility, .A_Yoink => true,
             else => false,
         };
     }
@@ -1158,6 +1159,7 @@ pub const Status = enum {
             .A_Paralyse => "paralysing",
             .A_LivingBolt => "living bolt",
             .A_Invincibility => "invincibility",
+            .A_Yoink => "yoink",
 
             .RingTeleportation => "ring: teleportation",
             .RingDamnation => "ring: damnation",
@@ -1214,7 +1216,7 @@ pub const Status = enum {
 
     pub fn miniString(self: Status) ?[]const u8 { // {{{
         return switch (self) {
-            .A_Bomb, .A_Multiattack, .A_Dominate, .A_MeatOffering, .A_BurningLance, .A_Paralyse, .A_LivingBolt, .A_Invincibility, .RingTeleportation, .RingDamnation, .RingElectrocution, .RingExcision, .RingConjuration => null,
+            .A_Bomb, .A_Multiattack, .A_Dominate, .A_MeatOffering, .A_BurningLance, .A_Paralyse, .A_LivingBolt, .A_Invincibility, .A_Yoink, .RingTeleportation, .RingDamnation, .RingElectrocution, .RingExcision, .RingConjuration => null,
 
             .DetectHeat, .DetectElec, .CopperWeapon, .Riposte, .EtherealShield, .FumesVest, .Echolocation, .DayBlindness, .NightBlindness, .Explosive, .ExplosiveElec, .Lifespan => null,
 
@@ -1332,6 +1334,26 @@ pub const Status = enum {
                 .noun = "The pain",
                 .strs = &[_]DamageStr{items._dmgstr(0, "weaken", "weakens", "")},
             });
+        }
+    }
+
+    pub fn tickYoink(mob: *Mob) void {
+        if (mob.hasStatus(.A_Yoink)) {
+            for (mob.fov) |row, y| for (row) |cell, x| {
+                if (!cell) continue;
+                const fitem = Coord.new2(mob.coord.z, x, y);
+                if (state.dungeon.at(fitem).mob) |othermob| {
+                    if (mob.isHostileTo(othermob)) {
+                        var i: usize = 3;
+                        while (i > 0) : (i -= 1) {
+                            const direction = othermob.nextDirectionTo(mob.coord) orelse break;
+                            const dest = othermob.coord.move(direction, state.mapgeometry) orelse break;
+                            if (!othermob.teleportTo(dest, direction, true, false))
+                                break;
+                        }
+                    }
+                }
+            };
         }
     }
 
@@ -1957,6 +1979,7 @@ pub const Mob = struct { // {{{
                     .Nausea => Status.tickNausea(self),
                     .Fire => Status.tickFire(self),
                     .Pain => Status.tickPain(self),
+                    .A_Yoink => Status.tickYoink(self),
                     else => {},
                 }
             }

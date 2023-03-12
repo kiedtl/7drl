@@ -63,6 +63,7 @@ pub const Ability = enum(usize) {
     Paralyse = 5,
     LivingBolt = 6,
     Invincibility = 7,
+    Yoink = 8,
 
     pub const TOTAL = std.meta.fields(@This()).len;
 
@@ -76,6 +77,7 @@ pub const Ability = enum(usize) {
             .Paralyse => .{ .s = .A_Paralyse, .d = 4 },
             .LivingBolt => .{ .s = .A_LivingBolt, .d = 4 },
             .Invincibility => .{ .s = .A_Invincibility, .d = 5 },
+            .Yoink => .{ .s = .A_Yoink, .d = 4 },
         };
     }
 
@@ -89,6 +91,7 @@ pub const Ability = enum(usize) {
             .Paralyse => "Paralyse Foes",
             .LivingBolt => "Living Bolt",
             .Invincibility => "Invincibility",
+            .Yoink => "Entrance Foes",
         };
     }
 
@@ -109,7 +112,8 @@ pub const Ability = enum(usize) {
             .BurningLance => "Conjures a burning lance nearby. When you move, the lance will attack foes in a line in the direction you moved, dealing 3x the damage you would deal.",
             .Paralyse => "Each time you attack, all foes in sight become paralysed for 4 turns (stacking).",
             .LivingBolt => "You zip around as living lightning, phasing through foes and dealing 2 electric damage.",
-            .Invincibility => "Whil standing on a corpse, you gain 100% Armor and rFire.",
+            .Invincibility => "While standing on a corpse, you gain 100% Armor and rFire.",
+            .Yoink => "Each turn, all foes in sight get dragged 3 tiles toward you.",
         };
     }
 };
@@ -163,6 +167,7 @@ pub const CONJ_AUGMENT_DROPS = [_]AbilityEntry{
     .{ .w = 99, .a = .Paralyse },
     .{ .w = 99, .a = .LivingBolt },
     .{ .w = 99, .a = .Invincibility },
+    .{ .w = 99, .a = .Yoink },
 };
 
 pub fn choosePlayerUpgrades() void {
