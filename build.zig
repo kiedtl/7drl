@@ -28,6 +28,9 @@ pub fn build(b: *Builder) void {
     const opt_use_sdl = b.option(bool, "use-sdl", "Build a graphical tiles version of Oathbreaker") orelse false;
     options.addOption(bool, "use_sdl", opt_use_sdl);
 
+    const opt_no_wizkeys = b.option(bool, "no-wizkeys", "Disable wizkeys") orelse false;
+    options.addOption(bool, "no_wizkeys", opt_no_wizkeys);
+
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
     // means any target is allowed, and the default is native. Other options
