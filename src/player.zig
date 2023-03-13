@@ -123,13 +123,15 @@ pub const AbilityInfo = struct {
     last_used: usize = 0,
     a: Ability,
 
+    const COOLDOWN = 15;
+
     pub fn isActive(self: AbilityInfo) bool {
         return state.player.hasStatus(self.a.statusInfo().s);
     }
 
     pub fn isCooldown(self: AbilityInfo) ?usize {
         const t = state.player_turns - self.last_used;
-        return if (t > 10) null else t;
+        return if (t > COOLDOWN) null else COOLDOWN - t;
     }
 
     pub fn isUsable(self: AbilityInfo) bool {
