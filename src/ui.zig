@@ -2223,16 +2223,14 @@ pub fn drawEscapeMenu() void {
     y += main_c.drawTextAt(5, y, "$CMessages$.     $b<M>$.", .{});
     y -= 1; // Next column
     y += main_c.drawTextAt(5 + 14 + pad, y, "$CExamine$.      $b<v>$.", .{});
+    y += main_c.drawTextAt(5, y, "$CAttacking$.    $bbump into enemies (only when raging)$.", .{});
     y += 1;
-
     y += main_c.drawTextAt(5, y, "See the itch.io page for gameplay info.", .{});
-    y += 3;
-
-    y += main_c.drawTextAtf(0, y, "$gAncient Rage v{s} (dist {s})$.", .{
+    y += 2;
+    y += main_c.drawTextAtf(0, y, "$gAncient Rage v{s} (dist {s}), a 2023 7drl.$.", .{
         @import("build_options").release,
         @import("build_options").dist,
     }, .{});
-    y += main_c.drawTextAt(0, y, "$gCreated by kiedtl for the 2023 7drl.$.", .{});
 
     const Tab = enum(usize) { Continue = 0, Quit = 1 };
     var tab: usize = @enumToInt(@as(Tab, .Continue));
