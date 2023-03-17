@@ -485,8 +485,7 @@ fn _getSurfDescription(w: io.FixedBufferStream([]u8).Writer, surface: SurfaceIte
             // mob.displayName() working
             const name = c.ai.profession_name orelse c.species.name;
             _writerWrite(w, "$c{s} remains$.\n", .{name});
-            _writerWrite(w, "corpse\n\n", .{});
-            _writerWrite(w, "This corpse is just begging for a necromancer to raise it.", .{});
+            _writerWrite(w, "corpse\n", .{});
         },
     }
 }
