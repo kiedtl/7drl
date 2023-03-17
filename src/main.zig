@@ -467,6 +467,10 @@ fn readInput() !bool {
             'x', 'j' => player.moveOrFight(.South),
             'z', 'b' => player.moveOrFight(.SouthWest),
             'a', 'h' => player.moveOrFight(.West),
+            '?' => b: {
+                ui.drawEscapeMenu();
+                break :b false;
+            },
             else => false,
         },
         //else => false,
