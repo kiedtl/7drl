@@ -277,24 +277,21 @@ pub const Coord = struct { // {{{
         );
     }
 
+    // Chebyshev: d = max(dx, dy)
     pub inline fn distance(a: Self, b: Self) usize {
-        const diff =
-            a.difference(b);
+        const diff = a.difference(b);
 
-        // Euclidean: d = sqrt(dx^2 + dy^2)
-        //
-        // return math.sqrt((diff.x * diff.x) + (diff.y * diff.y));
-
-        // Manhattan: d = dx + dy return diff.x + diff.y;
-
-        // Chebyshev: d = max(dx, dy)
         return math.max(diff.x, diff.y);
     }
 
     pub inline fn distanceManhattan(a: Self, b: Self) usize {
-        const diff =
-            a.difference(b);
+        const diff = a.difference(b);
         return diff.x + diff.y;
+    }
+
+    pub inline fn distanceEuclidean(a: Self, b: Self) f64 {
+        const diff = a.difference(b);
+        return math.sqrt(@intToFloat(f64, diff.x * diff.x) + @intToFloat(f64, diff.y * diff.y));
     }
 
     // Sometimes we want to pass Coord.eq around, but we can't since an inline
