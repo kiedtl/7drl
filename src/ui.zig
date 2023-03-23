@@ -964,7 +964,7 @@ fn drawInfo(moblist: []const *Mob, startx: usize, starty: usize, endx: usize, en
     while (y < endy) : (y += 1) _clear_line(startx, endx, y);
     y = starty;
 
-    const lvlstr = state.levelinfo[state.player.coord.z].name;
+    const lvlstr = if (state.player_rage > 0) state.levelinfo[state.player.coord.z].altname else state.levelinfo[state.player.coord.z].name;
     //_clearLineWith(startx, endx - 1, y, '─', colors.DARK_GREY, colors.BG);
     //const lvlstrx = startx + @divTrunc(endx - startx - 1, 2) - @intCast(isize, (lvlstr.len + 4) / 2);
     //y = _drawStrf(lvlstrx, y, endx, "$G┤$. $c{s}$. $G├$.", .{lvlstr}, .{});
